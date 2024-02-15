@@ -1,0 +1,7 @@
+name = "ScheduledScoring"
+uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+GlobalBrain = "098ac8c9-7e3b-475a-8ab5-e2cc3c93bac3"
+SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
