@@ -19,6 +19,9 @@ begin
 	where new.voteEventId > (select importedVoteEventId from lastVoteEvent)
 	on conflict do nothing;
 
+	-- DOo't actually keep vote events
+	-- delete from voteEvent where voteEventId = new.voteEventId;
+
 	-- insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt) select
 	--     new.voteEventId,
 	--     new.userId,
@@ -233,7 +236,8 @@ create trigger afterUpdateVote after update on Vote begin
 	update Tally
 		set 
 			total = total + (new.vote != 0) - (old.vote != 0),
-			count = count + (new.vote == 1) - (old.vote == 1)
+			count = count + (new.vote == 1) - (old.vote == 1),
+			latestVoteEventId = new.latestVoteEventId
 	where
 		tagId = new.tagId
 		and postId = new.postId
