@@ -21,6 +21,9 @@ function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream)
 
             vote_event_id = df[1, :voteEventId]
             post_id = df[1, :postId]
+            if vote_event_id == 9
+                break;
+            end
 
             @info "Got vote event $vote_event_id on post: $post_id"
 
@@ -36,8 +39,8 @@ function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream)
 
             calculate_score_changes(db)
 
-            @info "Press enter to process next event"
-            readline() # For debugging
+            # @info "Press enter to process next event"
+            # readline() # For debugging
 
         # catch e
             # @error "Error processing vote event: $e. At $now."
