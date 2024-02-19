@@ -1,2 +1,0 @@
-up:
-    julia --eval "using Pkg; Pkg.activate(pwd()); Pkg.update()"

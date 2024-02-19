@@ -1,23 +1,38 @@
 
 -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
 -- that is, if the voteEventId is greater than lastVoteEvent.voteEventId
-drop trigger if exists afterInsertOnProcessedVoteEvent;
-create trigger afterInsertOnProcessedVoteEvent instead of insert on ProcessedVoteEvent 
+
+drop trigger if exists afterInsertOnInsertVoteEventImport;
+create trigger afterInsertOnInsertVoteEventImport instead of insert on VoteEventImport
 begin
-	insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt, processedAt) select
-	    new.voteEventId,
-	    new.userId,
-	    new.tagId,
-	    new.parentId,
-	    new.postId,
-	    new.noteId,
-	    new.vote,
-	    new.createdAt,
-	    unixepoch('subsec')*1000
-	from lastVoteEvent
-	where
-	    new.voteEventId > lastVoteEvent.voteEventId;
-	-- on conflict do nothing; there won't be conflicts because of the where clause
+
+	insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt) 
+	select 
+		new.voteEventId,
+		new.userId,
+		new.tagId,
+		case when new.parentId = '' then null else new.parentId end as parentId,
+		new.postId,
+		case when new.noteId = '' then null else new.noteId end as noteId,
+		new.vote,
+		new.createdAt
+	where new.voteEventId > (select importedVoteEventId from lastVoteEvent)
+	on conflict do nothing;
+
+	-- insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt) select
+	--     new.voteEventId,
+	--     new.userId,
+	--     new.tagId,
+	--     new.parentId,
+	--     new.postId,
+	--     new.noteId,
+	--     new.vote,
+	--     new.createdAt
+	--     -- unixepoch('subsec')*1000
+	-- from lastVoteEvent
+	-- where
+	--     new.voteEventId > lastVoteEvent.voteEventId
+	-- 	on conflict do nothing; -- there shouldn't be conflicts because of the where clause
 end;
 
 
@@ -187,7 +202,7 @@ begin
 	;
 
 
-	insert into lastVoteEvent values (1, new.voteEventId) on conflict do update set voteEventId = new.voteEventId;
+	insert into lastVoteEvent(type, importedVoteEventId) values (1, new.voteEventId) on conflict do update set importedVoteEventId = new.voteEventId;
 
 end;
 
@@ -196,15 +211,17 @@ create trigger afterInsertVote after insert on Vote begin
 
 	update informedVote set vote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId ;
 
-	insert into Tally(tagId, postId, count, total) values (
+	insert into Tally(tagId, postId, latestVoteEventId, count, total) values (
 		new.tagId,
 		new.postId,
+		new.latestVoteEventId,
 		(new.vote == 1),
 		new.vote != 0
 	) on conflict(tagId, postId) do update 
 		set 
 			total = total + (new.vote != 0),
-			count = count + (new.vote == 1)
+			count = count + (new.vote == 1),
+			latestVoteEventId = new.latestVoteEventId
 	;
 end;
 

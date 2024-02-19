@@ -1,37 +1,42 @@
 module ScheduledScoring
 
 using GlobalBrain
+using CSV
 using SQLite
-import Dates
+using DataFrames
+using Dates
+using FileWatching
+using Base: run
+
+# include("src/types.jl")
+include("src/scoredb.jl")
+include("src/voteevents.jl")
 
 function julia_main()::Cint
     @info "Starting scheduled scorer..."
 
-    database_path = ARGS[1]
-    if !isfile(database_path)
-        create_score_db_tables(database_path)
+    vote_database_filename = ARGS[1]
+    vote_events_filename = ARGS[2]
+
+    if length(vote_database_filename) == 0
+        error("Missing vote database filename argument")
     end
 
-    while true
-        now = Dates.now()
-        try
-            db = get_score_db(database_path)
-
-            # TODO: optimize so that it doesn't score ALL tallies ALL the time
-            detailed_tallies = get_detailed_tallies(db, nothing, nothing)
-            snapshot_timestamp = Dates.now() |> Dates.datetime2unix |> (x -> trunc(Int, x))
-            score_data_db_writer = get_score_data_db_writer(db, snapshot_timestamp)
-            score_tree(detailed_tallies, score_data_db_writer)
-            close(db)
-
-            @info "Scored tallies at $now."
-        catch e
-            @error "Error scoring tallies: $e. At $now."
-        end
-        sleep(60)
+    if length(vote_events_filename) == 0
+        error("Missing vote events filename")
     end
+
+    if !isfile(vote_database_filename)
+        run(pipeline(`cat sql/tables.sql`, `sqlite3 $vote_database_filename`))
+        run(pipeline(`cat sql/views.sql`, `sqlite3 $vote_database_filename`))
+        run(pipeline(`cat sql/triggers.sql`, `sqlite3 $vote_database_filename`))
+    end
+
+    input_stream = open(vote_events_filename)
+    process_vote_events_stream(get_score_db(vote_database_filename), input_stream)
 
     return 0
 end
+
 
 end
