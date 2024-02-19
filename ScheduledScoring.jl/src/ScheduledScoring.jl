@@ -47,5 +47,6 @@ function scheduled_scorer(database_path::String, vote_events_path::String)
     return 0
 end
 
+export scheduled_scorer
 
 end
