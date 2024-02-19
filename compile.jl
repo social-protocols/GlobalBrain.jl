@@ -1,2 +1,2 @@
 using PackageCompiler
-create_app("ScheduledScoring.jl", "build"; force = true)
+create_app("ScheduledScoring.jl", "build"; force = true, incremental = true)
