@@ -1,5 +1,5 @@
-include(joinpath("..", "src", "ScheduledScoring.jl"))
-using Main.ScheduledScoring
+include(joinpath("..", "src", "GlobalBrainService.jl"))
+using Main.GlobalBrainService
 
 # Get environment variables
 database_path =  get(ENV, "DATABASE_PATH", "")

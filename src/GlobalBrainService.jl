@@ -1,4 +1,4 @@
-module ScheduledScoring
+module GlobalBrainService
 
 using GlobalBrain
 using CSV
