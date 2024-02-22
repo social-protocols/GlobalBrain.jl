@@ -1,4 +1,5 @@
-using ScheduledScoring
+include(joinpath("..", "src", "ScheduledScoring.jl"))
+using Main.ScheduledScoring
 
 # Get environment variables
 database_path =  get(ENV, "DATABASE_PATH", "")

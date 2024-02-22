@@ -21,11 +21,11 @@
             buildInputs = [
               just
               git
-              vim
-              less
               julia-bin
               libgcc
               sqlite-interactive
+              vim
+              less
             ];
           };
         };

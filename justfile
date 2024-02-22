@@ -5,8 +5,10 @@ run:
     ./build/bin/ScheduledScoring $DATABASE_PATH $VOTE_EVENTS_PATH
 
 runscript:
-    julia ScheduledScoring.jl/scripts/run.jl
-    
+    julia --project scripts/run.jl
+
+dev:
+    julia --eval "using Pkg; Pkg.develop(path = pwd())"
 
 sqlite:
     sqlite3 $DATABASE_PATH
