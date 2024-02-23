@@ -2,6 +2,7 @@ module GlobalBrainService
 
 using GlobalBrain
 using CSV
+using JSON
 using SQLite
 using DataFrames
 using Dates
@@ -22,7 +23,7 @@ function julia_main()::Cint
 end
 
 
-function scheduled_scorer(database_path::String, vote_events_path::String)
+function scheduled_scorer(database_path::String, vote_events_path::String, score_events_path::String)
 
 
     if length(database_path) == 0
@@ -41,12 +42,18 @@ function scheduled_scorer(database_path::String, vote_events_path::String)
     end
 
     @info "Reading vote events from $vote_events_path"
-    input_stream = open(vote_events_path)
-    process_vote_events_stream(get_score_db(database_path), input_stream)
+
+    open(vote_events_path) do input_stream
+        open(score_events_path, "a") do output_stream
+            process_vote_events_stream(get_score_db(database_path), input_stream, output_stream)
+
+        end
+    end
 
     return 0
 end
 
+export ScoreDataRecord
 export scheduled_scorer
 
 end

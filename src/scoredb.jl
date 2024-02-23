@@ -183,6 +183,33 @@ function get_score_data(
 
 end
 
+
+
+struct ScoreDataRecord
+    tagId::Int
+    parentId::Union{Int, Nothing}
+    postId::Int
+    topNoteId::Union{Int,Nothing}
+    parentUninformedP::Union{Float64,Nothing}
+    parentInformedP::Union{Float64,Nothing}
+    uninformedP::Union{Float64,Nothing}
+    informedP::Union{Float64,Nothing}
+    count::Int
+    total::Int
+    selfP::Float64
+    updatedAt::Int
+end
+
+using Tables
+
+# Tell Tables.jl that it can access rows in the array
+Tables.rowaccess(::Type{Vector{ScoreDataRecord}}) = true
+
+# Tell Tables.jl how to get the rows from the array
+Tables.rows(x::Vector{ScoreDataRecord}) = x
+
+
+
 """
     insert_score_data(
         db::SQLite.DB,
@@ -191,47 +218,30 @@ end
 
 Insert a `ScoreData` instance into the score database.
 """
-function insert_score_data(db::SQLite.DB, score_data::ScoreData)
-    sql_query = """
-        insert or replace into ScoreData(
-            tagId
-            , parentId
-            , postId
-            , topNoteId
-            , parentUninformedP
-            , parentInformedP
-            , uninformedP
-            , informedP
-            , count
-            , total
-            , selfP
-        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """
+function insert_score_data(db::SQLite.DB, score_data_record::ScoreDataRecord)
+    SQLite.load!([score_data_record], db, "ScoreData"; on_conflict="REPLACE")
+end
 
-    DBInterface.execute(
-        db,
-        sql_query,
-        [
-            score_data.tag_id,
-            score_data.parent_id,
-            score_data.post_id,
-            score_data.top_note_effect !== nothing ? score_data.top_note_effect.note_id :
-            nothing,
-            score_data.effect !== nothing ? score_data.effect.uninformed_probability :
-            nothing,
-            score_data.effect !== nothing ? score_data.effect.informed_probability :
-            nothing,
-            score_data.top_note_effect !== nothing ?
-            score_data.top_note_effect.uninformed_probability : nothing,
-            score_data.top_note_effect !== nothing ?
-            score_data.top_note_effect.informed_probability : nothing,
-            score_data.self_tally.count,
-            score_data.self_tally.sample_size,
-            score_data.self_probability
-        ],
+function as_score_data_record(score_data::ScoreData, created_at::Int)::ScoreDataRecord
+    return ScoreDataRecord(
+        score_data.tag_id,
+        score_data.parent_id,
+        score_data.post_id,
+        score_data.top_note_effect !== nothing ? score_data.top_note_effect.note_id :
+        nothing,
+        score_data.effect !== nothing ? score_data.effect.uninformed_probability :
+        nothing,
+        score_data.effect !== nothing ? score_data.effect.informed_probability :
+        nothing,
+        score_data.top_note_effect !== nothing ?
+        score_data.top_note_effect.uninformed_probability : nothing,
+        score_data.top_note_effect !== nothing ?
+        score_data.top_note_effect.informed_probability : nothing,
+        score_data.self_tally.count,
+        score_data.self_tally.sample_size,
+        score_data.self_probability,
+        created_at
     )
-
-
 end
 
 function set_last_processed_vote_event_id(db::SQLite.DB)

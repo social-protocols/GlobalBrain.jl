@@ -1,6 +1,5 @@
 
-
-function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream)
+function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream, output_stream::IOStream)
 
     column_names = []
 
@@ -29,23 +28,9 @@ function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream)
             continue
         end
 
-        # println("Inserting vote events", df)
-        results = SQLite.load!(df, db, "VoteEventImport")
+        results = SQLite.load!(df, db, "VoteEventImport"; on_conflict="REPLACE")
 
-        # if vote_event_id == 9
-        #     break;
-        # end
-
-        # @info "Updating scores"
-
-        calculate_score_changes(db)
-
-            # @info "Press enter to process next event"
-            # readline() # For debugging
-
-        # catch e
-            # @error "Error processing vote event: $e. At $now."
-        # end
+        output_score_changes(db,output_stream)
 
         @info """Processed new events at $(Dates.format(now(), "HH:MM:SS"))"""
     end
@@ -53,7 +38,7 @@ function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream)
     close(db)
 end
 
-function calculate_score_changes(db::SQLite.DB)
+function output_score_changes(db::SQLite.DB, output_stream)
     tallies = get_tallies(db, nothing, nothing)
 
     if length(tallies) == 0
@@ -64,9 +49,16 @@ function calculate_score_changes(db::SQLite.DB)
     scores = score_tree(
         tallies,  
         (score_data) -> begin
+            timestamp = Dates.value(now())
             for s in score_data
                 @info "Writing updated score data for post $(s.post_id): p=$(s.self_probability), effect=$(s.effect), topNoteEffect=$(s.effect)"
-                insert_score_data(db, s)
+
+                r = as_score_data_record(s, timestamp)
+
+                insert_score_data(db, r)
+
+                json_data = JSON.json(r) 
+                write(output_stream, json_data * "\n")
             end
         end
     )
