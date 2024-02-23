@@ -32,7 +32,7 @@ function to_score_data(row::SQLite.Row)::GlobalBrain.ScoreData
             (row[:parentQ] == 0 ? nothing : row[:parentQ]),
             (row[:parentP] == 0 ? nothing : row[:parentP]),
         ),
-        GlobalBrain.BernoulliTally(row[:count], row[:total]),
+        GlobalBrain.BernoulliTally(row[:count], row[:sampleSize]),
         row[:topNoteId] == 0 ? nothing : GlobalBrain.NoteEffect(
             row[:postId],
             (row[:topNoteId] == 0 ? nothing : row[:topNoteId]),

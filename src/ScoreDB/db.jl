@@ -87,7 +87,7 @@ function get_score_data(
             , ifnull(q, 0) q
             , ifnull(p, 0) p
             , count
-            , total
+            , sampleSize
            -- , NeedsRecalculation.postId is not null as needsRecalculation
 
         from ScoreData

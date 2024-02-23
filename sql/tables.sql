@@ -87,7 +87,7 @@ create table if not exists ScoreData(
     , q                 real
     , p                 real
     , count             integer
-    , total             integer
+    , sampleSize        integer
     , updatedAt integer not null default (unixepoch('subsec')*1000)
     , primary key(tagId, postId)
 ) strict;

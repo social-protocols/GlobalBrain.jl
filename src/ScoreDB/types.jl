@@ -20,7 +20,7 @@ struct ScoreDataRecord
     q::Union{Float64,Nothing}
     p::Union{Float64,Nothing}
     count::Int
-    total::Int
+    sampleSize::Int
     updatedAt::Int
 end
 
