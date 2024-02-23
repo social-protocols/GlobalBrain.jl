@@ -60,6 +60,7 @@ function output_score_changes(db::SQLite.DB, output_stream)
                 json_data = JSON.json(r) 
                 write(output_stream, json_data * "\n")
             end
+            flush(output_stream)
         end
     )
 
