@@ -13,73 +13,11 @@ end
 
 
 """
-    to_detailed_tally(result::SQLite.Row)::DetailedTally
-
-Convert a SQLite result row to a `DetailedTally`.
-"""
-function to_detailed_tally(row::SQLite.Row)::DetailedTally
-    return DetailedTally(
-        row[:tagId],
-        row[:parentId] == 0 ? nothing : row[:parentId],
-        row[:postId],
-        BernoulliTally(row[:parentCount], row[:parentTotal]),
-        BernoulliTally(row[:uninformedCount], row[:uninformedTotal]),
-        BernoulliTally(row[:informedCount], row[:informedTotal]),
-        BernoulliTally(row[:selfCount], row[:selfTotal]),
-    )
-end
-
-function to_score_data(r::SQLite.Row)::ScoreData
-
-    return ScoreData(
-        r[:tagId],
-        ((r[:parentId]==0) ? nothing : r[:parentId]),
-        r[:postId],
-        r[:parentId]==0 ? nothing : NoteEffect(
-            (r[:parentId]==0 ? nothing : r[:parentId]),
-            r[:postId],
-            (r[:parentUninformedP]==0 ? nothing : r[:parentUninformedP]),
-            (r[:parentInformedP]==0 ? nothing : r[:parentInformedP]),
-        ),
-        r[:selfP],
-        BernoulliTally(r[:count], r[:total]),
-        r[:topNoteId]==0 ? nothing : NoteEffect(
-            r[:postId],
-            (r[:topNoteId]==0 ? nothing : r[:topNoteId]),
-            (r[:uninformedP]==0 ? nothing : r[:uninformedP]),
-            (r[:informedP]==0 ? nothing : r[:informedP]),
-        ),
-    )
-end
-
-
-"""
-    SQLTalliesTree <: TalliesTree
-
-A data structure to represent a tree of tallies stored in an SQLite database.
-"""
-struct SQLTalliesTree
-    tally::DetailedTally
-    needs_recalculation::Bool
-    db::SQLite.DB
-end
-
-function AsTalliesTree(t::SQLTalliesTree)
-    return TalliesTree(
-        () -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id),
-        () -> t.tally,
-        () -> t.needs_recalculation,
-        () -> get_score_data(t.db, t.tally.tag_id, t.tally.post_id),
-    )
-end
-
-
-"""
     get_tallies(
         db::SQLite.DB,
-        tag_id::Union{Int,Nothing},
-        post_id::Union{Int,Nothing},
-    )::Base.Generator
+        tag_id::Union{Int, Nothing},
+        post_id::Union{Int, Nothing},
+    )::Vector{GlobalBrain.TalliesTree}
 
 Get the detailed tallies under a given tag and post, along with a boolean indicating if the tally has 
 been updated and thus the score needs to be recalculated. If `tag_id` is `nothing`, tallies for
@@ -89,10 +27,9 @@ The function returns a vector of `SQLTalliesTree`s.
 """
 function get_tallies(
     db::SQLite.DB,
-    tag_id::Union{Int,Nothing},
-    post_id::Union{Int,Nothing},
-)::Vector{TalliesTree}
-
+    tag_id::Union{Int, Nothing},
+    post_id::Union{Int, Nothing},
+)::Vector{GlobalBrain.TalliesTree}
     sql_query = """
         select
             self.tagId
@@ -122,11 +59,13 @@ function get_tallies(
                 )
         """
 
-    # println("Getting tallies for post $post_id")
-
     results = DBInterface.execute(db, sql_query, [tag_id, post_id])
 
-    return [AsTalliesTree(SQLTalliesTree(to_detailed_tally(row), row[:needsRecalculation], db)) for row in results]
+    return [
+        SQLTalliesTree(to_detailed_tally(row), row[:needsRecalculation], db) |>
+            as_tallies_tree
+        for row in results
+    ]
 end
 
 
@@ -161,14 +100,12 @@ function get_score_data(
             -- and not needsRecalculation
 
     """
-    # println("Getting score data for post $post_id")
 
     results = DBInterface.execute(db, get_score_sql, [tag_id, post_id])
 
     r = iterate(results)
 
     if isnothing(r) 
-        # println("No result in get_score_data")
         return nothing
     end
 
@@ -184,30 +121,14 @@ function get_score_data(
 end
 
 
-
-struct ScoreDataRecord
-    tagId::Int
-    parentId::Union{Int, Nothing}
-    postId::Int
-    topNoteId::Union{Int,Nothing}
-    parentUninformedP::Union{Float64,Nothing}
-    parentInformedP::Union{Float64,Nothing}
-    uninformedP::Union{Float64,Nothing}
-    informedP::Union{Float64,Nothing}
-    count::Int
-    total::Int
-    selfP::Float64
-    updatedAt::Int
+function as_tallies_tree(t::SQLTalliesTree)
+    return GlobalBrain.TalliesTree(
+        () -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id),
+        () -> t.tally,
+        () -> t.needs_recalculation,
+        () -> get_score_data(t.db, t.tally.tag_id, t.tally.post_id),
+    )
 end
-
-using Tables
-
-# Tell Tables.jl that it can access rows in the array
-Tables.rowaccess(::Type{Vector{ScoreDataRecord}}) = true
-
-# Tell Tables.jl how to get the rows from the array
-Tables.rows(x::Vector{ScoreDataRecord}) = x
-
 
 
 """
@@ -222,34 +143,18 @@ function insert_score_data(db::SQLite.DB, score_data_record::ScoreDataRecord)
     SQLite.load!([score_data_record], db, "ScoreData"; on_conflict="REPLACE")
 end
 
-function as_score_data_record(score_data::ScoreData, created_at::Int)::ScoreDataRecord
-    return ScoreDataRecord(
-        score_data.tag_id,
-        score_data.parent_id,
-        score_data.post_id,
-        score_data.top_note_effect !== nothing ? score_data.top_note_effect.note_id :
-        nothing,
-        score_data.effect !== nothing ? score_data.effect.uninformed_probability :
-        nothing,
-        score_data.effect !== nothing ? score_data.effect.informed_probability :
-        nothing,
-        score_data.top_note_effect !== nothing ?
-        score_data.top_note_effect.uninformed_probability : nothing,
-        score_data.top_note_effect !== nothing ?
-        score_data.top_note_effect.informed_probability : nothing,
-        score_data.self_tally.count,
-        score_data.self_tally.sample_size,
-        score_data.self_probability,
-        created_at
+
+
+function set_last_processed_vote_event_id(db::SQLite.DB)
+    DBInterface.execute(
+        db,
+        "update lastVoteEvent set processedVoteEventId = importedVoteEventId"
     )
 end
 
-function set_last_processed_vote_event_id(db::SQLite.DB)
-    DBInterface.execute(db, "update lastVoteEvent set processedVoteEventId = importedVoteEventId;")
-end
 
 function get_last_processed_vote_event_id(db::SQLite.DB)
-    results = DBInterface.execute(db, "select processedVoteEventId from lastVoteEvent;")
+    results = DBInterface.execute(db, "select processedVoteEventId from lastVoteEvent")
     r = iterate(results)
     return r[1][:processedVoteEventId]
 end

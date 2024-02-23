@@ -8,9 +8,11 @@ using Dates
 using FileWatching
 using Base: run
 
-# include("src/types.jl")
-include("scoredb.jl")
-include("voteevents.jl")
+include("ScoreDB/ScoreDB.jl")
+
+using .ScoreDB
+
+include("vote-events.jl")
 
 function julia_main()::Cint
     @info "Starting scheduled scorer..."
@@ -22,16 +24,14 @@ function julia_main()::Cint
     scheduled_scorer(database_path, vote_events_path, score_events_path)
 end
 
-
 function scheduled_scorer(database_path::String, vote_events_path::String, score_events_path::String)
-
 
     if length(database_path) == 0
         error("Missing vote database filename argument")
     end
 
     if length(vote_events_path) == 0
-        error("Missing vote events filename")
+        error("Missing vote events filename argument")
     end
 
     if !isfile(database_path)
@@ -52,8 +52,6 @@ function scheduled_scorer(database_path::String, vote_events_path::String, score
     open(score_events_path, "a") do output_stream
         process_vote_events_stream(get_score_db(database_path), input_stream, output_stream)
     end
-
-
 
     return 0
 end

@@ -15,3 +15,4 @@
 {"userId":"102","tagId":1,"parentId":null,"postId":1,"noteId":2,"vote":-1,"createdAt":1708696355966,"voteEventId":15}
 {"userId":"102","tagId":1,"parentId":1,"postId":2,"noteId":3,"vote":-1,"createdAt":1708696355967,"voteEventId":16}
 {"userId":"102","tagId":1,"parentId":1,"postId":2,"noteId":3,"vote":1,"createdAt":1708696355967,"voteEventId":17}
+{"userId":"102","tagId":1,"parentId":1,"postId":2,"noteId":3,"vote":1,"createdAt":1708696355967,"voteEventId":18}
