@@ -1,4 +1,4 @@
-name = "ScheduledScoring"
+name = "GlobalBrainService"
 uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"
 
 [deps]
