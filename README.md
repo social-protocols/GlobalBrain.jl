@@ -28,7 +28,7 @@ To inspect the produced data:
 just sqlite
 ```
 
-## ScheduledScoring.jl
+## Compilation to Avoid Startup Lag
 
 `just run` and `just runtest` do not run precompiled versions of the code, so the startup time might lag.
 `ScheduledScoring.jl` setup according to the structure required by [`PackageCompiler.jl`](https://github.com/JuliaLang/PackageCompiler.jl) to produce an executable app with `create_app`.
