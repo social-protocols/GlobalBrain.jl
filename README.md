@@ -1,20 +1,26 @@
-# Global Brain Note Scoring on a Schedule
+# Global Brain Note Scoring Service
 
-Produce an executable file that runs the [Global Brain top reply scoring algorithm](https://social-protocols.org/global-brain/) every 60 seconds on a SQLite database.
+>[!NOTE]
+>A Julia service that consumes an input stream of vote events and outputs a stream of top reply scores.
 
-The following command produces the executable (~10 mins compile time):
+## Overview
+
+To get a dev shell, run `direnv allow`.
+This will copy the contents from .env.example to a .env file, set the environment variables, and fetch the required dependencies.
+
+To run with test data (located in `testdata/`), execute:
 
 ```
-just compile
+just runtest
 ```
 
-Before you run the task, make sure that you have an environment variable called `DATABASE_PATH` that speciefies the path to your SQLite database available.
-Note, that the [GlobalBrain.jl](https://github.com/social-protocols/GlobalBrain.jl) package assumes a specific database schema.
-You can run the scheduled scoring task with this command (assuming the `DATABASE_PATH` variable is set):
- 
+To run with real data, execute:
+
 ```
 just run
 ```
+
+Make sure to check out the `.env.example` file to see the required environment variables.
 
 To inspect the produced data:
 
@@ -24,9 +30,21 @@ just sqlite
 
 ## ScheduledScoring.jl
 
-This is a Julia module that is setup according to the structure required by [`PackageCompiler.jl`](https://github.com/JuliaLang/PackageCompiler.jl) to produce an executable app with `create_app`.
+`just run` and `just runtest` do not run precompiled versions of the code, so the startup time might lag.
+`ScheduledScoring.jl` setup according to the structure required by [`PackageCompiler.jl`](https://github.com/JuliaLang/PackageCompiler.jl) to produce an executable app with `create_app`.
+
+>[!WARNING]
+>This might currently be broken, since we haven't tested it after a structure change.
+
+To compile the app, execute:
+
+```
+just compile
+```
+
 To update the depedencies, navigate to the `ScheduledScoring.jl` folder and execute:
 
 ```
 just up
 ```
+

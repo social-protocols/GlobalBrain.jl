@@ -8,7 +8,7 @@ run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH
     tail -f $VOTE_EVENTS_PATH | julia --project -- scripts/run.jl $DATABASE_PATH - $SCORE_EVENTS_PATH
 
-test-run:
+runtest:
     test -e $VOTE_EVENTS_TEST_PATH || touch $VOTE_EVENTS_TEST_PATH
     tail -f $VOTE_EVENTS_TEST_PATH | julia --project -- scripts/run.jl $DATABASE_PATH - $SCORE_EVENTS_PATH
 
