@@ -1,10 +1,10 @@
 compile:
     julia --project compile.jl
 
-run:
+runbin:
     ./build/bin/ScheduledScoring $DATABASE_PATH $VOTE_EVENTS_PATH
 
-runscript:
+run:
     julia --project scripts/run.jl
 
 dev:
@@ -15,10 +15,10 @@ sqlite:
 
 reset-db:
     rm -f $DATABASE_PATH
-    sqlite3 $DATABASE_PATH < ScheduledScoring.jl/sql/tables.sql
-    sqlite3 $DATABASE_PATH < ScheduledScoring.jl/sql/views.sql
-    sqlite3 $DATABASE_PATH < ScheduledScoring.jl/sql/triggers.sql
-#    sqlite3 $DATABASE_PATH < ScheduledScoring.jl/sql/import-vote-events.sql
+    sqlite3 $DATABASE_PATH < sql/tables.sql
+    sqlite3 $DATABASE_PATH < sql/views.sql
+    sqlite3 $DATABASE_PATH < sql/triggers.sql
+#    sqlite3 $DATABASE_PATH < sql/import-vote-events.sql
 
 import-vote-events:
-    sqlite3 $DATABASE_PATH < ScheduledScoring.jl/sql/import-vote-events.sql
+    sqlite3 $DATABASE_PATH < sql/import-vote-events.sql
