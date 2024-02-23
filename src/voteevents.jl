@@ -1,5 +1,5 @@
 
-function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream, output_stream::IOStream)
+function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream::IOStream)
 
     column_names = []
 
@@ -15,8 +15,8 @@ function process_vote_events_stream(db::SQLite.DB, input_stream::IOStream, outpu
             continue
         end
 
-        csv = CSV.File(IOBuffer(line); header=column_names)
-        df = DataFrame(csv)
+        json = JSON.parse(IOBuffer(line))
+        df = DataFrame(json)
 
         vote_event_id = df[1, :voteEventId]
         post_id = df[1, :postId]
