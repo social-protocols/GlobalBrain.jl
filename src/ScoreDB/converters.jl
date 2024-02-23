@@ -29,16 +29,15 @@ function to_score_data(row::SQLite.Row)::GlobalBrain.ScoreData
         row[:parentId] == 0 ? nothing : GlobalBrain.NoteEffect(
             (row[:parentId] == 0 ? nothing : row[:parentId]),
             row[:postId],
-            (row[:parentUninformedP] == 0 ? nothing : row[:parentUninformedP]),
-            (row[:parentInformedP] == 0 ? nothing : row[:parentInformedP]),
+            (row[:parentQ] == 0 ? nothing : row[:parentQ]),
+            (row[:parentP] == 0 ? nothing : row[:parentP]),
         ),
-        row[:selfP],
         GlobalBrain.BernoulliTally(row[:count], row[:total]),
         row[:topNoteId] == 0 ? nothing : GlobalBrain.NoteEffect(
             row[:postId],
             (row[:topNoteId] == 0 ? nothing : row[:topNoteId]),
-            (row[:uninformedP] == 0 ? nothing : row[:uninformedP]),
-            (row[:informedP] == 0 ? nothing : row[:informedP]),
+            (row[:q] == 0 ? nothing : row[:q]),
+            (row[:p] == 0 ? nothing : row[:p]),
         ),
     )
 end
@@ -72,7 +71,6 @@ function as_score_data_record(
         score_data.top_note_effect.informed_probability : nothing,
         score_data.self_tally.count,
         score_data.self_tally.sample_size,
-        score_data.self_probability,
         created_at
     )
 end

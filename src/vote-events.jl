@@ -103,7 +103,6 @@ function output_score_changes(db::SQLite.DB, output_stream)
             for s in score_data
                 @info (
                     "Writing updated score data for post $(s.post_id):"
-                        * " p=$(s.self_probability),"
                         * " effect=$(s.effect),"
                         * " topNoteEffect=$(s.effect)"
                 )

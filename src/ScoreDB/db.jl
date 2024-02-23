@@ -80,15 +80,14 @@ function get_score_data(
             , ifnull(ScoreData.parentId, 0) parentId
             , ScoreData.postId
             , ifnull(topNoteId, 0) topNoteId
-            , ifnull(parentUninformedP, 0) parentUninformedP
-            , ifnull(parentInformedP, 0) parentInformedP
-            , ifnull(uninformedP, 0) uninformedP
-            , ifnull(informedP, 0) informedP
-            , ifnull(uninformedP, 0) uninformedP
-            , ifnull(informedP, 0) informedP
+            , ifnull(parentQ, 0) parentQ
+            , ifnull(parentP, 0) parentP
+            , ifnull(q, 0) q
+            , ifnull(p, 0) p
+            , ifnull(q, 0) q
+            , ifnull(p, 0) p
             , count
             , total
-            , selfP
            -- , NeedsRecalculation.postId is not null as needsRecalculation
 
         from ScoreData
@@ -117,7 +116,6 @@ function get_score_data(
     # println("Got existing score data for post $post_id")
 
     return to_score_data(r[1])
-
 end
 
 

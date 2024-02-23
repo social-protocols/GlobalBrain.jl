@@ -125,7 +125,7 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[deps.GlobalBrain]]
 deps = ["DBInterface", "Dates", "Distributions", "Random", "SQLite"]
-git-tree-sha1 = "58bb2f0a6ef27f8d658c147e0bcdfb90f9d7532c"
+git-tree-sha1 = "765df9877e3575f8409673cae50e3f9a82a901a6"
 repo-rev = "main"
 repo-url = "https://github.com/social-protocols/GlobalBrain.jl"
 uuid = "098ac8c9-7e3b-475a-8ab5-e2cc3c93bac3"

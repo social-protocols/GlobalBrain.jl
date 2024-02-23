@@ -82,13 +82,12 @@ create table if not exists ScoreData(
     , parentId          integer
     , postId            integer not null
     , topNoteId         integer
-    , parentUninformedP real
-    , parentInformedP   real
-    , uninformedP       real
-    , informedP         real
+    , parentQ           real
+    , parentP           real
+    , q                 real
+    , p                 real
     , count             integer
     , total             integer
-    , selfP             real    not null
     , updatedAt integer not null default (unixepoch('subsec')*1000)
     , primary key(tagId, postId)
 ) strict;

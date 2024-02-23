@@ -15,13 +15,12 @@ struct ScoreDataRecord
     parentId::Union{Int, Nothing}
     postId::Int
     topNoteId::Union{Int,Nothing}
-    parentUninformedP::Union{Float64,Nothing}
-    parentInformedP::Union{Float64,Nothing}
-    uninformedP::Union{Float64,Nothing}
-    informedP::Union{Float64,Nothing}
+    parentQ::Union{Float64,Nothing}
+    parentP::Union{Float64,Nothing}
+    q::Union{Float64,Nothing}
+    p::Union{Float64,Nothing}
     count::Int
     total::Int
-    selfP::Float64
     updatedAt::Int
 end
 
