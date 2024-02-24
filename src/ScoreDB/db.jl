@@ -76,9 +76,9 @@ function get_score_data(
 )
     get_score_sql = """
         select
-            ScoreData.tagId
-            , ifnull(ScoreData.parentId, 0) parentId
-            , ScoreData.postId
+            Score.tagId
+            , ifnull(Score.parentId, 0) parentId
+            , Score.postId
             , ifnull(topNoteId, 0) topNoteId
             , ifnull(parentQ, 0) parentQ
             , ifnull(parentP, 0) parentP
@@ -91,11 +91,11 @@ function get_score_data(
             , sampleSize
            -- , NeedsRecalculation.postId is not null as needsRecalculation
 
-        from ScoreData
+        from Score
         -- left join NeedsRecalculation using (postId)
         where 
-            ifnull(ScoreData.tagId = :tag_id, true)
-            and ifnull(ScoreData.postId = :post_id, true)
+            ifnull(Score.tagId = :tag_id, true)
+            and ifnull(Score.postId = :post_id, true)
             -- Only return existing score data that is not out of date.
             -- and not needsRecalculation
 
@@ -131,17 +131,60 @@ end
 
 
 """
-    insert_score_data(
+    insert_score_event(
         db::SQLite.DB,
-        score_data::ScoreData,
+        score::Score,
     )::Nothing
 
-Insert a `ScoreData` instance into the score database.
+Insert a `Score` instance into the score database.
 """
-function insert_score_data(db::SQLite.DB, score_data_record::ScoreDataRecord)
-    SQLite.load!([score_data_record], db, "ScoreData"; on_conflict="REPLACE")
-end
+function insert_score_event(db::SQLite.DB, score::Score)
+    # result = SQLite.load!([score], db, "ScoreEvent")
 
+
+    insert_score_event_sql = """
+        insert into ScoreEvent(
+              voteEventId
+            , voteEventTime
+            , tagId
+            , postId
+            , topNoteId
+            , parentQ
+            , parentP
+            , q
+            , p
+            , count
+            , sampleSize
+            , overallP
+        )
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        returning scoreEventId;
+
+    """
+
+    results = DBInterface.execute(
+        db,
+        insert_score_event_sql,
+        (
+            score.vote_event_id,
+            score.vote_event_time,
+            score.tag_id,
+            score.post_id,
+            score.top_note_id,
+            score.parent_q,
+            score.parent_p,
+            score.q,
+            score.p,
+            score.count,
+            score.sample_size,
+            score.overall_p,
+        ),
+    )
+
+    result = iterate(results)
+
+    return result[1][:scoreEventId]
+end
 
 
 function set_last_processed_vote_event_id(db::SQLite.DB)

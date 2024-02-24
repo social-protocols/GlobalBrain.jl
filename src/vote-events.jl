@@ -31,7 +31,7 @@ function parse_vote_event(input::Dict{String, Any})::VoteEvent
     )
 end
 
-function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream::IOStream)
+function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
     last_processed_vote_event_id = get_last_processed_vote_event_id(db)
     @info "Last processed vote event: $last_processed_vote_event_id"
 
@@ -81,14 +81,14 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream::
             )
         )
 
-        output_score_changes(db, output_stream)
+        output_score_changes(db, output_stream, vote_event.id, vote_event.created_at)
         @info """Processed new events at $(Dates.format(now(), "HH:MM:SS"))"""
     end
 
     close(db)
 end
 
-function output_score_changes(db::SQLite.DB, output_stream)
+function output_score_changes(db::SQLite.DB, output_stream, vote_event_id::Int, vote_event_time::Int)
     tallies = get_tallies(db, nothing, nothing)
 
     if length(tallies) == 0
@@ -106,14 +106,16 @@ function output_score_changes(db::SQLite.DB, output_stream)
                         * " effect=$(s.effect),"
                         * " topNoteEffect=$(s.effect)"
                 )
-                r = as_score_data_record(s, timestamp)
-                insert_score_data(db, r)
-                json_data = JSON.json(r) 
+                r = as_score(s, vote_event_id, vote_event_time)
+                println("Inserting score data $r")
+                score_event_id = insert_score_event(db, r)
+
+                json_data = JSON.json(with_score_event_id(r, score_event_id))
                 write(output_stream, json_data * "\n")
             end
             flush(output_stream)
         end
     )
-
     set_last_processed_vote_event_id(db)
+
 end

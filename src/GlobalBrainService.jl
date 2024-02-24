@@ -21,10 +21,10 @@ function julia_main()::Cint
     vote_events_path = ARGS[2]
     score_events_path = ARGS[3]
 
-    scheduled_scorer(database_path, vote_events_path, score_events_path)
+    global_brain_service(database_path, vote_events_path, score_events_path)
 end
 
-function scheduled_scorer(database_path::String, vote_events_path::String, score_events_path::String)
+function global_brain_service(database_path::String, vote_events_path::String, score_events_path::String)
 
     if length(database_path) == 0
         error("Missing vote database filename argument")
@@ -56,8 +56,10 @@ function scheduled_scorer(database_path::String, vote_events_path::String, score
     return 0
 end
 
-export ScoreDataRecord
-export scheduled_scorer
+export Score
+export global_brain_service
 export julia_main
+export get_score_db
+export process_vote_events_stream
 
 end

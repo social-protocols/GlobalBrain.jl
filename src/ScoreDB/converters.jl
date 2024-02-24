@@ -45,34 +45,59 @@ end
 
 
 """
-    as_score_data_record(
-        score_data::GlobalBrain.ScoreData,
-        created_at::Int,
-    )::ScoreDataRecord
+    as_score(
+        score_data::GlobalBrain.ScoreData
+        vote_event_id::Int,
+        vote_event_time::Int,
+    )::Score
 
-Convert a `GlobalBrain.ScoreData` object to a flat `ScoreDataRecord` for the database.
+Convert a `GlobalBrain.ScoreData` object to a flat `Score` for the database.
 """
-function as_score_data_record(
+function as_score(
     score_data::GlobalBrain.ScoreData,
-    created_at::Int,
-)::ScoreDataRecord
-    return ScoreDataRecord(
-        tagId = score_data.tag_id,
-        parentId = score_data.parent_id,
-        postId = score_data.post_id,
-        topNoteId = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
+    vote_event_id::Int,
+    vote_event_time::Int,
+)::Score
+    return Score(
+        score_event_id = nothing, # Assigned by database
+        vote_event_id = vote_event_id,
+        vote_event_time = vote_event_time,
+        tag_id = score_data.tag_id,
+        parent_id = score_data.parent_id,
+        post_id = score_data.post_id,
+        top_note_id = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
             nothing,
-        parentQ = !isnothing(score_data.effect) ? score_data.effect.uninformed_probability :
+        parent_q = !isnothing(score_data.effect) ? score_data.effect.uninformed_probability :
             nothing,
-        parentP = !isnothing(score_data.effect) ? score_data.effect.informed_probability :
+        parent_p = !isnothing(score_data.effect) ? score_data.effect.informed_probability :
             nothing,
         q = !isnothing(score_data.top_note_effect) ?
             score_data.top_note_effect.uninformed_probability : nothing,
         p = !isnothing(score_data.top_note_effect) ?
             score_data.top_note_effect.informed_probability : nothing,
-        overallP = score_data.self_probability,
         count = score_data.self_tally.count,
-        sampleSize = score_data.self_tally.sample_size,
-        updatedAt = created_at
+        sample_size = score_data.self_tally.sample_size,
+        overall_p = score_data.self_probability,
+    )
+end
+
+
+function with_score_event_id(r::Score, score_event_id::Integer)::Score
+    println("with_score_event_id: $r, $score_event_id")
+    return Score(
+        score_event_id = score_event_id,
+        vote_event_id = r.vote_event_id,
+        vote_event_time = r.vote_event_time,
+        tag_id = r.tag_id,
+        parent_id = r.parent_id,
+        post_id = r.post_id,
+        top_note_id = r.top_note_id,
+        parent_q = r.parent_q,
+        parent_p = r.parent_p,
+        q = r.q,
+        p = r.p,
+        count = r.count,
+        sample_size = r.sample_size,
+        overall_p = r.overall_p,
     )
 end
