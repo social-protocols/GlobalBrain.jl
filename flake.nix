@@ -25,6 +25,7 @@
               libgcc
               sqlite-interactive
               vim
+              neovim
               less
             ];
           };
