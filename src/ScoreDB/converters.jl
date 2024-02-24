@@ -23,17 +23,18 @@ Convert a SQLite result row to a `GlobalBrain.ScoreData`.
 """
 function to_score_data(row::SQLite.Row)::GlobalBrain.ScoreData
     return GlobalBrain.ScoreData(
-        row[:tagId],
-        ((row[:parentId] == 0) ? nothing : row[:parentId]),
-        row[:postId],
-        row[:parentId] == 0 ? nothing : GlobalBrain.NoteEffect(
+        tag_id = row[:tagId],
+        parent_id = ((row[:parentId] == 0) ? nothing : row[:parentId]),
+        post_id = row[:postId],
+        effect = row[:parentId] == 0 ? nothing : GlobalBrain.NoteEffect(
             (row[:parentId] == 0 ? nothing : row[:parentId]),
             row[:postId],
             (row[:parentQ] == 0 ? nothing : row[:parentQ]),
             (row[:parentP] == 0 ? nothing : row[:parentP]),
         ),
-        GlobalBrain.BernoulliTally(row[:count], row[:sampleSize]),
-        row[:topNoteId] == 0 ? nothing : GlobalBrain.NoteEffect(
+        self_probability = row[:overallP],
+        self_tally = GlobalBrain.BernoulliTally(row[:count], row[:sampleSize]),
+        top_note_effect = row[:topNoteId] == 0 ? nothing : GlobalBrain.NoteEffect(
             row[:postId],
             (row[:topNoteId] == 0 ? nothing : row[:topNoteId]),
             (row[:q] == 0 ? nothing : row[:q]),
@@ -56,21 +57,22 @@ function as_score_data_record(
     created_at::Int,
 )::ScoreDataRecord
     return ScoreDataRecord(
-        score_data.tag_id,
-        score_data.parent_id,
-        score_data.post_id,
-        !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
-        nothing,
-        !isnothing(score_data.effect) ? score_data.effect.uninformed_probability :
-        nothing,
-        !isnothing(score_data.effect) ? score_data.effect.informed_probability :
-        nothing,
-        !isnothing(score_data.top_note_effect) ?
-        score_data.top_note_effect.uninformed_probability : nothing,
-        !isnothing(score_data.top_note_effect) ?
-        score_data.top_note_effect.informed_probability : nothing,
-        score_data.self_tally.count,
-        score_data.self_tally.sample_size,
-        created_at
+        tagId = score_data.tag_id,
+        parentId = score_data.parent_id,
+        postId = score_data.post_id,
+        topNoteId = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
+            nothing,
+        parentQ = !isnothing(score_data.effect) ? score_data.effect.uninformed_probability :
+            nothing,
+        parentP = !isnothing(score_data.effect) ? score_data.effect.informed_probability :
+            nothing,
+        q = !isnothing(score_data.top_note_effect) ?
+            score_data.top_note_effect.uninformed_probability : nothing,
+        p = !isnothing(score_data.top_note_effect) ?
+            score_data.top_note_effect.informed_probability : nothing,
+        overallP = score_data.self_probability,
+        count = score_data.self_tally.count,
+        sampleSize = score_data.self_tally.sample_size,
+        updatedAt = created_at
     )
 end

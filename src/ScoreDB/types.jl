@@ -10,7 +10,7 @@ struct SQLTalliesTree
 end
 
 
-struct ScoreDataRecord
+Base.@kwdef struct ScoreDataRecord
     tagId::Int
     parentId::Union{Int, Nothing}
     postId::Int
@@ -19,6 +19,7 @@ struct ScoreDataRecord
     parentP::Union{Float64,Nothing}
     q::Union{Float64,Nothing}
     p::Union{Float64,Nothing}
+    overallP::Float64
     count::Int
     sampleSize::Int
     updatedAt::Int

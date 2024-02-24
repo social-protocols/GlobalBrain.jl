@@ -86,6 +86,7 @@ create table if not exists ScoreData(
     , parentP           real
     , q                 real
     , p                 real
+    , overallP          real
     , count             integer
     , sampleSize        integer
     , updatedAt integer not null default (unixepoch('subsec')*1000)

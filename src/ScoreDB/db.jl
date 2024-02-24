@@ -86,6 +86,7 @@ function get_score_data(
             , ifnull(p, 0) p
             , ifnull(q, 0) q
             , ifnull(p, 0) p
+            , overallP
             , count
             , sampleSize
            -- , NeedsRecalculation.postId is not null as needsRecalculation
