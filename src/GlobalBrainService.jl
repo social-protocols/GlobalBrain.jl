@@ -58,5 +58,6 @@ end
 
 export ScoreDataRecord
 export scheduled_scorer
+export julia_main
 
 end
