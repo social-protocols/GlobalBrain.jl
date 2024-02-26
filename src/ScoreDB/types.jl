@@ -35,7 +35,7 @@ end
 # Tables.rows(x::Vector{Score}) = x
 
 
-struct VoteEvent
+Base.@kwdef struct VoteEvent
     id::Int
     user_id::String
     tag_id::Int
