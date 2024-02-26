@@ -5,7 +5,7 @@ using JSON
 using SQLite
 using DataFrames
 using Dates
-using FileWatching
+# using FileWatching
 using Base: run
 
 include("ScoreDB/ScoreDB.jl")
@@ -34,12 +34,6 @@ function global_brain_service(database_path::String, vote_events_path::String, s
         error("Missing vote events filename argument")
     end
 
-    if !isfile(database_path)
-        @info "Initializing database at $database_path"
-        run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
-        run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
-        run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
-    end
 
     @info "Reading vote events from $vote_events_path"
 

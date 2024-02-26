@@ -5,9 +5,18 @@ Get a connection to the score database at the provided path. If the database doe
 exist, an error will be thrown.
 """
 function get_score_db(path::String)::SQLite.DB
+    init_score_db(path)
     return SQLite.DB(path)
 end
 
+function init_score_db(database_path::String)
+    if !isfile(database_path)
+        @info "Initializing database at $database_path"
+        run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
+        run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
+        run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
+    end
+end
 
 """
     get_tallies(
