@@ -5,9 +5,6 @@ Get a connection to the score database at the provided path. If the database doe
 exist, an error will be thrown.
 """
 function get_score_db(path::String)::SQLite.DB
-    if !ispath(path)
-        error("Database file does not exist: $path")
-    end
     return SQLite.DB(path)
 end
 
