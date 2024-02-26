@@ -29,7 +29,19 @@ end
 
 
 # Tell Tables.jl that it can access rows in the array
-Tables.rowaccess(::Type{Vector{Score}}) = true
+# Tables.rowaccess(::Type{Vector{Score}}) = true
 
-# Tell Tables.jl how to get the rows from the array
-Tables.rows(x::Vector{Score}) = x
+# # Tell Tables.jl how to get the rows from the array
+# Tables.rows(x::Vector{Score}) = x
+
+
+struct VoteEvent
+    id::Int
+    user_id::String
+    tag_id::Int
+    parent_id::Union{Int, Nothing}
+    post_id::Int
+    note_id::Union{Int, Nothing}
+    vote::Int
+    created_at::Int
+end

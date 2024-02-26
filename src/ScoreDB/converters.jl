@@ -83,7 +83,6 @@ end
 
 
 function with_score_event_id(r::Score, score_event_id::Integer)::Score
-    println("with_score_event_id: $r, $score_event_id")
     return Score(
         score_event_id = score_event_id,
         vote_event_id = r.vote_event_id,

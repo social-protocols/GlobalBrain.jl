@@ -184,10 +184,11 @@ function insert_score_event(db::SQLite.DB, score::Score)
 end
 
 
-function set_last_processed_vote_event_id(db::SQLite.DB)
+function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
     DBInterface.execute(
         db,
-        "update lastVoteEvent set processedVoteEventId = importedVoteEventId"
+        "update lastVoteEvent set processedVoteEventId = ?",
+        [vote_event_id]
     )
 end
 
@@ -197,3 +198,36 @@ function get_last_processed_vote_event_id(db::SQLite.DB)
     r = iterate(results)
     return r[1][:processedVoteEventId]
 end
+
+function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
+
+    DBInterface.execute(
+        db,
+        """
+            insert into VoteEventImport
+            (
+                  voteEventId
+                , userId
+                , tagId
+                , parentId
+                , postId
+                , noteId
+                , vote
+                , createdAt
+            )
+            values (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            vote_event.id,
+            vote_event.user_id,
+            vote_event.tag_id,
+            vote_event.parent_id,
+            vote_event.post_id,
+            vote_event.note_id,
+            vote_event.vote,
+            vote_event.created_at
+        )
+    )
+end
+
+

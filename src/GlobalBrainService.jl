@@ -57,6 +57,7 @@ function global_brain_service(database_path::String, vote_events_path::String, s
 end
 
 export Score
+export VoteEvent
 export global_brain_service
 export julia_main
 export get_score_db

@@ -9,6 +9,7 @@ include("db.jl")
 
 export SQLTalliesTree
 export Score
+export VoteEvent
 
 export to_detailed_tally
 export to_score_data
@@ -22,5 +23,8 @@ export get_tallies
 export insert_score_event
 export set_last_processed_vote_event_id
 export get_last_processed_vote_event_id
+
+
+export insert_vote_event
 
 end

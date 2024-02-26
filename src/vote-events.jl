@@ -1,13 +1,3 @@
-struct VoteEvent
-    id::Int
-    user_id::String
-    tag_id::Int
-    parent_id::Union{Int, Nothing}
-    post_id::Int
-    note_id::Union{Int, Nothing}
-    vote::Int
-    created_at::Int
-end
 
 function check_schema(input::Dict{String, Any})
     required_keys = Set(
@@ -48,47 +38,49 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
             "Got vote event $(vote_event.id) on post:"
                 * " $(vote_event.post_id) at $(Dates.format(now(), "HH:MM:SS"))"
         )
-        if vote_event.id <= last_processed_vote_event_id
-            @info "Already processed vote event $(vote_event.id)"
-            continue
+
+        processed = process_vote_event(db::SQLite.DB, vote_event) do score_event
+            json_data = JSON.json(score_event)
+            write(output_stream, json_data * "\n")
         end
 
-        DBInterface.execute(
-            db,
-            """
-                insert into VoteEventImport
-                (
-                      voteEventId
-                    , userId
-                    , tagId
-                    , parentId
-                    , postId
-                    , noteId
-                    , vote
-                    , createdAt
-                )
-                values (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                vote_event.id,
-                vote_event.user_id,
-                vote_event.tag_id,
-                vote_event.parent_id,
-                vote_event.post_id,
-                vote_event.note_id,
-                vote_event.vote,
-                vote_event.created_at
-            )
-        )
+        if !processed
+            @info "Already processed vote event $(vote_event.id)"
+        else
+            flush(output_stream)
+        end
 
-        output_score_changes(db, output_stream, vote_event.id, vote_event.created_at)
         @info """Processed new events at $(Dates.format(now(), "HH:MM:SS"))"""
     end
 
     close(db)
 end
 
-function output_score_changes(db::SQLite.DB, output_stream, vote_event_id::Int, vote_event_time::Int)
+
+function process_vote_event(output_score_event::Function, db::SQLite.DB, vote_event::VoteEvent)
+    last_processed_vote_event_id = get_last_processed_vote_event_id(db)
+    if vote_event.id <= last_processed_vote_event_id
+        return false
+    end
+
+    insert_vote_event(db, vote_event)
+
+    update_scores(
+        db, 
+        vote_event.id, 
+        vote_event.created_at
+    ) do score_event
+        output_score_event(score_event)
+    end
+
+    last_processed_vote_event_id = vote_event.id
+    set_last_processed_vote_event_id(db, vote_event.id)
+
+    return true
+end
+
+
+function update_scores(output_score_event::Function, db::SQLite.DB, vote_event_id::Int, vote_event_time::Int)
     tallies = get_tallies(db, nothing, nothing)
 
     if length(tallies) == 0
@@ -107,15 +99,10 @@ function output_score_changes(db::SQLite.DB, output_stream, vote_event_id::Int, 
                         * " topNoteEffect=$(s.effect)"
                 )
                 r = as_score(s, vote_event_id, vote_event_time)
-                println("Inserting score data $r")
                 score_event_id = insert_score_event(db, r)
 
-                json_data = JSON.json(with_score_event_id(r, score_event_id))
-                write(output_stream, json_data * "\n")
+                output_score_event(with_score_event_id(r, score_event_id))
             end
-            flush(output_stream)
         end
     )
-    set_last_processed_vote_event_id(db)
-
 end
