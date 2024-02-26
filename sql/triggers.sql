@@ -163,7 +163,7 @@ begin
 		and new.vote != 0
 	on conflict(userId, tagId, postId, noteId, eventType) do update set
 		-- get the parent vote again. In this onConflict clause, postId will be the parent because that's the record we tried to insert
-		vote = (select vote from Vote where postId = postId and userId = userId and tagId = tagId)
+		vote = excluded.vote
 	;
 
 
