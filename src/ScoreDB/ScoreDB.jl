@@ -2,7 +2,6 @@ module ScoreDB
 
 using GlobalBrain
 using SQLite
-using Tables
 
 include("types.jl")
 include("converters.jl")
