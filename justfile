@@ -27,7 +27,7 @@ reset-db:
 
 
 #test-events-json-to-csv:
-#    cat test-data/vote-events.jsonl| jq -s | jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv' > test-data/#vote-events.csv
+#    cat test-data/vote-events.jsonl| jq -s | jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv' > test-data/vote-events.csv
 
 
 test-vote-events-csv-file := 'test-data/vote-events.csv'
@@ -50,6 +50,7 @@ test-tallies:
     @diff {{expected-tallies-file}} {{test-tallies-file}}
     @echo "Tests passed"
 
+    rm {{test-tallies-file}}
 
 
 test-vote-events-json-file := 'test-data/vote-events.jsonl'
@@ -69,6 +70,8 @@ test-service:
     @echo "Comparing {{test-score-events-file}} to {{expected-score-events-file}}"
     @diff {{expected-score-events-file}} {{test-score-events-file}}
     @echo "Tests passed"
+
+    rm {{test-score-events-file}}
 
 test:
     just test-tallies
