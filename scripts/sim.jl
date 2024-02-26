@@ -1,4 +1,8 @@
 include("../src/GlobalBrainService.jl")
+
+# include("src/ScoreDB/ScoreDB.jl")
+# include("src/GlobalBrainService.jl")
+
 using Main.GlobalBrainService
 using Random, Distributions
 
@@ -42,6 +46,37 @@ end
 
 # print score
 # total_error = relative_entropy
+
+
+# common priors
+p_a_given_b = .9
+p_a_given_not_b = .01
+p_b = .5
+
+# Law of total probability
+p_a = p_b * p_a_given_b + (1 - p_b) * p_a_given_not_b
+
+
+posterior_b = 1
+posterior_a = p_a_given_b
+
+# Scenario
+# Users have common priors wrt a/b
+# post: is a true
+# all users answer no because p_a is just under 50%
+# user U given true value of b
+# user U posts note saying b is true
+
+# all users trust user U
+# minority of users consider U's note and thus form same posterior belief in B
+# these users also change vote on A accordingly
+# algorithm should estimate posterior_a close to true posterior_a
+
+
+
+
+
+
 
 
 
