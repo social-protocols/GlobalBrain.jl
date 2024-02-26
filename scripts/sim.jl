@@ -1,22 +1,34 @@
-include("../src/GlobalBrainService.jl")
+if isinteractive()
+    include("src/GlobalBrainService.jl")
+else
+    include("../src/GlobalBrainService.jl")
+end
 
 # include("src/ScoreDB/ScoreDB.jl")
-# include("src/GlobalBrainService.jl")
 
 using Main.GlobalBrainService
-using Random, Distributions
+using Random, Distributions, SQLite
 
 database_path = "data/sim.db"
-if isfile(database_path)
-    println("delete db? (y/n)")
-    are_you_sure = readline()
-    if are_you_sure == "y"
-        rm(database_path)
-    else
-        error("okay")
+
+function reset_db(path::String = database_path)::SQLite.DB
+    if isfile(path)
+        rm(path)
     end
+    return get_score_db(path)
 end
-db = get_score_db(database_path)
+
+# database_path = "data/sim.db"
+# if isfile(database_path)
+#     println("delete db? (y/n)")
+#     are_you_sure = readline()
+#     if are_you_sure == "y"
+#         rm(database_path)
+#     else
+#         error("okay")
+#     end
+# end
+# db = get_score_db(database_path)
 
 
 # Scenario
@@ -24,25 +36,42 @@ db = get_score_db(database_path)
 # users vote honestly.
 
 tag_id = 1
-post_id = 1
+# post_id = 1
 
 
-n = 1000
-p = 0.37  # Set the probability parameter for the Bernoulli distribution
-draws = rand(Bernoulli(p), n)
+# n = 1000
+# p = 0.37  # Set the probability parameter for the Bernoulli distribution
+# draws = rand(Bernoulli(p), n)
 
-t = 0
-vote_event_id = 1
 
-for (i, draw) in enumerate(draws)
-    vote = draw == 1 ? 1 : -1
+function process_votes(db, draws::Vector{Bool}, post_id, parent_id, vote_event_id::Int = 1)
+    t = 0
 
-    vote_event = GlobalBrainService.VoteEvent(id=vote_event_id, user_id=string(i), tag_id=tag_id, parent_id=nothing, post_id=post_id, note_id=nothing, vote=vote, created_at=t)
-    GlobalBrainService.process_vote_event(db, vote_event) do score
-        println("Processed vote event: $score")
+    scores = []
+
+    for (i, draw) in enumerate(draws)
+        vote = draw == 1 ? 1 : -1
+
+        vote_event = GlobalBrainService.VoteEvent(
+            id=vote_event_id,
+            user_id=string(i),
+            tag_id=tag_id,
+            parent_id=parent_id,
+            post_id=post_id,
+            note_id=nothing,
+            vote=vote,
+            created_at=t
+        )
+        GlobalBrainService.process_vote_event(db, vote_event) do score
+            push!(scores, score)
+        end
+        vote_event_id += 1
     end
-    global vote_event_id += 1
+    return scores
 end
+
+# post_id = 1
+# scores = process_votes(draws, post_id, nothing, 1)
 
 # print score
 # total_error = relative_entropy
@@ -60,6 +89,28 @@ p_a = p_b * p_a_given_b + (1 - p_b) * p_a_given_not_b
 posterior_b = 1
 posterior_a = p_a_given_b
 
+n_users = 100
+
+root_post_id = 1
+note_id = 2
+
+db = reset_db(database_path)
+draws_0 = [p_a > 0.5 ? true : false for i in 1:n_users]
+
+scores_0 = process_votes(db, draws_0, root_post_id, nothing)
+
+n_subset = 10
+draws_1 = [posterior_b > 0.5 ? true : false for i in 1:n_subset]
+draws_2 = [posterior_a > 0.5 ? true : false for i in 1:n_subset]
+
+scores_1 = process_votes(db, draws_1, note_id, root_post_id, scores_0[end].vote_event_id + 1)
+scores_2 = process_votes(db, draws_2, root_post_id, nothing, scores_1[end].vote_event_id + 1)
+
+close(db)
+
+
+
+
 # Scenario
 # Users have common priors wrt a/b
 # post: is a true
@@ -71,6 +122,8 @@ posterior_a = p_a_given_b
 # minority of users consider U's note and thus form same posterior belief in B
 # these users also change vote on A accordingly
 # algorithm should estimate posterior_a close to true posterior_a
+
+
 
 
 

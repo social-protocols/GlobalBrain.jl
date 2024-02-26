@@ -93,11 +93,11 @@ function update_scores(output_score_event::Function, db::SQLite.DB, vote_event_i
         (score_data) -> begin
             timestamp = Dates.value(now())
             for s in score_data
-                @info (
-                    "Writing updated score data for post $(s.post_id):"
-                        * " effect=$(s.effect),"
-                        * " topNoteEffect=$(s.effect)"
-                )
+                # @info (
+                #     "Writing updated score data for post $(s.post_id):"
+                #         * " effect=$(s.effect),"
+                #         * " topNoteEffect=$(s.effect)"
+                # )
                 r = as_score(s, vote_event_id, vote_event_time)
                 score_event_id = insert_score_event(db, r)
 
