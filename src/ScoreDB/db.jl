@@ -138,12 +138,12 @@ end
 """
     insert_score_event(
         db::SQLite.DB,
-        score::Score,
+        score::ScoreEvent,
     )::Nothing
 
 Insert a `Score` instance into the score database.
 """
-function insert_score_event(db::SQLite.DB, score::Score)
+function insert_score_event(db::SQLite.DB, score::ScoreEvent)
     # result = SQLite.load!([score], db, "ScoreEvent")
 
 

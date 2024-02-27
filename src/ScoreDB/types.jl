@@ -10,7 +10,7 @@ struct SQLTalliesTree
 end
 
 
-Base.@kwdef struct Score
+Base.@kwdef struct ScoreEvent
     score_event_id::Union{Int,Nothing}
     vote_event_id::Int
     vote_event_time::Int

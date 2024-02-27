@@ -13,7 +13,7 @@ export VoteEvent
 
 export to_detailed_tally
 export to_score_data
-export as_score
+export as_score_event
 export as_tallies_tree
 export with_score_event_id
 

@@ -45,20 +45,20 @@ end
 
 
 """
-    as_score(
+    as_score_event(
         score_data::GlobalBrain.ScoreData
         vote_event_id::Int,
         vote_event_time::Int,
-    )::Score
+    )::ScoreEvent
 
 Convert a `GlobalBrain.ScoreData` object to a flat `Score` for the database.
 """
-function as_score(
+function as_score_event(
     score_data::GlobalBrain.ScoreData,
     vote_event_id::Int,
     vote_event_time::Int,
-)::Score
-    return Score(
+)::ScoreEvent
+    return ScoreEvent(
         score_event_id = nothing, # Assigned by database
         vote_event_id = vote_event_id,
         vote_event_time = vote_event_time,
@@ -82,8 +82,8 @@ function as_score(
 end
 
 
-function with_score_event_id(r::Score, score_event_id::Integer)::Score
-    return Score(
+function with_score_event_id(r::ScoreEvent, score_event_id::Integer)::ScoreEvent
+    return ScoreEvent(
         score_event_id = score_event_id,
         vote_event_id = r.vote_event_id,
         vote_event_time = r.vote_event_time,
