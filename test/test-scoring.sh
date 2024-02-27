@@ -21,9 +21,11 @@ result=$?
 
 if [ $result -eq 1 ]; then
     echo "test failed. Keeping test output in $TMPDIR for debugging."
+    cat $TMPDIR/score-events.jsonl | jq -c
+    sqlite3 $TMPDIR/score.db
     exit 1
 else
-    # rm -rf $TMPDIR
-    echo "yo"
+    echo "Scoring tests passed"
+    rm -rf $TMPDIR
 fi
 

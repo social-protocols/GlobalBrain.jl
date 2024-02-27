@@ -3,7 +3,9 @@
 test_vote_events_csv_file='test-data/vote-events.csv'
 expected_tallies_file='test-data/expected-tallies.txt'
 
-result=3
+#test-events-json-to-csv:
+#    cat test-data/vote-events.jsonl| jq -s | jq -r '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv' > test-data/vote-events.csv
+
 TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     echo "Testing tallies";
     touch $TMPDIR/score.db;
@@ -25,6 +27,7 @@ if [ $result -eq 1 ]; then
     echo "test failed. Keeping test output in $TMPDIR for debugging."
     exit 1
 else
+    echo "Tallies tests passed"
     rm -rf $TMPDIR
 fi
 
