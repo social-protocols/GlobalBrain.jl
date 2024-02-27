@@ -64,44 +64,44 @@ function as_score_event(
     end
 
     return ScoreEvent(
-        score_event_id = nothing, # Assigned by database
-        vote_event_id = vote_event_id,
-        vote_event_time = vote_event_time,
-        tag_id = score_data.tag_id,
-        parent_id = score_data.parent_id,
-        post_id = score_data.post_id,
-        top_note_id = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
+        scoreEventId = nothing, # Assigned by database
+        voteEventId = vote_event_id,
+        voteEventTime = vote_event_time,
+        tagId = score_data.tag_id,
+        parentId = score_data.parent_id,
+        postId = score_data.post_id,
+        topNoteId = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
             nothing,
-        parent_q = !isnothing(score_data.effect) ? rnd(score_data.effect.uninformed_probability) :
+        parentQ = !isnothing(score_data.effect) ? rnd(score_data.effect.uninformed_probability) :
             nothing,
-        parent_p = !isnothing(score_data.effect) ? rnd(score_data.effect.informed_probability) :
+        parentP = !isnothing(score_data.effect) ? rnd(score_data.effect.informed_probability) :
             nothing,
-        q = !isnothing(score_data.top_note_effect) ?
+        q= !isnothing(score_data.top_note_effect) ?
             rnd(score_data.top_note_effect.uninformed_probability) : nothing,
-        p = !isnothing(score_data.top_note_effect) ?
+        p= !isnothing(score_data.top_note_effect) ?
             rnd(score_data.top_note_effect.informed_probability) : nothing,
         count = score_data.self_tally.count,
-        sample_size = score_data.self_tally.sample_size,
-        overall_p = score_data.self_probability,
+        sampleSize = score_data.self_tally.sample_size,
+        overallP = score_data.self_probability,
     )
 end
 
 
 function with_score_event_id(r::ScoreEvent, score_event_id::Integer)::ScoreEvent
     return ScoreEvent(
-        score_event_id = score_event_id,
-        vote_event_id = r.vote_event_id,
-        vote_event_time = r.vote_event_time,
-        tag_id = r.tag_id,
-        parent_id = r.parent_id,
-        post_id = r.post_id,
-        top_note_id = r.top_note_id,
-        parent_q = r.parent_q,
-        parent_p = r.parent_p,
-        q = r.q,
-        p = r.p,
+        scoreEventId = score_event_id,
+        voteEventId = r.voteEventId,
+        voteEventTime = r.voteEventTime,
+        tagId = r.tagId,
+        parentId = r.parentId,
+        postId = r.postId,
+        topNoteId = r.topNoteId,
+        parentQ = r.parentQ,
+        parentP = r.parentP,
+        q= r.q,
+        p= r.p,
         count = r.count,
-        sample_size = r.sample_size,
-        overall_p = r.overall_p,
+        sampleSize = r.sampleSize,
+        overallP = r.overallP,
     )
 end

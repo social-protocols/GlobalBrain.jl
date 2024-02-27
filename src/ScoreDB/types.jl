@@ -11,20 +11,20 @@ end
 
 
 Base.@kwdef struct ScoreEvent
-    score_event_id::Union{Int,Nothing}
-    vote_event_id::Int
-    vote_event_time::Int
-    tag_id::Int
-    parent_id::Union{Int, Nothing}
-    post_id::Int
-    top_note_id::Union{Int,Nothing}
-    parent_q::Union{Float64,Nothing}
-    parent_p::Union{Float64,Nothing}
+    scoreEventId::Union{Int,Nothing}
+    voteEventId::Int
+    voteEventTime::Int
+    tagId::Int
+    parentId::Union{Int, Nothing}
+    postId::Int
+    topNoteId::Union{Int,Nothing}
+    parentQ::Union{Float64,Nothing}
+    parentP::Union{Float64,Nothing}
     q::Union{Float64,Nothing}
     p::Union{Float64,Nothing}
     count::Int
-    sample_size::Int
-    overall_p::Float64
+    sampleSize::Int
+    overallP::Float64
 end
 
 
