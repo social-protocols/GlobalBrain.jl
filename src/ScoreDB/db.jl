@@ -91,9 +91,10 @@ function get_score_data(
             , ifnull(p, 0) p
             , ifnull(q, 0) q
             , ifnull(p, 0) p
-            , overallP
             , count
             , sampleSize
+            , overallP
+            , score
            -- , NeedsRecalculation.postId is not null as needsRecalculation
 
         from Score
@@ -162,8 +163,9 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             , count
             , sampleSize
             , overallP
+            , score
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         returning scoreEventId;
 
     """
@@ -185,6 +187,7 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             score.count,
             score.sampleSize,
             score.overallP,
+            score.score,
         ),
     )
 

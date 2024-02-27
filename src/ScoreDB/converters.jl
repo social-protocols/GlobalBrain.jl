@@ -39,7 +39,7 @@ function to_score_data(row::SQLite.Row)::GlobalBrain.ScoreData
             (row[:topNoteId] == 0 ? nothing : row[:topNoteId]),
             (row[:q] == 0 ? nothing : row[:q]),
             (row[:p] == 0 ? nothing : row[:p]),
-        ),
+        )
     )
 end
 
@@ -82,7 +82,8 @@ function as_score_event(
             rnd(score_data.top_note_effect.informed_probability) : nothing,
         count = score_data.self_tally.count,
         sampleSize = score_data.self_tally.sample_size,
-        overallP = score_data.self_probability,
+        overallP = rnd(score_data.self_probability),
+        score = rnd(score(score_data)),
     )
 end
 
@@ -103,5 +104,6 @@ function with_score_event_id(r::ScoreEvent, score_event_id::Integer)::ScoreEvent
         count = r.count,
         sampleSize = r.sampleSize,
         overallP = r.overallP,
+        score =    r.score,
     )
 end

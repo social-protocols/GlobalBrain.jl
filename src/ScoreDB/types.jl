@@ -25,6 +25,7 @@ Base.@kwdef struct ScoreEvent
     count::Int
     sampleSize::Int
     overallP::Float64
+    score::Float64
 end
 
 

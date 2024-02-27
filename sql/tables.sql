@@ -94,11 +94,12 @@ create table if not exists ScoreEvent(
     , count             integer
     , sampleSize        integer
     , overallP          real
+    , score             real
 ) strict;
 
 
 create table if not exists Score(
-    tagId               integer
+    tagId             integer
     , voteEventId       integer not null
     , voteEventTime     integer not null
     , parentId          integer
@@ -111,12 +112,12 @@ create table if not exists Score(
     , count             integer
     , sampleSize        integer
     , overallP          real
-    -- , scoreEventId integer
+    , score             real
     , primary key(tagId, postId)
 ) strict;
 
 create trigger after insert on ScoreEvent begin
-    insert or replace into Score(voteEventId, voteEventTime, tagId, parentId, postId, topNoteId, parentQ, parentP, q, p, count, sampleSize, overallP) values (
+    insert or replace into Score(voteEventId, voteEventTime, tagId, parentId, postId, topNoteId, parentQ, parentP, q, p, count, sampleSize, overallP, score) values (
         new.voteEventId,
         new.voteEventTime,
         new.tagId,
@@ -129,7 +130,8 @@ create trigger after insert on ScoreEvent begin
         new.p,
         new.count,
         new.sampleSize,
-        new.overallP
+        new.overallP,
+        new.score
     ) on conflict(tagId, postId) do update set
         voteEventId = new.voteEventId,
         voteEventTime = new.voteEventTime,
@@ -140,7 +142,8 @@ create trigger after insert on ScoreEvent begin
         p = new.p,
         count = new.count,
         sampleSize = new.sampleSize,
-        overallP = new.overallP
+        overallP = new.overallP,
+        score = new.score
     ;
 end;
 
