@@ -27,6 +27,7 @@
               vim
               neovim
               less
+              fzf
             ];
           };
         };
