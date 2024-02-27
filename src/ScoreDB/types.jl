@@ -20,8 +20,8 @@ Base.@kwdef struct ScoreEvent
     topNoteId::Union{Int,Nothing}
     parentQ::Union{Float64,Nothing}
     parentP::Union{Float64,Nothing}
-    q::Union{Float64,Nothing}
-    p::Union{Float64,Nothing}
+    q::Float64
+    p::Float64
     count::Int
     sampleSize::Int
     overallP::Float64

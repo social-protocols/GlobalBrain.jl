@@ -21,21 +21,6 @@ begin
 
 	-- DOo't actually keep vote events
 	-- delete from voteEvent where voteEventId = new.voteEventId;
-
-	-- insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt) select
-	--     new.voteEventId,
-	--     new.userId,
-	--     new.tagId,
-	--     new.parentId,
-	--     new.postId,
-	--     new.noteId,
-	--     new.vote,
-	--     new.createdAt
-	--     -- unixepoch('subsec')*1000
-	-- from lastVoteEvent
-	-- where
-	--     new.voteEventId > lastVoteEvent.voteEventId
-	-- 	on conflict do nothing; -- there shouldn't be conflicts because of the where clause
 end;
 
 

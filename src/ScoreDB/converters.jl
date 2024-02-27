@@ -70,16 +70,11 @@ function as_score_event(
         tagId = score_data.tag_id,
         parentId = score_data.parent_id,
         postId = score_data.post_id,
-        topNoteId = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
-            nothing,
-        parentQ = !isnothing(score_data.effect) ? rnd(score_data.effect.uninformed_probability) :
-            nothing,
-        parentP = !isnothing(score_data.effect) ? rnd(score_data.effect.informed_probability) :
-            nothing,
-        q= !isnothing(score_data.top_note_effect) ?
-            rnd(score_data.top_note_effect.uninformed_probability) : nothing,
-        p= !isnothing(score_data.top_note_effect) ?
-            rnd(score_data.top_note_effect.informed_probability) : nothing,
+        topNoteId = top_note_id(score_data),
+        parentQ = parent_uninformed_probability(score_data),
+        parentP = parent_informed_probability(score_data),
+        q = rnd(uninformed_probability(score_data)),
+        p = rnd(informed_probability(score_data)),
         count = score_data.self_tally.count,
         sampleSize = score_data.self_tally.sample_size,
         overallP = rnd(score_data.self_probability),
