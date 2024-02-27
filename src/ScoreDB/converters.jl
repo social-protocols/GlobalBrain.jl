@@ -58,6 +58,11 @@ function as_score_event(
     vote_event_id::Int,
     vote_event_time::Int,
 )::ScoreEvent
+
+    function rnd(x)
+        return round(x, digits=4)
+    end
+
     return ScoreEvent(
         score_event_id = nothing, # Assigned by database
         vote_event_id = vote_event_id,
@@ -67,14 +72,14 @@ function as_score_event(
         post_id = score_data.post_id,
         top_note_id = !isnothing(score_data.top_note_effect) ? score_data.top_note_effect.note_id :
             nothing,
-        parent_q = !isnothing(score_data.effect) ? score_data.effect.uninformed_probability :
+        parent_q = !isnothing(score_data.effect) ? rnd(score_data.effect.uninformed_probability) :
             nothing,
-        parent_p = !isnothing(score_data.effect) ? score_data.effect.informed_probability :
+        parent_p = !isnothing(score_data.effect) ? rnd(score_data.effect.informed_probability) :
             nothing,
         q = !isnothing(score_data.top_note_effect) ?
-            score_data.top_note_effect.uninformed_probability : nothing,
+            rnd(score_data.top_note_effect.uninformed_probability) : nothing,
         p = !isnothing(score_data.top_note_effect) ?
-            score_data.top_note_effect.informed_probability : nothing,
+            rnd(score_data.top_note_effect.informed_probability) : nothing,
         count = score_data.self_tally.count,
         sample_size = score_data.self_tally.sample_size,
         overall_p = score_data.self_probability,
