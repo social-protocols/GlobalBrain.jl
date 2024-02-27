@@ -28,54 +28,39 @@ select
        left join tally note on (note.postId = a.noteId)
 ;
 
--- Okay where we: DetailedTally needs to be a union. We need the two separate queries like we had before
-
--- create view if not exists DetailedTally as
--- select 
---     overall.tagId
---     , parentId
---     , id as postId
---     , informed.noteId
---     , informed.count as informedCount
---     , informed.total as informedTotal
---     , uninformed.count as uninformedCount
---     , uninformed.total as uninformedTotal 
---     , overall.count as overallCount
---     , overall.total as overallTotal
---     , note.count as noteCount
---     , note.total as noteTotal
---     , eventType
---  from 
---     Post 
---     join Tally overall on (overall.postId = post.id)
---     left join InformedTally informed on (informed.postId = overall.postId and informed.tagId = overall.tagId)
---     left join UninformedTally uninformed using (tagId, postId, noteId, eventType)
---     left join Tally note on (note.postId = ifnull(informed.noteId, uninformed.noteId))
---     where ifnull(eventType = 1, true) -- important -- only looking at tally's given voted on note
--- ;
-
-
-
+-- Whenever there is a vote, we need to recalculate scores for 
+-- 1) the post that was voted on
+-- 2) all ancestors of the post that was voted on (because a post's score depends on children's score)
+-- 3) all direct children of the post that was voted on (because a post's score also includes its effect on its parent)
 create view NeedsRecalculation as 
-WITH RECURSIVE Ancestors AS (
+with RECURSIVE Ancestors AS (
 
     with leafNodes as (
         select postId, tagId
         from tally
         join LastVoteEvent
-        where latestVoteEventId > processedVoteEventId  
+        on latestVoteEventId > processedVoteEventId  
     )
-    SELECT id as postId, parentId
-    FROM post
-    JOIN leafNodes
-    WHERE id = leafNodes.postId
-    UNION
-    SELECT p.id, p.parentId
-    FROM post p
-    INNER JOIN Ancestors a ON p.id = a.parentId
+    select id as postId, parentId
+    from post
+    join leafNodes
+    where id = leafNodes.postId
+    union
+    select p.id, p.parentId
+    from post p
+    inner join Ancestors a on p.id = a.parentId
 )
-SELECT postId, tagId FROM tally join Ancestors using (postId);
+-- First, select self and all ancestors of posts that were voted on since last processedVoteEventId
+select 
+    postId, tagId FROM tally join Ancestors using (postId)
 
+union
+-- Next, select all children
+select 
+    post.id, tagId 
+    from tally 
+    join lastVoteEvent on latestVoteEventId > processedVoteEventId 
+    join post on post.parentId = tally.postId; -- children of item that was voted on
 
 
 create view VoteEventImport as
