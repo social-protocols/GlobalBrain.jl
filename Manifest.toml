@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "9576a5390068f9ec3373a646c419bbbc1d7424e2"
+project_hash = "15d404cff3c4155aaec409b1386b6301ddd469da"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -122,6 +122,14 @@ weakdeps = ["PDMats", "SparseArrays", "Statistics"]
 [[deps.Future]]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
+
+[[deps.GlobalBrain]]
+deps = ["DBInterface", "Dates", "Distributions", "Random", "SQLite"]
+git-tree-sha1 = "b15e8e0ca333f3362fd0af3dd60d833b6acfe3cd"
+repo-rev = "main"
+repo-url = "https://github.com/social-protocols/GlobalBrain.jl"
+uuid = "098ac8c9-7e3b-475a-8ab5-e2cc3c93bac3"
+version = "1.0.0-DEV"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
