@@ -39,8 +39,8 @@ function get_tallies(
     sql_query = """
         select
             self.tagId
-            , ifnull(post.parentId,0)    as parentId
-            , post.id                    as postId
+            , ifnull(parentId,0)    as parentId
+            , self.postId                    as postId
             , ifnull(overallCount, 0)   as parentCount
             , ifnull(overallTotal, 0)   as parentTotal
             , ifnull(uninformedCount, 0) as uninformedCount
@@ -51,17 +51,16 @@ function get_tallies(
             , ifnull(self.total, 0)       as selfTotal
             , NeedsRecalculation.postId is not null as needsRecalculation
         from 
-            Post
-            join Tally self on (Post.id = self.postId)
+            Tally self
             -- left join NeedsRecalculation on (postId, tagId)
-            left join NeedsRecalculation on (NeedsRecalculation.postId = post.id and NeedsRecalculation.tagId = self.tagId)
-            left join DetailedTally on (post.parentId = detailedTally.postId and post.id = detailedTally.noteId)
+            left join NeedsRecalculation on (NeedsRecalculation.postId = self.postId and NeedsRecalculation.tagId = self.tagId)
+            left join DetailedTally on (parentId = detailedTally.postId and self.postId = detailedTally.noteId)
         where 
             ifnull(self.tagId = :tag_id, true)
             and ( 
-                    ( :post_id is null and parentId is null and needsRecalculation)
+                    ( :post_id is null and self.parentId is null and needsRecalculation)
                     or 
-                    ( post.parentId = :post_id)
+                    ( self.parentId = :post_id)
                 )
         """
 
@@ -153,6 +152,7 @@ function insert_score_event(db::SQLite.DB, score::Score)
               voteEventId
             , voteEventTime
             , tagId
+            , parentId
             , postId
             , topNoteId
             , parentQ
@@ -163,7 +163,7 @@ function insert_score_event(db::SQLite.DB, score::Score)
             , sampleSize
             , overallP
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         returning scoreEventId;
 
     """
@@ -175,6 +175,7 @@ function insert_score_event(db::SQLite.DB, score::Score)
             score.vote_event_id,
             score.vote_event_time,
             score.tag_id,
+            score.parent_id,
             score.post_id,
             score.top_note_id,
             score.parent_q,

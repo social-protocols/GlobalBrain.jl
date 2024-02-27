@@ -190,9 +190,10 @@ begin
 	;
 
 	-- Insert/update the vote record
-	insert into Vote(userId, tagId, postId, vote, latestVoteEventId, createdAt, updatedAt) values (
+	insert into Vote(userId, tagId, parentId, postId, vote, latestVoteEventId, createdAt, updatedAt) values (
 		new.userId,
 		new.tagId,
+		new.parentId,
 		new.postId,
 		new.vote,
 		new.voteEventId,
@@ -214,8 +215,9 @@ create trigger afterInsertVote after insert on Vote begin
 
 	update informedVote set vote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId ;
 
-	insert into Tally(tagId, postId, latestVoteEventId, count, total) values (
+	insert into Tally(tagId, parentId, postId, latestVoteEventId, count, total) values (
 		new.tagId,
+		new.parentId,
 		new.postId,
 		new.latestVoteEventId,
 		(new.vote == 1),

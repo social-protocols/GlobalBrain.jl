@@ -13,6 +13,7 @@ create table if not exists VoteEvent(
 create table if not exists Vote (
     userId text,
     tagId integer not null,
+    parentId integer,
     postId integer not null,
     vote integer not null,
     latestVoteEventId integer not null,
@@ -23,6 +24,7 @@ create table if not exists Vote (
 
 create table if not exists Tally (
     tagId integer not null,
+    parentId integer,
     postId integer not null,
     latestVoteEventId integer not null,
     count integer not null,
