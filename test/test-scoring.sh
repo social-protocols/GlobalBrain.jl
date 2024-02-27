@@ -12,5 +12,18 @@ TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     julia --project -- scripts/run.jl $TMPDIR/score.db $test_vote_events_json_file $TMPDIR/score-events.jsonl;
     echo "Comparing $TMPDIR/score-events.jsonl to $expected_score_events_file";
     diff $expected_score_events_file $TMPDIR/score-events.jsonl;
-    echo "Scoring tests passed"
-); rm -rf $TMPDIR
+    result=$?
+    if [ $result -eq 1 ]; then
+        exit 1
+    fi
+); 
+result=$?
+
+if [ $result -eq 1 ]; then
+    echo "test failed. Keeping test output in $TMPDIR for debugging."
+    exit 1
+else
+    # rm -rf $TMPDIR
+    echo "yo"
+fi
+
