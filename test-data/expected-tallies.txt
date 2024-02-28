@@ -25,19 +25,6 @@ uninformedTotal = 2
       noteTotal = 2
 
           tagId = 1
-         postId = 6
-         noteId = 7
-      eventType = 2
-  informedCount = 0
-  informedTotal = 1
-uninformedCount = 0
-uninformedTotal = 1
-   overallCount = 0
-   overallTotal = 2
-      noteCount = 1
-      noteTotal = 1
-
-          tagId = 1
          postId = 4
          noteId = 5
       eventType = 2
@@ -49,3 +36,16 @@ uninformedTotal = 1
    overallTotal = 1
       noteCount = 1
       noteTotal = 2
+
+          tagId = 1
+         postId = 6
+         noteId = 7
+      eventType = 2
+  informedCount = 0
+  informedTotal = 1
+uninformedCount = 0
+uninformedTotal = 1
+   overallCount = 0
+   overallTotal = 2
+      noteCount = 1
+      noteTotal = 1

@@ -26,6 +26,7 @@ select
        left join uninformedTally using (tagId, postId, noteId, eventType)
        left join tally overall on (overall.postId = a.postId)
        left join tally note on (note.postId = a.noteId)
+       order by tagId, postId, noteId, eventType
 ;
 
 -- Whenever there is a vote, we need to recalculate scores for 
