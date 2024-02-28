@@ -1,31 +1,38 @@
 
 create view if not exists DetailedTally as
+with ConditionalTally as (
+    select
+           uninformedTally.tagId
+           , uninformedTally.postId
+           , uninformedTally.noteId
+           , uninformedTally.eventType
+           , informedTally.count as informedCount
+           , informedTally.total as informedTotal
+           , uninformedTally.count as uninformedCount
+           , uninformedTally.total as uninformedTotal
+     from 
+           uninformedTally
+           left join informedTally using (tagId, postId, noteId, eventType)
+           where uninformedTally.eventType == 2
+           order by uninformedTally.tagId, uninformedTally.postId, uninformedTally.noteId, uninformedTally.eventType
+)
 select
-       parent.tagId
-       , parent.postId
-       , uninformedTally.noteId
-       , uninformedTally.eventType
-       , informedTally.count as informedCount
-       , informedTally.total as informedTotal
-       , uninformedTally.count as uninformedCount
-       , uninformedTally.total as uninformedTotal
-       , parent.count as parentCount
-       , parent.total as parentTotal
-       , note.count as overallCount
-       , note.total as overallTotal
- from 
-       tally parent
-       left join uninformedTally  on (parent.postId = uninformedTally.postId and uninformedTally.eventType == 2)
-       left join informedTally on (
-            uninformedTally.tagId = informedTally.tagId 
-            and uninformedTally.postId = informedTally.postId 
-            and uninformedTally.noteId = informedTally.noteId
-            and uninformedTally.eventType = informedTally.eventType
-        )
-       left join tally note on (note.postId = uninformedTally.noteId)
-       order by parent.tagId, parent.postId, uninformedTally.noteId, uninformedTally.eventType
+    self.tagId
+    , self.parentId   as parentId
+    , self.postId                    as postId
+    , parent.count   as parentCount
+    , parent.total   as parentTotal
+    , uninformedCount as uninformedCount
+    , uninformedTotal as uninformedTotal
+    , informedCount   as informedCount
+    , informedTotal   as informedTotal
+    , self.count       as selfCount
+    , self.total       as selfTotal
+from 
+    Tally self
+    left join ConditionalTally on (self.parentId = ConditionalTally.postId and self.postId = ConditionalTally.noteId)
+    left join Tally parent on (self.parentId = parent.postId and self.tagId = parent.tagId)
 ;
-
 
 
 -- Whenever there is a vote, we need to recalculate scores for 

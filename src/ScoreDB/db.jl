@@ -38,29 +38,26 @@ function get_tallies(
 )::Vector{GlobalBrain.TalliesTree}
     sql_query = """
         select
-            self.tagId
+            tagId
             , ifnull(parentId,0)    as parentId
-            , self.postId                    as postId
+            , postId                    as postId
             , ifnull(parentCount, 0)   as parentCount
             , ifnull(parentTotal, 0)   as parentTotal
             , ifnull(uninformedCount, 0) as uninformedCount
             , ifnull(uninformedTotal, 0) as uninformedTotal
             , ifnull(informedCount, 0)   as informedCount
             , ifnull(informedTotal, 0)   as informedTotal
-            , ifnull(self.count, 0)       as selfCount
-            , ifnull(self.total, 0)       as selfTotal
+            , ifnull(selfCount, 0)       as selfCount
+            , ifnull(selfTotal, 0)       as selfTotal
             , NeedsRecalculation.postId is not null as needsRecalculation
-        from 
-            Tally self
-            -- left join NeedsRecalculation on (postId, tagId)
-            left join NeedsRecalculation on (NeedsRecalculation.postId = self.postId and NeedsRecalculation.tagId = self.tagId)
-            left join DetailedTally on (parentId = detailedTally.postId and self.postId = detailedTally.noteId)
+        from DetailedTally 
+        left join NeedsRecalculation using (postId, tagId)
         where 
-            ifnull(self.tagId = :tag_id, true)
+            ifnull(DetailedTally.tagId = :tag_id, true)
             and ( 
-                    ( :post_id is null and self.parentId is null and needsRecalculation)
+                    ( :post_id is null and DetailedTally.parentId is null and needsRecalculation)
                     or 
-                    ( self.parentId = :post_id)
+                    ( DetailedTally.parentId = :post_id)
                 )
         """
 
