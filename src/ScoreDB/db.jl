@@ -41,8 +41,8 @@ function get_tallies(
             self.tagId
             , ifnull(parentId,0)    as parentId
             , self.postId                    as postId
-            , ifnull(overallCount, 0)   as parentCount
-            , ifnull(overallTotal, 0)   as parentTotal
+            , ifnull(parentCount, 0)   as parentCount
+            , ifnull(parentTotal, 0)   as parentTotal
             , ifnull(uninformedCount, 0) as uninformedCount
             , ifnull(uninformedTotal, 0) as uninformedTotal
             , ifnull(informedCount, 0)   as informedCount

@@ -1,33 +1,32 @@
 
 create view if not exists DetailedTally as
-with a as (
-       select
-               tagId
-               , postId
-               , noteId
-               , eventType
-
-               , count as informedCount
-               , total as informedTotal
-
-       from
-               informedTally t
-       where eventType == 2
-)
 select
-       a.*
+       parent.tagId
+       , parent.postId
+       , uninformedTally.noteId
+       , uninformedTally.eventType
+       , informedTally.count as informedCount
+       , informedTally.total as informedTotal
        , uninformedTally.count as uninformedCount
        , uninformedTally.total as uninformedTotal
-       , overall.count as overallCount
-       , overall.total as overallTotal
-       , note.count as noteCount
-       , note.total as noteTotal
- from a
-       left join uninformedTally using (tagId, postId, noteId, eventType)
-       left join tally overall on (overall.postId = a.postId)
-       left join tally note on (note.postId = a.noteId)
-       order by tagId, postId, noteId, eventType
+       , parent.count as parentCount
+       , parent.total as parentTotal
+       , note.count as overallCount
+       , note.total as overallTotal
+ from 
+       tally parent
+       left join uninformedTally  on (parent.postId = uninformedTally.postId and uninformedTally.eventType == 2)
+       left join informedTally on (
+            uninformedTally.tagId = informedTally.tagId 
+            and uninformedTally.postId = informedTally.postId 
+            and uninformedTally.noteId = informedTally.noteId
+            and uninformedTally.eventType = informedTally.eventType
+        )
+       left join tally note on (note.postId = uninformedTally.noteId)
+       order by parent.tagId, parent.postId, uninformedTally.noteId, uninformedTally.eventType
 ;
+
+
 
 -- Whenever there is a vote, we need to recalculate scores for 
 -- 1) the post that was voted on
