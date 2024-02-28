@@ -124,48 +124,49 @@ begin
 		and eventType = 2
 	;
 
-	-- Do the same update for eventType 1 -- look for users who have not been shown note.
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
-	select
-		new.userId,
-		new.tagId,
-		new.postId, 
-		note.id as noteId,
-		1,
-		new.vote,
-		0
-	from
-		Post note 
-		left join ConditionalVote on (
-			ConditionalVote.userId = new.userId
-			and ConditionalVote.tagId = new.tagId
-			and ConditionalVote.postId = new.postId
-			and ConditionalVote.noteId = note.id
-			and ConditionalVote.eventType = 1
-			and ConditionalVote.informedVote != 0
-		)
-		where
-			note.parentId = new.postId     -- all notes under the post that was voted on
-			and note.id != ifnull(new.noteId,0)
-			and ConditionalVote.userId is null  -- that haven't been shown to this user
-	on conflict(userId, tagId, postId, noteId, eventType) do update set
-		uninformedVote = new.vote
-	;
+
+	-- -- Do the same update for eventType 1 -- look for users who have not been shown note.
+	-- insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	-- select
+	-- 	new.userId,
+	-- 	new.tagId,
+	-- 	new.postId, 
+	-- 	note.id as noteId,
+	-- 	1,
+	-- 	new.vote,
+	-- 	0
+	-- from
+	-- 	Post note 
+	-- 	left join ConditionalVote on (
+	-- 		ConditionalVote.userId = new.userId
+	-- 		and ConditionalVote.tagId = new.tagId
+	-- 		and ConditionalVote.postId = new.postId
+	-- 		and ConditionalVote.noteId = note.id
+	-- 		and ConditionalVote.eventType = 1
+	-- 		and ConditionalVote.informedVote != 0
+	-- 	)
+	-- 	where
+	-- 		note.parentId = new.postId     -- all notes under the post that was voted on
+	-- 		and note.id != ifnull(new.noteId,0)
+	-- 		and ConditionalVote.userId is null  -- that haven't been shown to this user
+	-- on conflict(userId, tagId, postId, noteId, eventType) do update set
+	-- 	uninformedVote = new.vote
+	-- ;
 
 
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
-	select 		
-		new.userId,
-		new.tagId,
-		new.postId,
-		new.noteId,
-		1, -- 1 means "shown note"
-		0,
-		new.vote
-	where new.noteId is not null
-	on conflict(userId, tagId, postId, noteId, eventType) do update set
-		informedVote = new.vote
-	;
+	-- insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	-- select 		
+	-- 	new.userId,
+	-- 	new.tagId,
+	-- 	new.postId,
+	-- 	new.noteId,
+	-- 	1, -- 1 means "shown note"
+	-- 	0,
+	-- 	new.vote
+	-- where new.noteId is not null
+	-- on conflict(userId, tagId, postId, noteId, eventType) do update set
+	-- 	informedVote = new.vote
+	-- ;
 
 
 
