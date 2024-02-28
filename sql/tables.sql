@@ -32,44 +32,26 @@ create table if not exists Tally (
     primary key(tagId, postId)
  ) strict;
 
-create table if not exists UninformedVote (
+create table if not exists ConditionalVote (
     userId text,
     tagId integer not null,
     postId integer not null,
     noteId integer not null,
     eventType integer not null,
-    vote integer not null,
+    informedVote integer not null,
+    uninformedVote integer not null,
     primary key(userId, tagId, postId, noteId, eventType)
 ) strict;
 
-create table if not exists UninformedTally (
+create table if not exists ConditionalTally (
     tagId integer not null,
     postId integer not null,
     noteId integer not null,
     eventType integer not null,
-    count integer not null,
-    total integer not null,
-    primary key(tagId, postId, noteId, eventType)
-) strict;
-
-create table if not exists InformedVote (
-    userId text,
-    tagId integer not null,
-    postId integer not null,
-    noteId integer not null,
-    eventType integer not null,
-    vote integer not null,
-    createdAt integer not null,
-    primary key(userId, tagId, postId, noteId, eventType)
-) strict;
-
-create table if not exists InformedTally (
-    tagId integer not null,
-    postId integer not null,
-    noteId integer not null,
-    eventType integer not null,
-    count Integer not null,
-    total Integer not null,
+    informedCount integer not null,
+    informedTotal integer not null,
+    uninformedCount integer not null,
+    uninformedTotal integer not null,
     primary key(tagId, postId, noteId, eventType)
 ) strict;
 
@@ -165,10 +147,8 @@ insert into LastScoreEvent values(0);
 
 create index if not exists post_parent on Post(parentId);
 create index if not exists Vote_tag_user_post on Vote(tagId, userId, postId);
-create index if not exists InformedVote_tag_user_post on InformedVote(tagId, userId, postId);
-create index if not exists InformedVote_tag_user_post_note on InformedVote(tagId, userId, postId, noteId);
-create index if not exists InformedTally_tag_post on InformedTally(tagId, postId);
-create index if not exists InformedTally_tag_post_note on InformedTally(tagId, postId, noteId);
+create index if not exists ConditionalVote_tag_user_post on ConditionalVote(tagId, userId, postId);
+create index if not exists ConditionalVote_tag_user_post_note on ConditionalVote(tagId, userId, postId, noteId);
 
 
 

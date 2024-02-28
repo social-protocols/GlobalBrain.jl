@@ -1,21 +1,5 @@
 
 create view if not exists DetailedTally as
-with ConditionalTally as (
-    select
-           uninformedTally.tagId
-           , uninformedTally.postId
-           , uninformedTally.noteId
-           , uninformedTally.eventType
-           , informedTally.count as informedCount
-           , informedTally.total as informedTotal
-           , uninformedTally.count as uninformedCount
-           , uninformedTally.total as uninformedTotal
-     from 
-           uninformedTally
-           left join informedTally using (tagId, postId, noteId, eventType)
-           where uninformedTally.eventType == 2
-           order by uninformedTally.tagId, uninformedTally.postId, uninformedTally.noteId, uninformedTally.eventType
-)
 select
     self.tagId
     , self.parentId   as parentId
@@ -30,7 +14,7 @@ select
     , self.total       as selfTotal
 from 
     Tally self
-    left join ConditionalTally on (self.parentId = ConditionalTally.postId and self.postId = ConditionalTally.noteId)
+    left join ConditionalTally on (self.parentId = ConditionalTally.postId and self.postId = ConditionalTally.noteId and eventType = 2)
     left join Tally parent on (self.parentId = parent.postId and self.tagId = parent.tagId)
 ;
 
