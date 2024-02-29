@@ -337,21 +337,21 @@ create trigger afterInsertOnPost after insert on Post begin
 
 
 	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, informedVote, uninformedVote) 
-	with eventTypes as (
-		select 1 as eventType UNION ALL select 2 as eventType 
-	) 
+	-- with eventTypes as (
+	-- 	select 1 as eventType UNION ALL select 2 as eventType 
+	-- ) 
 	select
 		vote.userId,
 		vote.tagId,
 		vote.postId, 
 		new.id as noteId,
-		eventType,
+		2,
 		0,
 		vote.vote
 	from
 		vote
 		-- join new
-		join eventTypes
+		-- join eventTypes
 		where vote.postId = new.parentId		
 	-- on conflict
 	-- there can be no conflicts
