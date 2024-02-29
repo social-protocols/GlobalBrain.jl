@@ -78,6 +78,6 @@ uninformedTotal =
 uninformedCount = 0
 uninformedTotal = 1
   informedCount = 0
-  informedTotal = 2
+  informedTotal = 1
       selfCount = 1
       selfTotal = 1

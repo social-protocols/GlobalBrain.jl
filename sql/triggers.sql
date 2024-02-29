@@ -280,7 +280,7 @@ end;
 drop trigger if exists afterUpdateVote;
 create trigger afterUpdateVote after update on Vote begin
 
-	update ConditionalVote set informedVote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId ;
+	-- update ConditionalVote set informedVote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId ;
 
 	update Tally
 		set 
