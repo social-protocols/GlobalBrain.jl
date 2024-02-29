@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "24160f8d2a553efa755be403d5f29eaf2e9ebf63"
+project_hash = "5059e9581755f0185191bdcb4d17b02515d08b38"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -136,7 +136,7 @@ version = "1.3.1"
 
 [[deps.GlobalBrain]]
 deps = ["DBInterface", "Dates", "Distributions", "Random", "SQLite"]
-git-tree-sha1 = "360f4ea21683f4175debf2effe4c06362634b15f"
+git-tree-sha1 = "5959d07cb608da1a2e9e567fc03543f45e90ea27"
 repo-rev = "main"
 repo-url = "https://github.com/social-protocols/GlobalBrain.jl"
 uuid = "098ac8c9-7e3b-475a-8ab5-e2cc3c93bac3"
