@@ -1,4 +1,69 @@
 
+create trigger after insert on ScoreEvent begin
+    insert or replace into Score(
+        voteEventId,
+        voteEventTime,
+        tagId,
+        parentId,
+        postId,
+        topNoteId,
+        parentP,
+        parentQ,
+        p,
+        q,
+        overallP,
+        -- informedCount,
+        -- informedSampleSize,
+        -- uninformedCount,
+        -- uninformedSampleSize,
+        -- overallCount,
+        -- overallSampleSize,
+        count,
+        sampleSize,
+        score
+    ) values (
+        new.voteEventId,
+        new.voteEventTime,
+        new.tagId,
+        new.parentId,
+        new.postId,
+        new.topNoteId,
+        new.parentP,
+        new.parentQ,
+        new.p,
+        new.q,
+        new.overallP,
+        -- new.informedCount,
+        -- new.informedSampleSize,
+        -- new.uninformedCount,
+        -- new.uninformedSampleSize,
+        -- new.overallCount,
+        -- new.overallSampleSize,
+        new.count,
+        new.sampleSize,
+        new.score
+    ) on conflict(tagId, postId) do update set
+        voteEventId = new.voteEventId,
+        voteEventTime = new.voteEventTime,
+        topNoteId = new.topNoteId,
+        parentP = new.parentP,
+        parentQ = new.parentQ,
+        p = new.p,
+        q = new.q,
+        overallP = new.overallP,
+        -- informedCount = new.informedCount,
+        -- informedSampleSize = new.informedsampleSize,
+        -- uninformedCount = new.uninformedCount,
+        -- uninformedSampleSize = new.uninformedSampleSize,
+        -- overallCount = new.overallCount,
+        -- overallSampleSize = new.overallSampleSize,
+        count = new.count,
+        sampleSize = new.sampleSize,
+        score = new.score
+    ;
+end;
+
+
 -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
 -- that is, if the voteEventId is greater than lastVoteEvent.voteEventId
 
