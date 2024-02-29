@@ -25,7 +25,8 @@ reset-db:
     sqlite3 $DATABASE_PATH < sql/triggers.sql
 
 sim:
-    julia --project scripts/sim.jl && sqlite3 $SIM_DATABASE_PATH "select * from score;"
+    julia --project scripts/sim.jl
+    # && sqlite3 $SIM_DATABASE_PATH "select * from score;"
 
 
 ############ TESTS ##############

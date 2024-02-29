@@ -73,7 +73,7 @@ function run_simulation(sim::Function; tag_id=nothing)
 
     sim(process_votes)
 
-    results = DBInterface.execute(db, "select * from score where tagId = ?", [tag_id]);
+    results = DBInterface.execute(db, "select * from score where tagId = ? order by postId", [tag_id]);
     println(DataFrame(results))
 
     close(db)

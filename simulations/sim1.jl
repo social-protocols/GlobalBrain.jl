@@ -10,7 +10,7 @@ run_simulation(tag_id=1) do process_votes
     # tag_id = 1
     post_id = 1
 
-    n = 10
+    n = 100
     p = 0.37  # Set the probability parameter for the Bernoulli distribution
     draws = rand(Bernoulli(p), n)
 
