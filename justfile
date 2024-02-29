@@ -1,8 +1,12 @@
 compile:
     julia --project compile.jl
 
+activate:
+    julia --project -e 'using Pkg; Pkg.activate()'
+
 runbin:
     ./build/bin/ScheduledScoring $DATABASE_PATH $VOTE_EVENTS_PATH
+
 
 run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH
