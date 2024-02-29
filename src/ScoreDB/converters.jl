@@ -63,7 +63,7 @@ function as_score_event(
 )::ScoreEvent
 
     function rnd(x)
-        return round(x, digits=4)
+        return isnothing(x) ? nothing : round(x, digits=4)
     end
 
     return ScoreEvent(
@@ -74,8 +74,10 @@ function as_score_event(
         parentId = score_data.parent_id,
         postId = score_data.post_id,
         topNoteId = top_note_id(score_data),
-        parentP = parent_informed_probability(score_data),
-        parentQ = parent_uninformed_probability(score_data),
+        parentP = rnd(parent_informed_probability(score_data)),
+        parentQ = rnd(parent_uninformed_probability(score_data)),
+        # parentP = parent_informed_probability(score_data),
+        # parentQ = parent_uninformed_probability(score_data),
         p = rnd(informed_probability(score_data)),
         q = rnd(uninformed_probability(score_data)),
         overallP = rnd(score_data.overall_probability),
