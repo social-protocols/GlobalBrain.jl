@@ -56,28 +56,33 @@ Let's say there are 100 people in each group. Suppose they all vote after each p
 
 """
 
-post_id = 1
-n = 4
+include("../src/simulations.jl")
 
-supportersBeliefs = [.2,.4,.6,.06]
-detractorsBeliefs = [.8,.95,.6,.8]
+run_simulation(tag_id=3) do process_votes
 
-beliefs = [supportersBeliefs detractorsBeliefs]
+	post_id = 1
+	n = 4
 
-using Distributions
+	supportersBeliefs = [.2,.4,.6,.06]
+	detractorsBeliefs = [.8,.95,.6,.8]
 
-beliefs[1,:]
+	beliefs = [supportersBeliefs detractorsBeliefs]
 
-A = 1
-draws_A = rand.(Bernoulli.(beliefs[1,:]), n) 
-votes_A = hcat(draws_A...)[:]
-process_votes(tag_id, nothing, A, votes_A)
+	beliefs[1,:]
 
-B = 2
-draws_B = rand.(Bernoulli.(beliefs[2,:]), n) 
-votes_B = hcat(draws_B...)[:]
-process_votes(tag_id, A, B, votes_B)
+	A = 1
+	draws_A = rand.(Bernoulli.(beliefs[1,:]), n) 
+	votes_A = hcat(draws_A...)[:]
+	process_votes(nothing, A, votes_A)
 
+	B = 2
+	draws_B = rand.(Bernoulli.(beliefs[2,:]), n) 
+	votes_B = hcat(draws_B...)[:]
+	process_votes(A, B, votes_B)
+
+
+
+end
 
 
 # draws_0_supporters = rand(Bernoulli(supportersBeliefs[1]), n)

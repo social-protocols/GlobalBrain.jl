@@ -10,32 +10,39 @@
 # these users also change vote on A accordingly
 # algorithm should estimate posterior_a close to true posterior_a
 
-
-# common priors
-p_a_given_b = .9
-p_a_given_not_b = .01
-p_b = .5
-
-# Law of total probability
-p_a = p_b * p_a_given_b + (1 - p_b) * p_a_given_not_b
+include("../src/simulations.jl")
 
 
-posterior_b = 1
-posterior_a = p_a_given_b
 
-n_users = 100
+run_simulation(tag_id=2) do process_votes
 
-root_post_id = 1
-note_id = 2
 
-draws_0 = [p_a > 0.5 ? true : false for i in 1:n_users]
+    # common priors
+    p_a_given_b = .9
+    p_a_given_not_b = .01
+    p_b = .5
 
-process_votes(tag_id, nothing, root_post_id, draws_0)
+    # Law of total probability
+    p_a = p_b * p_a_given_b + (1 - p_b) * p_a_given_not_b
 
-n_subset = 10
-draws_1 = [posterior_b > 0.5 ? true : false for i in 1:n_subset]
-draws_2 = [posterior_a > 0.5 ? true : false for i in 1:n_subset]
 
-process_votes(tag_id, root_post_id, note_id, draws_1)
-process_votes(tag_id, nothing, root_post_id, draws_2)
+    posterior_b = 1
+    posterior_a = p_a_given_b
 
+    n_users = 100
+
+    root_post_id = 1
+    note_id = 2
+
+    draws_0 = [p_a > 0.5 ? true : false for i in 1:n_users]
+
+    process_votes(nothing, root_post_id, draws_0)
+
+    n_subset = 10
+    draws_1 = [posterior_b > 0.5 ? true : false for i in 1:n_subset]
+    draws_2 = [posterior_a > 0.5 ? true : false for i in 1:n_subset]
+
+    process_votes(root_post_id, note_id, draws_1)
+    process_votes(nothing, root_post_id, draws_2)
+
+end
