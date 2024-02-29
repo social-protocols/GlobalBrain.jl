@@ -82,15 +82,19 @@ function get_score_data(
             , ifnull(Score.parentId, 0) parentId
             , Score.postId
             , ifnull(topNoteId, 0) topNoteId
-            , ifnull(parentQ, 0) parentQ
             , ifnull(parentP, 0) parentP
-            , ifnull(q, 0) q
+            , ifnull(parentQ, 0) parentQ
             , ifnull(p, 0) p
             , ifnull(q, 0) q
-            , ifnull(p, 0) p
+            , overallP
+            -- , informedCount
+            -- , informedSampleSize
+            -- , uninformedCount
+            -- , uninformedSampleSize
+            -- , overallCount
+            -- , overallSampleSize
             , count
             , sampleSize
-            , overallP
             , score
            -- , NeedsRecalculation.postId is not null as needsRecalculation
 
@@ -153,13 +157,19 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             , parentId
             , postId
             , topNoteId
-            , parentQ
             , parentP
-            , q
+            , parentQ
             , p
+            , q
+            , overallP
+            -- , informedCount
+            -- , informedSampleSize
+            -- , uninformedCount
+            -- , uninformedSampleSize
+            -- , overallCount
+            -- , overallSampleSize
             , count
             , sampleSize
-            , overallP
             , score
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -177,13 +187,19 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             score.parentId,
             score.postId,
             score.topNoteId,
-            score.parentQ,
             score.parentP,
-            score.q,
+            score.parentQ,
             score.p,
+            score.q,
+            score.overallP,
+            # score.informedCount,
+            # score.informedSampleSize,
+            # score.uninformedCount,
+            # score.uninformedSampleSize,
+            # score.overallCount,
+            # score.overallSampleSize,
             score.count,
             score.sampleSize,
-            score.overallP,
             score.score,
         ),
     )

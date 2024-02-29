@@ -69,13 +69,19 @@ create table if not exists ScoreEvent(
     , parentId          integer
     , postId            integer not null
     , topNoteId         integer
-    , parentQ           real
     , parentP           real
-    , q                 real
+    , parentQ           real
     , p                 real
-    , count             integer
-    , sampleSize        integer
+    , q                 real
     , overallP          real
+    -- , informedCount         integer
+    -- , informedSampleSize    integer
+    -- , uninformedCount       integer
+    -- , uninformedSampleSize  integer
+    -- , overallCount          integer
+    -- , overallSampleSize     integer
+    , count          integer
+    , sampleSize     integer
     , score             real
 ) strict;
 
