@@ -58,7 +58,7 @@ Let's say there are 100 people in each group. Suppose they all vote after each p
 
 include("../src/simulations.jl")
 
-run_simulation(tag_id=3) do process_votes
+run_simulation(tag_id=5) do process_votes
 
 	post_id = 1
 	n = 100
@@ -69,6 +69,7 @@ run_simulation(tag_id=3) do process_votes
 	beliefs = [supportersBeliefs detractorsBeliefs]
 
 	overallProb = beliefs * [n, n] / (2*n)
+	# println("Overall prob: $overallProb")
 
 	A = 1
 	draws_A = rand.(Bernoulli.(beliefs[A,:]), n) 
@@ -85,17 +86,13 @@ run_simulation(tag_id=3) do process_votes
 	draws_C = rand.(Bernoulli.(beliefs[C,:]), n) 
 	votes_C = hcat(draws_C...)[:]
     process_votes(B, C, repeat([true], n)) # everyone upvotes C for now
-	process_votes(A, B, votes_C)
+	process_votes(nothing, A, votes_C)
 
-	# C = 3
-	# draws_C = rand.(Bernoulli.(beliefs[C,:]), n) 
-	# votes_C = hcat(draws_B...)[:]
-    # process_votes(B, C, repeat([true], n)) # everyone upvotes C for now
-	# process_votes(A, B, votes_C)
-
-
-
-
+	# d = 4
+	# draws_D = rand.(Bernoulli.(beliefs[D,:]), n) 
+	# votes_D = hcat(draws_D...)[:]
+    # process_votes(C, D, repeat([true], n)) # everyone upvotes C for now
+	# process_votes(nothing, A, votes_D)
 end
 
 

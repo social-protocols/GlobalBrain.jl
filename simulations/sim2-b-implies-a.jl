@@ -12,8 +12,6 @@
 
 include("../src/simulations.jl")
 
-
-
 run_simulation(tag_id=2) do process_votes
 
 

@@ -10,7 +10,6 @@ end
 using Main.GlobalBrainService
 using DataFrames
 
-
 sim_database_path = ENV["SIM_DATABASE_PATH"]
 function init_sim_db(tag_id)::SQLite.DB
     if isfile(sim_database_path)
@@ -34,6 +33,7 @@ end
 #     DBInterface.execute(db, "update lastVoteEvent set importedVoteEventId = 0, processedVoteEventId = 0 where tagId = ?", [tag_id])
 # end
 
+using Test
 
 function run_simulation(sim::Function; tag_id=nothing) 
 
@@ -41,7 +41,7 @@ function run_simulation(sim::Function; tag_id=nothing)
     db = init_sim_db(tag_id)
 
     # Init globals that are visible in all scripts
-    process_votes = function(parent_id, post_id, draws::Vector{Bool}) 
+    process_votes = function(parent_id, post_id::Number, draws::Vector{Bool}; start_user::Number=0) 
         t = 0
 
         for (i, draw) in enumerate(draws)
@@ -49,7 +49,7 @@ function run_simulation(sim::Function; tag_id=nothing)
 
             vote_event = GlobalBrainService.VoteEvent(
                 id=vote_event_id,
-                user_id=string(i),
+                user_id=string(i+start_user),
                 tag_id=tag_id,
                 parent_id=parent_id,
                 post_id=post_id,
@@ -74,9 +74,13 @@ function run_simulation(sim::Function; tag_id=nothing)
     sim(process_votes)
 
     results = DBInterface.execute(db, "select * from score where tagId = ? order by postId", [tag_id]);
-    println(DataFrame(results))
+
+    df = DataFrame(results)
+    println(df)
 
     close(db)
+
+    return df
 end
 
 
