@@ -94,10 +94,29 @@ create trigger afterInsertOnVoteEvent after insert on VoteEvent
 begin
 	insert into Post(parentId, id) values(new.parentId, new.postId) on conflict do nothing;
 
-	-- Record an informedVote for all notes where the user is informed of the note.
-	-- insert or update vote on post given voted on (each notes under this post)
-	-- 1. find all notes for this post that this user has voted on
-	-- 2. insert or update record by joining to current vote
+
+	-- Insert/update the vote record
+	insert into Vote(userId, tagId, parentId, postId, vote, latestVoteEventId, createdAt, updatedAt) values (
+		new.userId,
+		new.tagId,
+		new.parentId,
+		new.postId,
+		new.vote,
+		new.voteEventId,
+		new.createdAt,
+		new.createdAt
+	) on conflict(userId, tagId, postId) do update set
+		vote = new.vote
+		, latestVoteEventId = new.voteEventId
+		, updatedAt = new.createdAt
+	;
+
+
+
+	-- Record an informedVote for all children of this post where the user is informed of the child
+	-- Insert or update conditional vote on this post given voted on (each child of this post)
+	-- 1. find all children of this post that the user has voted on
+	-- 2. insert or update ConditionalVote record
 	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
 	select
 		new.userId,
@@ -118,12 +137,11 @@ begin
 	;
 
 
-	-- Record an uninformedVote for all notes
-	-- where the user was not informed of that note at the time of the vote on the post. The uninformedVote field
-	-- of this record will contain the latest uninformed vote. This field and will stop updating after the
-	-- user becomes informed.
-	-- So every time there is a vote, we need to look at all notes under the post, see if user has NOT been 
-	-- exposed to that note, and insert or update an entry in the uninformedVote table accordingly.
+	-- Record an informedVote for all children of this post where the user is NOT informed of the child
+    -- The uninformedVote field
+	-- of this record will contain the latest uninformed vote. 
+	-- 1. Find all children of this post that the user has NOT voted on
+	-- 2. Insert or update ConditionalVote record
 	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
 	select
 		new.userId,
@@ -235,24 +253,6 @@ begin
 
 
 
-
-	-- Insert/update the vote record
-	insert into Vote(userId, tagId, parentId, postId, vote, latestVoteEventId, createdAt, updatedAt) values (
-		new.userId,
-		new.tagId,
-		new.parentId,
-		new.postId,
-		new.vote,
-		new.voteEventId,
-		new.createdAt,
-		new.createdAt
-	) on conflict(userId, tagId, postId) do update set
-		vote = new.vote
-		, latestVoteEventId = new.voteEventId
-		, updatedAt = new.createdAt
-	;
-
-
 	insert into lastVoteEvent(type, importedVoteEventId) values (1, new.voteEventId) on conflict do update set importedVoteEventId = new.voteEventId;
 
 end;
@@ -335,11 +335,10 @@ end;
 drop trigger if exists afterInsertOnPost;
 create trigger afterInsertOnPost after insert on Post begin
 
-
+	-- When there is a new note, we need to record an uninformed vote for every user who has voted on the parent
+	-- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
+	-- current user, not *all* users who have voted on the parent.
 	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, informedVote, uninformedVote) 
-	-- with eventTypes as (
-	-- 	select 1 as eventType UNION ALL select 2 as eventType 
-	-- ) 
 	select
 		vote.userId,
 		vote.tagId,
@@ -350,11 +349,7 @@ create trigger afterInsertOnPost after insert on Post begin
 		vote.vote
 	from
 		vote
-		-- join new
-		-- join eventTypes
 		where vote.postId = new.parentId		
-	-- on conflict
-	-- there can be no conflicts
 	;
 
 end;
