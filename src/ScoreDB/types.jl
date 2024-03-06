@@ -11,7 +11,6 @@ end
 
 
 Base.@kwdef struct ScoreEvent
-    scoreEventId::Union{Int,Nothing}
     voteEventId::Int
     voteEventTime::Int
     tagId::Int

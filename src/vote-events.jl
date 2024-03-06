@@ -99,9 +99,8 @@ function update_scores(output_score_event::Function, db::SQLite.DB, vote_event_i
                 #         * " topNoteEffect=$(s.effect)"
                 # )
                 r = as_score_event(s, vote_event_id, vote_event_time)
-                score_event_id = insert_score_event(db, r)
-
-                output_score_event(with_score_event_id(r, score_event_id))
+                insert_score_event(db, r)
+                output_score_event(r)
             end
         end
     )

@@ -67,7 +67,6 @@ function as_score_event(
     end
 
     return ScoreEvent(
-        scoreEventId = nothing, # Assigned by database
         voteEventId = vote_event_id,
         voteEventTime = vote_event_time,
         tagId = score_data.tag_id,
@@ -94,28 +93,27 @@ function as_score_event(
 end
 
 
-function with_score_event_id(r::ScoreEvent, score_event_id::Integer)::ScoreEvent
-    return ScoreEvent(
-        scoreEventId = score_event_id,
-        voteEventId = r.voteEventId,
-        voteEventTime = r.voteEventTime,
-        tagId = r.tagId,
-        parentId = r.parentId,
-        postId = r.postId,
-        topNoteId = r.topNoteId,
-        parentP = r.parentP,
-        parentQ = r.parentQ,
-        p = r.p,
-        q = r.q,
-        overallP = r.overallP,
-        # informedCount = r.informedCount,
-        # informedSampleSize = r.informedSampleSize,
-        # uninformedCount = r.uninformedCount,
-        # uninformedSampleSize = r.uninformedSampleSize,
-        # overallCount = r.overallCount,
-        # overallSampleSize = r.overallSampleSize,
-        count = r.count,
-        sampleSize = r.sampleSize,
-        score = r.score,
-    )
-end
+# function with_score_event_id(r::ScoreEvent, score_event_id::Integer)::ScoreEvent
+#     return ScoreEvent(
+#         voteEventId = r.voteEventId,
+#         voteEventTime = r.voteEventTime,
+#         tagId = r.tagId,
+#         parentId = r.parentId,
+#         postId = r.postId,
+#         topNoteId = r.topNoteId,
+#         parentP = r.parentP,
+#         parentQ = r.parentQ,
+#         p = r.p,
+#         q = r.q,
+#         overallP = r.overallP,
+#         # informedCount = r.informedCount,
+#         # informedSampleSize = r.informedSampleSize,
+#         # uninformedCount = r.uninformedCount,
+#         # uninformedSampleSize = r.uninformedSampleSize,
+#         # overallCount = r.overallCount,
+#         # overallSampleSize = r.overallSampleSize,
+#         count = r.count,
+#         sampleSize = r.sampleSize,
+#         score = r.score,
+#     )
+# end

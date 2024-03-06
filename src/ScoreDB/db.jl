@@ -137,6 +137,7 @@ function as_tallies_tree(t::SQLTalliesTree)
 end
 
 
+
 """
     insert_score_event(
         db::SQLite.DB,
@@ -146,7 +147,13 @@ end
 Insert a `Score` instance into the score database.
 """
 function insert_score_event(db::SQLite.DB, score::ScoreEvent)
-    # result = SQLite.load!([score], db, "ScoreEvent")
+    # using Tables
+    #  # Tell Tables.jl that it can access rows in the array
+    # Tables.rowaccess(::Type{Vector{ScoreEvent}}) = true
+
+    #  # Tell Tables.jl how to get the rows from the array
+    # Tables.rows(x::Vector{ScoreEvent}) = x
+    # result = SQLite.load!([score], db, "ScoreEvent", on_conflict="replace")
 
 
     insert_score_event_sql = """
@@ -173,11 +180,11 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             , score
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        returning scoreEventId;
+        on conflict do nothing
 
     """
 
-    results = DBInterface.execute(
+    DBInterface.execute(
         db,
         insert_score_event_sql,
         (
@@ -203,10 +210,6 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             score.score,
         ),
     )
-
-    result = iterate(results)
-
-    return result[1][:scoreEventId]
 end
 
 

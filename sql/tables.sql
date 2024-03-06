@@ -62,8 +62,7 @@ create table if not exists Post (
 ) strict;
 
 create table if not exists ScoreEvent(
-    scoreEventId        integer not null primary key
-    , voteEventId       integer not null
+    voteEventId         integer not null
     , voteEventTime     integer not null
     , tagId             integer
     , parentId          integer
@@ -83,12 +82,13 @@ create table if not exists ScoreEvent(
     , count          integer
     , sampleSize     integer
     , score             real
+    , primary key(voteEventId, postId)
 ) strict;
 
 
 create table if not exists Score(
-    tagId             integer
-    , voteEventId       integer not null
+    voteEventId         integer not null
+    , tagId             integer
     , voteEventTime     integer not null
     , parentId          integer
     , postId            integer not null
@@ -118,13 +118,8 @@ create table if not exists LastVoteEvent (
     primary key(type)
 ) strict;
 
-create table if not exists LastScoreEvent (
-    scoreEventId integer not null default 0
-) strict;
-
 
 insert into LastVoteEvent values(1,0,0);
-insert into LastScoreEvent values(0);
 
 create index if not exists post_parent on Post(parentId);
 create index if not exists Vote_tag_user_post on Vote(tagId, userId, postId);
