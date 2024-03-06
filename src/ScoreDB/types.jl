@@ -21,15 +21,17 @@ Base.@kwdef struct ScoreEvent
     parentP::Union{Float64,Nothing}
     q::Float64
     p::Float64
+    overallProb::Float64
+    parentPSampleSize::Union{Int,Nothing}
+    parentQSampleSize::Union{Int,Nothing}
+    pSampleSize::Int
+    qSampleSize::Int
     # informedCount::Int
-    # informedSampleSize::Int
     # uninformedCount::Int
-    # uninformedSampleSize::Int
     # overallCount::Int
     # overallSampleSize::Int
     count::Int
     sampleSize::Int
-    overallP::Float64
     score::Float64
 end
 

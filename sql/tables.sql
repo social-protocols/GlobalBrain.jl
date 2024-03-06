@@ -80,16 +80,18 @@ create table if not exists ScoreEvent(
     , parentQ           real
     , p                 real
     , q                 real
-    , overallP          real
+    , overallProb          real
     -- , informedCount         integer
-    -- , informedSampleSize    integer
+    , parentPSampleSize    integer
+    , parentQSampleSize  integer
+    , pSampleSize    integer not null
+    , qSampleSize  integer not null
     -- , uninformedCount       integer
-    -- , uninformedSampleSize  integer
     -- , overallCount          integer
     -- , overallSampleSize     integer
     , count          integer
-    , sampleSize     integer
-    , score             real
+    , sampleSize     integer not null
+    , score             real not null
     , primary key(voteEventId, postId)
 ) strict;
 
@@ -103,18 +105,20 @@ create table if not exists Score(
     , topNoteId         integer
     , parentP           real
     , parentQ           real
-    , p                 real
-    , q                 real
-    , overallP          real
+    , p                 real not null
+    , q                 real not null
+    , overallProb          real
     -- , informedCount             integer
-    -- , informedSampleSize        integer
+    , parentPSampleSize        integer
+    , parentQSampleSize        integer
+    , pSampleSize        integer not null
+    , qSampleSize        integer not null
     -- , uninformedCount             integer
-    -- , uninformedSampleSize        integer
     -- , overallCount             integer
     -- , overallSampleSize        integer
     , count             integer
-    , sampleSize        integer
-    , score             real
+    , sampleSize        integer not null
+    , score             real not null
     , primary key(tagId, postId)
 ) strict;
 

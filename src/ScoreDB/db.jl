@@ -86,11 +86,13 @@ function get_score_data(
             , ifnull(parentQ, 0) parentQ
             , ifnull(p, 0) p
             , ifnull(q, 0) q
-            , overallP
+            , overallProb
             -- , informedCount
-            -- , informedSampleSize
+            , parentPSampleSize
+            , parentQSampleSize
+            , pSampleSize
+            , qSampleSize
             -- , uninformedCount
-            -- , uninformedSampleSize
             -- , overallCount
             -- , overallSampleSize
             , count
@@ -168,18 +170,20 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             , parentQ
             , p
             , q
-            , overallP
+            , overallProb
             -- , informedCount
-            -- , informedSampleSize
+            , parentPSampleSize
+            , parentQSampleSize
+            , pSampleSize
+            , qSampleSize
             -- , uninformedCount
-            -- , uninformedSampleSize
             -- , overallCount
             -- , overallSampleSize
             , count
             , sampleSize
             , score
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
 
     """
@@ -198,11 +202,13 @@ function insert_score_event(db::SQLite.DB, score::ScoreEvent)
             score.parentQ,
             score.p,
             score.q,
-            score.overallP,
+            score.overallProb,
+            score.parentPSampleSize,
+            score.parentQSampleSize,
+            score.pSampleSize,
+            score.qSampleSize,
             # score.informedCount,
-            # score.informedSampleSize,
             # score.uninformedCount,
-            # score.uninformedSampleSize,
             # score.overallCount,
             # score.overallSampleSize,
             score.count,
