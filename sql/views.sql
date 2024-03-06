@@ -24,34 +24,28 @@ from
 -- 2) all ancestors of the post that was voted on (because a post's score depends on children's score)
 -- 3) all direct children of the post that was voted on (because a post's score also includes its effect on its parent)
 create view NeedsRecalculation as 
-with RECURSIVE Ancestors AS (
-
-    with leafNodes as (
-        select postId, tagId
-        from tally
-        join LastVoteEvent
-        on latestVoteEventId > processedVoteEventId  
-    )
-    select id as postId, parentId
-    from post
-    join leafNodes
-    where id = leafNodes.postId
-    union
-    select p.id, p.parentId
-    from post p
-    inner join Ancestors a on p.id = a.parentId
+-- First, select posts that were voted on since last processedVoteEventId
+with leafNode as (
+    select postId, tagId
+    from tally
+    join LastVoteEvent
+    on latestVoteEventId > processedVoteEventId  
 )
--- First, select self and all ancestors of posts that were voted on since last processedVoteEventId
+select * from leafNode
+
+union
+-- Next, select all ancestors
 select 
-    postId, tagId FROM tally join Ancestors using (postId)
+    ancestorId as postId, tagId
+from leafNode join Lineage Ancestor on (postId = descendantId)
+
 
 union
 -- Next, select all children
 select 
-    post.id, tagId 
-    from tally 
-    join lastVoteEvent on latestVoteEventId > processedVoteEventId 
-    join post on post.parentId = tally.postId; -- children of item that was voted on
+    post.id as postId, tagId 
+from leafNode
+join post on parentId = postId; -- children of item that was voted on
 
 
 create view VoteEventImport as

@@ -61,6 +61,14 @@ create table if not exists Post (
     primary key(id)
 ) strict;
 
+create table if not exists Lineage (
+    ancestorID integer,
+    descendantId integer not null,
+    separation integer not null,
+    primary key(ancestorID, descendantId)
+) strict;
+
+
 create table if not exists ScoreEvent(
     voteEventId         integer not null
     , voteEventTime     integer not null

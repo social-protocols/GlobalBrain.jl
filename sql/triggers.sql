@@ -89,6 +89,24 @@ begin
 end;
 
 
+
+create trigger afterInsertPost after insert on Post when new.parentId is not null begin
+	insert into Lineage(ancestorId, descendantId, separation) values(new.parentId, new.id, 1) on conflict do nothing;
+end;
+
+create trigger afterInsertLineage after insert on Lineage
+begin
+	insert into Lineage
+		select 
+			post.parentId as ancestorId,
+			new.descendantId as descendantId,
+			new.separation + 1
+		from post
+		where post.id = new.ancestorId
+		and post.parentId is not null
+	on conflict do nothing;
+end;
+
 drop trigger if exists afterInsertOnVoteEvent;
 create trigger afterInsertOnVoteEvent after insert on VoteEvent
 begin
