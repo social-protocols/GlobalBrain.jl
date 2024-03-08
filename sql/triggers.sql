@@ -102,15 +102,16 @@ end;
 
 create trigger afterInsertLineage after insert on Lineage
 begin
+	-- Insert a record for all ancestors of this ancestor
 	insert into Lineage
 		select 
-			post.parentId as ancestorId,
+			ancestor.ancestorId as ancestorId,
 			new.descendantId as descendantId,
 			new.separation + 1
-		from post
-		where post.id = new.ancestorId
-		and post.parentId is not null
+		from lineage ancestor 
+		where ancestor.descendantId = new.ancestorId
 	on conflict do nothing;
+
 end;
 
 drop trigger if exists afterInsertOnVoteEvent;

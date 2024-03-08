@@ -84,8 +84,7 @@ function update_scores(output_score_event::Function, db::SQLite.DB, vote_event_i
     tallies = get_tallies(db, nothing, nothing)
 
     if length(tallies) == 0
-        @info "No updated tallies to process"
-        return
+        throw("No tallies found in the database: vote_event_id=$vote_event_id")
     end
 
     score_tree(
