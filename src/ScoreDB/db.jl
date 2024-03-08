@@ -55,9 +55,9 @@ function get_tallies(
         where 
             ifnull(DetailedTally.tagId = :tag_id, true)
             and ( 
-                    ( :post_id is null and DetailedTally.parentId is null and needsRecalculation)
+                    ( :post_id is null and DetailedTally.parentId is null)
                     or 
-                    ( DetailedTally.parentId = :post_id)
+                    ( :post_id is not null and DetailedTally.parentId is not null and ifnull(DetailedTally.parentId = :post_id, false) )
                 )
         """
 
