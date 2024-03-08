@@ -2,7 +2,8 @@
 create view if not exists DetailedTally as
 select
     self.tagId
-    , self.parentId   as parentId
+    , ancestorId   as ancestorId
+    , self.parentId as parentId
     , self.postId                    as postId
     , parent.count   as parentCount
     , parent.total   as parentTotal
@@ -12,10 +13,12 @@ select
     , informedTotal   as informedTotal
     , self.count       as selfCount
     , self.total       as selfTotal
+    -- , ifnull(lineage.separation,0) as separation
 from 
     Tally self
-    left join ConditionalTally on (self.parentId = ConditionalTally.postId and self.postId = ConditionalTally.noteId and eventType = 2)
-    left join Tally parent on (self.parentId = parent.postId and self.tagId = parent.tagId)
+    left join Lineage on (lineage.descendantId = self.postId)
+    left join ConditionalTally on (ancestorId = ConditionalTally.postId and self.postId = ConditionalTally.noteId and eventType = 2)
+    left join Tally parent on (ancestorId = parent.postId and self.tagId = parent.tagId)
 ;
 
 

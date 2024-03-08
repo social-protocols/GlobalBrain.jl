@@ -1,4 +1,5 @@
           tagId = 1
+     ancestorId = 
        parentId = 
          postId = 1
     parentCount = 
@@ -11,6 +12,7 @@ uninformedTotal =
       selfTotal = 3
 
           tagId = 1
+     ancestorId = 1
        parentId = 1
          postId = 2
     parentCount = 1
@@ -23,6 +25,20 @@ uninformedTotal = 1
       selfTotal = 2
 
           tagId = 1
+     ancestorId = 1
+       parentId = 2
+         postId = 3
+    parentCount = 1
+    parentTotal = 3
+uninformedCount = 0
+uninformedTotal = 1
+  informedCount = 1
+  informedTotal = 2
+      selfCount = 2
+      selfTotal = 2
+
+          tagId = 1
+     ancestorId = 2
        parentId = 2
          postId = 3
     parentCount = 1
@@ -35,6 +51,7 @@ uninformedTotal = 2
       selfTotal = 2
 
           tagId = 1
+     ancestorId = 
        parentId = 
          postId = 4
     parentCount = 
@@ -47,6 +64,7 @@ uninformedTotal =
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 4
        parentId = 4
          postId = 5
     parentCount = 0
@@ -59,6 +77,7 @@ uninformedTotal = 1
       selfTotal = 2
 
           tagId = 1
+     ancestorId = 
        parentId = 
          postId = 6
     parentCount = 
@@ -71,6 +90,7 @@ uninformedTotal =
       selfTotal = 2
 
           tagId = 1
+     ancestorId = 6
        parentId = 6
          postId = 7
     parentCount = 0
@@ -83,6 +103,7 @@ uninformedTotal = 1
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
        parentId = 1
          postId = 8
     parentCount = 1
@@ -95,6 +116,20 @@ uninformedTotal = 3
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
+       parentId = 8
+         postId = 9
+    parentCount = 1
+    parentTotal = 3
+uninformedCount = 
+uninformedTotal = 
+  informedCount = 
+  informedTotal = 
+      selfCount = 0
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 8
        parentId = 8
          postId = 9
     parentCount = 0
@@ -107,6 +142,33 @@ uninformedTotal = 1
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
+       parentId = 9
+         postId = 10
+    parentCount = 1
+    parentTotal = 3
+uninformedCount = 
+uninformedTotal = 
+  informedCount = 
+  informedTotal = 
+      selfCount = 1
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 8
+       parentId = 9
+         postId = 10
+    parentCount = 0
+    parentTotal = 1
+uninformedCount = 0
+uninformedTotal = 0
+  informedCount = 0
+  informedTotal = 1
+      selfCount = 1
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 9
        parentId = 9
          postId = 10
     parentCount = 0
@@ -119,6 +181,33 @@ uninformedTotal = 1
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
+       parentId = 9
+         postId = 11
+    parentCount = 1
+    parentTotal = 3
+uninformedCount = 
+uninformedTotal = 
+  informedCount = 
+  informedTotal = 
+      selfCount = 1
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 8
+       parentId = 9
+         postId = 11
+    parentCount = 0
+    parentTotal = 1
+uninformedCount = 0
+uninformedTotal = 0
+  informedCount = 0
+  informedTotal = 1
+      selfCount = 1
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 9
        parentId = 9
          postId = 11
     parentCount = 0
@@ -131,6 +220,20 @@ uninformedTotal = 1
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
+       parentId = 8
+         postId = 12
+    parentCount = 1
+    parentTotal = 3
+uninformedCount = 
+uninformedTotal = 
+  informedCount = 
+  informedTotal = 
+      selfCount = 1
+      selfTotal = 1
+
+          tagId = 1
+     ancestorId = 8
        parentId = 8
          postId = 12
     parentCount = 0
@@ -143,6 +246,7 @@ uninformedTotal = 1
       selfTotal = 1
 
           tagId = 1
+     ancestorId = 1
        parentId = 1
          postId = 13
     parentCount = 1

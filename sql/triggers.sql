@@ -107,17 +107,34 @@ begin
 		select 
 			ancestor.ancestorId as ancestorId,
 			new.descendantId as descendantId,
-			new.separation + 1
+			new.separation + ancestor.separation
 		from lineage ancestor 
 		where ancestor.descendantId = new.ancestorId
 	on conflict do nothing;
+
+	-- When there is a new post, we need to record an uninformed vote for every user who has voted on the parent
+	-- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
+	-- current user, not *all* users who have voted on the parent.
+	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, informedVote, uninformedVote) 
+	select
+		vote.userId,
+		vote.tagId,
+		vote.postId, 
+		new.descendantId as noteId,
+		2,
+		0,
+		vote.vote
+	from
+		vote
+		where vote.postId = new.ancestorId
+		and vote.vote != 0
+	;
 
 end;
 
 drop trigger if exists afterInsertOnVoteEvent;
 create trigger afterInsertOnVoteEvent after insert on VoteEvent
 begin
-	insert into Post(parentId, id) values(new.parentId, new.postId) on conflict do nothing;
 
 
 	-- Insert/update the vote record
@@ -135,6 +152,8 @@ begin
 		, latestVoteEventId = new.voteEventId
 		, updatedAt = new.createdAt
 	;
+
+	insert into Post(parentId, id) values(new.parentId, new.postId) on conflict do nothing;
 
 
 
@@ -155,7 +174,7 @@ begin
 	where
 		VoteOnNote.userId = new.userId
 		and VoteOnNote.tagId = new.tagId 
-		and VoteOnNote.postId in (select id from post where post.parentId = new.postId)	
+		and VoteOnNote.postId in (select descendantId from lineage where lineage.ancestorId = new.postId)
 		and VoteOnNote.vote != 0
 	on conflict(userId, tagId, postId, noteId, eventType) do update set
 		informedVote = new.vote
@@ -172,21 +191,20 @@ begin
 		new.userId,
 		new.tagId,
 		new.postId, 
-		note.id as noteId,
+		descendant.descendantId as noteId,
 		2,
 		new.vote,
 		0
-	from Post note 
+	from Lineage descendant 
 	left join Vote on (
 		vote.userId = new.userId
 		and vote.tagId = new.tagId
-		and vote.postId = note.id
+		and vote.postId = descendant.descendantId
 		and vote.vote != 0
 	)
 	where
-		note.parentId = new.postId
+		descendant.ancestorId = new.postId
 		and Vote.userId is null
-
 	on conflict(userId, tagId, postId, noteId, eventType) do update set
 		uninformedVote = new.vote
 	;
@@ -198,18 +216,18 @@ begin
 	select
 		userId,
 		tagId,
-		ParentVote.postId, -- the parent of the new.postId
+		AncestorVote.postId, -- the parent of the new.postId
 		new.postId, -- the note that was voted on
 		2, 
 		0, 
-		ifnull(ParentVote.vote,0)
-	from Post
-	left join Vote ParentVote
+		ifnull(AncestorVote.vote,0)
+	from Lineage Descendant
+	left join Vote AncestorVote
 	where
-		Post.id = new.postId 
-		and ParentVote.postId = Post.parentId
-		and ParentVote.userId = new.userId
-		and ParentVote.tagId = new.tagId 
+		Descendant.descendantId = new.postId 
+		and AncestorVote.postId = Descendant.ancestorId
+		and AncestorVote.userId = new.userId
+		and AncestorVote.tagId = new.tagId 
 
 		-- only do this if the vote is not being cleared
 		and new.vote != 0
@@ -357,25 +375,4 @@ create trigger afterUpdateConditionalVote after update on ConditionalVote begin
 end;
 
 
-drop trigger if exists afterInsertOnPost;
-create trigger afterInsertOnPost after insert on Post begin
-
-	-- When there is a new note, we need to record an uninformed vote for every user who has voted on the parent
-	-- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
-	-- current user, not *all* users who have voted on the parent.
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, informedVote, uninformedVote) 
-	select
-		vote.userId,
-		vote.tagId,
-		vote.postId, 
-		new.id as noteId,
-		2,
-		0,
-		vote.vote
-	from
-		vote
-		where vote.postId = new.parentId		
-	;
-
-end;
 
