@@ -136,7 +136,7 @@ version = "1.3.1"
 
 [[deps.GlobalBrain]]
 deps = ["DBInterface", "Dates", "Distributions", "Random", "SQLite"]
-git-tree-sha1 = "16163f954927fd4c3b777dcce5b020df62d8027f"
+git-tree-sha1 = "659836689e337584a7fd4c56b8719597a944bd90"
 repo-rev = "main"
 repo-url = "https://github.com/social-protocols/GlobalBrain.jl"
 uuid = "098ac8c9-7e3b-475a-8ab5-e2cc3c93bac3"

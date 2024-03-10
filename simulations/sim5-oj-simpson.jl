@@ -68,8 +68,8 @@ run_simulation(tag_id=5) do process_votes
 
 	beliefs = [supportersBeliefs detractorsBeliefs]
 
-	overallProb = beliefs * [n, n] / (2*n)
-	# println("Overall prob: $overallProb")
+	upvote_probability = beliefs * [n, n] / (2*n)
+	# println("Overall prob: $upvote_probability")
 
 	A = 1
 	draws_A = rand.(Bernoulli.(beliefs[A,:]), n) 

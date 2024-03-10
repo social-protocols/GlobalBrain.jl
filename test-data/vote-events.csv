@@ -1,4 +1,4 @@
-voteEventId,userId,tagId,parentId,postId,noteId,vote,createdAt
+vote_event_id,user_id,tag_id,parent_id,post_id,note_id,vote,created_at
 1,100,1,,1,,1,1708772663570
 2,101,1,1,2,,1,1708772663573
 3,101,1,,1,2,-1,1708772663575

@@ -22,15 +22,15 @@ function init_sim_db(tag_id)::SQLite.DB
 end
 
 # function clear_simulation(db, tag_id)
-#     DBInterface.execute(db, "delete from ScoreEvent where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from Score where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from VoteEvent where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from Vote where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from Tally where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from ConditionalVote where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "delete from ConditionalTally where tagId = ?", [tag_id])
-#     # DBInterface.execute(db, "delete from Post where tagId = ?", [tag_id])
-#     DBInterface.execute(db, "update lastVoteEvent set importedVoteEventId = 0, processedVoteEventId = 0 where tagId = ?", [tag_id])
+#     DBInterface.execute(db, "delete from ScoreEvent where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from Score where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from VoteEvent where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from Vote where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from Tally where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from ConditionalVote where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "delete from ConditionalTally where tag_id = ?", [tag_id])
+#     # DBInterface.execute(db, "delete from Post where tag_id = ?", [tag_id])
+#     DBInterface.execute(db, "update lastVoteEvent set importedvote_event_id = 0, processed_vote_event_id = 0 where tag_id = ?", [tag_id])
 # end
 
 using Test
@@ -73,7 +73,7 @@ function run_simulation(sim::Function; tag_id=nothing)
 
     sim(process_votes)
 
-    results = DBInterface.execute(db, "select * from score where tagId = ? order by postId", [tag_id]);
+    results = DBInterface.execute(db, "select * from score where tag_id = ? order by post_id", [tag_id]);
 
     df = DataFrame(results)
     println(df)

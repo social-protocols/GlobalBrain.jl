@@ -19,12 +19,12 @@ function julia_main()::Cint
 
     database_path = ARGS[1]
     vote_events_path = ARGS[2]
-    score_events_path = ARGS[3]
+    output_path = ARGS[3]
 
-    global_brain_service(database_path, vote_events_path, score_events_path)
+    global_brain_service(database_path, vote_events_path, output_path)
 end
 
-function global_brain_service(database_path::String, vote_events_path::String, score_events_path::String)
+function global_brain_service(database_path::String, vote_events_path::String, output_path::String)
 
     if length(database_path) == 0
         error("Missing vote database filename argument")
@@ -43,7 +43,7 @@ function global_brain_service(database_path::String, vote_events_path::String, s
         open(vote_events_path, "r")
     end
 
-    open(score_events_path, "a") do output_stream
+    open(output_path, "a") do output_stream
         process_vote_events_stream(get_score_db(database_path), input_stream, output_stream)
     end
 

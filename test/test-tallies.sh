@@ -15,7 +15,7 @@ TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     sqlite3 $TMPDIR/score.db -csv -header  ".import -skip 1 '|cat' VoteEventImport" < $test_vote_events_csv_file;
     sqlite3 $TMPDIR/score.db -line ".eqp off" ".output $TMPDIR/tallies.txt" "select * from DetailedTally";
     echo "Comparing $TMPDIR/tallies.txt to $expected_tallies_file";
-    diff $expected_tallies_file $TMPDIR/tallies.txt
+    diff -b $expected_tallies_file $TMPDIR/tallies.txt
     result=$?
     if [ $result -eq 1 ]; then
         exit 1

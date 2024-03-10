@@ -1,24 +1,24 @@
 
 create view if not exists DetailedTally as
 select
-    self.tagId
-    , ancestorId   as ancestorId
-    , self.parentId as parentId
-    , self.postId                    as postId
+    self.tag_id
+    , ancestor_id   as ancestor_id
+    , self.parent_id as parent_id
+    , self.post_id                    as post_id
     , parent.count   as parentCount
     , parent.total   as parentTotal
-    , uninformedCount as uninformedCount
-    , uninformedTotal as uninformedTotal
-    , informedCount   as informedCount
-    , informedTotal   as informedTotal
+    , uninformed_count as uninformed_count
+    , uninformed_total as uninformed_total
+    , informed_count   as informed_count
+    , informed_total   as informed_total
     , self.count       as selfCount
     , self.total       as selfTotal
     -- , ifnull(lineage.separation,0) as separation
 from 
     Tally self
-    left join Lineage on (lineage.descendantId = self.postId)
-    left join ConditionalTally on (ancestorId = ConditionalTally.postId and self.postId = ConditionalTally.noteId and eventType = 2)
-    left join Tally parent on (ancestorId = parent.postId and self.tagId = parent.tagId)
+    left join Lineage on (lineage.descendant_id = self.post_id)
+    left join ConditionalTally on (ancestor_id = ConditionalTally.post_id and self.post_id = ConditionalTally.note_id and event_type = 2)
+    left join Tally parent on (ancestor_id = parent.post_id and self.tag_id = parent.tag_id)
 ;
 
 
@@ -27,38 +27,37 @@ from
 -- 2) all ancestors of the post that was voted on (because a post's score depends on children's score)
 -- 3) all direct children of the post that was voted on (because a post's score also includes its effect on its parent)
 create view NeedsRecalculation as 
--- First, select posts that were voted on since last processedVoteEventId
+-- First, select posts that were voted on since last processed_vote_event_id
 with leafNode as (
-    select postId, tagId
+    select post_id, tag_id
     from tally
     join LastVoteEvent
-    on latestVoteEventId > processedVoteEventId  
+    on latest_vote_event_id > processed_vote_event_id  
 )
 select * from leafNode
 
 union
 -- Next, select all ancestors
 select 
-    ancestorId as postId, tagId
-from leafNode join Lineage Ancestor on (postId = descendantId)
-
+    ancestor_id as post_id, tag_id
+from leafNode join Lineage Ancestor on (post_id = descendant_id)
 
 union
 -- Next, select all children
 select 
-    post.id as postId, tagId 
+    post.id as post_id, tag_id 
 from leafNode
-join post on parentId = postId; -- children of item that was voted on
+join post on parent_id = post_id; -- children of item that was voted on
 
 
 create view VoteEventImport as
 select 
-    0 voteEventId,
-    '' userId,
-    0 tagId,
-    '' parentId,
-    0 postId,
-    '' noteId,
+    0 vote_event_id,
+    '' user_id,
+    0 tag_id,
+    '' parent_id,
+    0 post_id,
+    '' note_id,
     0 vote,
-    0 createdAt
+    0 vote_event_time 
 ;

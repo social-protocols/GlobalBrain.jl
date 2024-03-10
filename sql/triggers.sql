@@ -1,103 +1,118 @@
 
-create trigger after insert on ScoreEvent begin
+create trigger afterInsertScoreEvent after insert on ScoreEvent begin
     insert or replace into Score(
-        voteEventId,
-        voteEventTime,
-        tagId,
-        parentId,
-        postId,
-        topNoteId,
-        parentP,
-        parentQ,
+        vote_event_id,
+        vote_event_time,
+        tag_id,
+        post_id,
+        top_note_id,
+        o,
+        o_count,
+        o_size,
         p,
-        q,
-        overallProb,
-        parentPSampleSize,
-        parentQSampleSize,
-        -- informedCount,
-        pSampleSize,
-        qSampleSize,
-        -- uninformedCount,
-        -- overallCount,
-        -- overallSampleSize,
-        count,
-        sampleSize,
         score
     ) values (
-        new.voteEventId,
-        new.voteEventTime,
-        new.tagId,
-        new.parentId,
-        new.postId,
-        new.topNoteId,
-        new.parentP,
-        new.parentQ,
+        new.vote_event_id,
+        new.vote_event_time,
+        new.tag_id,
+        new.post_id,
+        new.top_note_id,
+        new.o,
+        new.o_count,
+        new.o_size,
         new.p,
-        new.q,
-        new.overallProb,
-        new.parentPSampleSize,
-        new.parentQSampleSize,
-        new.pSampleSize,
-        new.qSampleSize,
-        -- new.informedCount,
-        -- new.uninformedCount,
-        -- new.overallCount,
-        -- new.overallSampleSize,
-        new.count,
-        new.sampleSize,
         new.score
-    ) on conflict(tagId, postId) do update set
-        voteEventId = new.voteEventId,
-        voteEventTime = new.voteEventTime,
-        topNoteId = new.topNoteId,
-        parentP = new.parentP,
-        parentQ = new.parentQ,
+    ) on conflict(tag_id, post_id) do update set
+        vote_event_id = new.vote_event_id,
+        vote_event_time = new.vote_event_time,
+        top_note_id = new.top_note_id,
+        o = new.o,
+        o_count = new.o_count,
+        o_size = new.o_size,
         p = new.p,
-        q = new.q,
-        overallProb = new.overallProb,
-        parentPSampleSize = new.parentPSampleSize,
-        parentQSampleSize = new.parentQSampleSize,
-        pSampleSize = new.pSampleSize,
-        qSampleSize = new.qSampleSize,
-        -- informedCount = new.informedCount,
-        -- uninformedCount = new.uninformedCount,
-        -- overallCount = new.overallCount,
-        -- overallSampleSize = new.overallSampleSize,
-        count = new.count,
-        sampleSize = new.sampleSize,
         score = new.score
     ;
 end;
 
 
+
+create trigger afterInsertEffectEvent after insert on EffectEvent begin
+    insert or replace into Effect(
+        vote_event_id,
+        vote_event_time,
+        tag_id,
+        post_id,
+        note_id,
+        p,
+        q,
+        r,
+        p_count,
+        q_count,
+        r_count,
+        p_size,
+        q_size,
+        r_size
+    ) values (
+        new.vote_event_id,
+        new.vote_event_time,
+        new.tag_id,
+        new.post_id,
+        new.note_id,
+        new.p,
+        new.q,
+        new.r,
+        new.p_count,
+        new.q_count,
+        new.r_count,
+        new.p_size,
+        new.q_size,
+        new.r_size
+    ) on conflict(tag_id, post_id, note_id) do update set
+        vote_event_id = new.vote_event_id,
+        vote_event_time = new.vote_event_time,
+        p = new.p,
+        q = new.q,
+        r = new.r,
+        p_count = new.p_count,
+        q_count = new.q_count,
+        r_count = new.r_count,
+        p_size = new.p_size,
+        q_size = new.q_size,
+        r_size = new.r_size
+    ;
+end;
+
+
+
+
 -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
--- that is, if the voteEventId is greater than lastVoteEvent.voteEventId
+-- that is, if the vote_event_id is greater than lastVoteEvent.vote_event_id
 
 drop trigger if exists afterInsertOnInsertVoteEventImport;
 create trigger afterInsertOnInsertVoteEventImport instead of insert on VoteEventImport
 begin
 
-	insert into VoteEvent(voteEventId, userId, tagId, parentId, postId, noteId, vote, createdAt) 
+	insert into VoteEvent(vote_event_id, vote_event_time, user_id, tag_id, parent_id, post_id, note_id, vote) 
 	select 
-		new.voteEventId,
-		new.userId,
-		new.tagId,
-		case when new.parentId = '' then null else new.parentId end as parentId,
-		new.postId,
-		case when new.noteId = '' then null else new.noteId end as noteId,
-		new.vote,
-		new.createdAt
-	where new.voteEventId > (select importedVoteEventId from lastVoteEvent)
+		new.vote_event_id,
+		new.vote_event_time,
+		new.user_id,
+		new.tag_id,
+		case when new.parent_id = '' then null else new.parent_id end as parent_id,
+		new.post_id,
+		case when new.note_id = '' then null else new.note_id end as note_id,
+		new.vote
+	where new.vote_event_id > (select importedvote_event_id from lastVoteEvent)
 	on conflict do nothing;
 
 	-- We don't actually have keep vote events in this database once the triggers have updated the tallies.
-	-- delete from voteEvent where voteEventId = new.voteEventId;
+	-- delete from voteEvent where vote_event_id = new.vote_event_id;
 end;
 
 
 
-create trigger afterInsertPost after insert on Post when new.parentId is not null begin
-	insert into Lineage(ancestorId, descendantId, separation) values(new.parentId, new.id, 1) on conflict do nothing;
+create trigger afterInsertPost after insert on Post when new.parent_id is not null begin
+	insert into Lineage(ancestor_id, descendant_id, separation) values(new.parent_id, new.id, 1) on conflict do nothing;
 end;
 
 create trigger afterInsertLineage after insert on Lineage
@@ -105,32 +120,35 @@ begin
 	-- Insert a record for all ancestors of this ancestor
 	insert into Lineage
 		select 
-			ancestor.ancestorId as ancestorId,
-			new.descendantId as descendantId,
+			ancestor.ancestor_id as ancestor_id,
+			new.descendant_id as descendant_id,
 			new.separation + ancestor.separation
 		from lineage ancestor 
-		where ancestor.descendantId = new.ancestorId
+		where ancestor.descendant_id = new.ancestor_id
 	on conflict do nothing;
 
 	-- When there is a new post, we need to record an uninformed vote for every user who has voted on the parent
 	-- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
 	-- current user, not *all* users who have voted on the parent.
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, informedVote, uninformedVote) 
+	insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, informed_vote, uninformed_vote) 
 	select
-		vote.userId,
-		vote.tagId,
-		vote.postId, 
-		new.descendantId as noteId,
+		vote.user_id,
+		vote.tag_id,
+		vote.post_id, 
+		new.descendant_id as note_id,
 		2,
 		0,
 		vote.vote
 	from
 		vote
-		where vote.postId = new.ancestorId
+		where vote.post_id = new.ancestor_id
 		and vote.vote != 0
 	;
 
 end;
+
+
+
 
 drop trigger if exists afterInsertOnVoteEvent;
 create trigger afterInsertOnVoteEvent after insert on VoteEvent
@@ -138,222 +156,221 @@ begin
 
 
 	-- Insert/update the vote record
-	insert into Vote(userId, tagId, parentId, postId, vote, latestVoteEventId, createdAt, updatedAt) values (
-		new.userId,
-		new.tagId,
-		new.parentId,
-		new.postId,
-		new.vote,
-		new.voteEventId,
-		new.createdAt,
-		new.createdAt
-	) on conflict(userId, tagId, postId) do update set
+	insert into Vote(vote_event_id, vote_event_time, user_id, tag_id, parent_id, post_id, vote) values (
+		new.vote_event_id,
+		new.vote_event_time,
+		new.user_id,
+		new.tag_id,
+		new.parent_id,
+		new.post_id,
+		new.vote
+	) on conflict(user_id, tag_id, post_id) do update set
 		vote = new.vote
-		, latestVoteEventId = new.voteEventId
-		, updatedAt = new.createdAt
+		, vote_event_id = new.vote_event_id
+		, vote_event_time = new.vote_event_time
 	;
 
-	insert into Post(parentId, id) values(new.parentId, new.postId) on conflict do nothing;
+	insert into Post(parent_id, id) values(new.parent_id, new.post_id) on conflict do nothing;
 
 
 
-	-- Record an informedVote for all children of this post where the user is informed of the child
+	-- Record an informed_vote for all children of this post where the user is informed of the child
 	-- Insert or update conditional vote on this post given voted on (each child of this post)
 	-- 1. find all children of this post that the user has voted on
 	-- 2. insert or update ConditionalVote record
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, uninformed_vote, informed_vote) 
 	select
-		new.userId,
-		new.tagId,
-		new.postId, 
-		VoteOnNote.postId,
+		new.user_id,
+		new.tag_id,
+		new.post_id, 
+		VoteOnNote.post_id,
 		2, -- 2 means voted on note
 		0, 
 		new.vote
 	from Vote VoteOnNote
 	where
-		VoteOnNote.userId = new.userId
-		and VoteOnNote.tagId = new.tagId 
-		and VoteOnNote.postId in (select descendantId from lineage where lineage.ancestorId = new.postId)
+		VoteOnNote.user_id = new.user_id
+		and VoteOnNote.tag_id = new.tag_id 
+		and VoteOnNote.post_id in (select descendant_id from lineage where lineage.ancestor_id = new.post_id)
 		and VoteOnNote.vote != 0
-	on conflict(userId, tagId, postId, noteId, eventType) do update set
-		informedVote = new.vote
+	on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
+		informed_vote = new.vote
 	;
 
 
-	-- Record an informedVote for all children of this post where the user is NOT informed of the child
-    -- The uninformedVote field
+	-- Record an informed_vote for all children of this post where the user is NOT informed of the child
+    -- The uninformed_vote field
 	-- of this record will contain the latest uninformed vote. 
 	-- 1. Find all children of this post that the user has NOT voted on
 	-- 2. Insert or update ConditionalVote record
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, uninformed_vote, informed_vote) 
 	select
-		new.userId,
-		new.tagId,
-		new.postId, 
-		descendant.descendantId as noteId,
+		new.user_id,
+		new.tag_id,
+		new.post_id, 
+		descendant.descendant_id as note_id,
 		2,
 		new.vote,
 		0
 	from Lineage descendant 
 	left join Vote on (
-		vote.userId = new.userId
-		and vote.tagId = new.tagId
-		and vote.postId = descendant.descendantId
+		vote.user_id = new.user_id
+		and vote.tag_id = new.tag_id
+		and vote.post_id = descendant.descendant_id
 		and vote.vote != 0
 	)
 	where
-		descendant.ancestorId = new.postId
-		and Vote.userId is null
-	on conflict(userId, tagId, postId, noteId, eventType) do update set
-		uninformedVote = new.vote
+		descendant.ancestor_id = new.post_id
+		and Vote.user_id is null
+	on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
+		uninformed_vote = new.vote
 	;
 
 	-- insert or update informed vote on parent of post that was voted on, given voted on this note
 	-- 1. get parent of post that was voted on
 	-- 2. insert or update record by joining to current vote
-	insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, uninformed_vote, informed_vote) 
 	select
-		userId,
-		tagId,
-		AncestorVote.postId, -- the parent of the new.postId
-		new.postId, -- the note that was voted on
+		user_id,
+		tag_id,
+		AncestorVote.post_id, -- the parent of the new.post_id
+		new.post_id, -- the note that was voted on
 		2, 
 		0, 
 		ifnull(AncestorVote.vote,0)
 	from Lineage Descendant
 	left join Vote AncestorVote
 	where
-		Descendant.descendantId = new.postId 
-		and AncestorVote.postId = Descendant.ancestorId
-		and AncestorVote.userId = new.userId
-		and AncestorVote.tagId = new.tagId 
+		Descendant.descendant_id = new.post_id 
+		and AncestorVote.post_id = Descendant.ancestor_id
+		and AncestorVote.user_id = new.user_id
+		and AncestorVote.tag_id = new.tag_id 
 
 		-- only do this if the vote is not being cleared
 		and new.vote != 0
-	on conflict(userId, tagId, postId, noteId, eventType) do update set
-		-- get the parent vote again. In this onConflict clause, postId will be the parent because that's the record we tried to insert
-		informedVote = excluded.informedVote
+	on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
+		-- get the parent vote again. In this onConflict clause, post_id will be the parent because that's the record we tried to insert
+		informed_vote = excluded.informed_vote
 	;
 
 
-	-- when the vote on the note is cleared, clear the informedVote, and set the uninformedVote to the previous value of the informedVote
+	-- when the vote on the note is cleared, clear the informed_vote, and set the uninformed_vote to the previous value of the informed_vote
 	update ConditionalVote 
 		set 
-			uninformedVote = informedVote
-			, informedVote = 0
+			uninformed_vote = informed_vote
+			, informed_vote = 0
 	where
 		new.vote = 0
-		and userId = new.userId
-		and tagId = new.tagId
-		and noteId = new.postId
-		and eventType = 2
+		and user_id = new.user_id
+		and tag_id = new.tag_id
+		and note_id = new.post_id
+		and event_type = 2
 	;
 
 
-	-- -- Do the same update for eventType 1 -- look for users who have not been shown note.
-	-- insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	-- -- Do the same update for event_type 1 -- look for users who have not been shown note.
+	-- insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, uninformed_vote, informed_vote) 
 	-- select
-	-- 	new.userId,
-	-- 	new.tagId,
-	-- 	new.postId, 
-	-- 	note.id as noteId,
+	-- 	new.user_id,
+	-- 	new.tag_id,
+	-- 	new.post_id, 
+	-- 	note.id as note_id,
 	-- 	1,
 	-- 	new.vote,
 	-- 	0
 	-- from
 	-- 	Post note 
 	-- 	left join ConditionalVote on (
-	-- 		ConditionalVote.userId = new.userId
-	-- 		and ConditionalVote.tagId = new.tagId
-	-- 		and ConditionalVote.postId = new.postId
-	-- 		and ConditionalVote.noteId = note.id
-	-- 		and ConditionalVote.eventType = 1
-	-- 		and ConditionalVote.informedVote != 0
+	-- 		ConditionalVote.user_id = new.user_id
+	-- 		and ConditionalVote.tag_id = new.tag_id
+	-- 		and ConditionalVote.post_id = new.post_id
+	-- 		and ConditionalVote.note_id = note.id
+	-- 		and ConditionalVote.event_type = 1
+	-- 		and ConditionalVote.informed_vote != 0
 	-- 	)
 	-- 	where
-	-- 		note.parentId = new.postId     -- all notes under the post that was voted on
-	-- 		and note.id != ifnull(new.noteId,0)
-	-- 		and ConditionalVote.userId is null  -- that haven't been shown to this user
-	-- on conflict(userId, tagId, postId, noteId, eventType) do update set
-	-- 	uninformedVote = new.vote
+	-- 		note.parent_id = new.post_id     -- all notes under the post that was voted on
+	-- 		and note.id != ifnull(new.note_id,0)
+	-- 		and ConditionalVote.user_id is null  -- that haven't been shown to this user
+	-- on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
+	-- 	uninformed_vote = new.vote
 	-- ;
 
 
-	-- insert into ConditionalVote(userId, tagId, postId, noteId, eventType, uninformedVote, informedVote) 
+	-- insert into ConditionalVote(user_id, tag_id, post_id, note_id, event_type, uninformed_vote, informed_vote) 
 	-- select 		
-	-- 	new.userId,
-	-- 	new.tagId,
-	-- 	new.postId,
-	-- 	new.noteId,
+	-- 	new.user_id,
+	-- 	new.tag_id,
+	-- 	new.post_id,
+	-- 	new.note_id,
 	-- 	1, -- 1 means "shown note"
 	-- 	0,
 	-- 	new.vote
-	-- where new.noteId is not null
-	-- on conflict(userId, tagId, postId, noteId, eventType) do update set
-	-- 	informedVote = new.vote
+	-- where new.note_id is not null
+	-- on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
+	-- 	informed_vote = new.vote
 	-- ;
 
 
 
-	insert into lastVoteEvent(type, importedVoteEventId) values (1, new.voteEventId) on conflict do update set importedVoteEventId = new.voteEventId;
+	insert into lastVoteEvent(type, importedvote_event_id) values (1, new.vote_event_id) on conflict do update set importedvote_event_id = new.vote_event_id;
 
 end;
 
 drop trigger if exists afterInsertVote;
 create trigger afterInsertVote after insert on Vote begin
 
-	-- update ConditionalVote set informedVote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId;
+	-- update ConditionalVote set informed_vote = new.vote where user_id = new.user_id and tag_id = new.tag_id and post_id = new.post_id;
 
-	insert into Tally(tagId, parentId, postId, latestVoteEventId, count, total) values (
-		new.tagId,
-		new.parentId,
-		new.postId,
-		new.latestVoteEventId,
+	insert into Tally(tag_id, parent_id, post_id, latest_vote_event_id, count, total) values (
+		new.tag_id,
+		new.parent_id,
+		new.post_id,
+		new.vote_event_id,
 		(new.vote == 1),
 		new.vote != 0
-	) on conflict(tagId, postId) do update 
+	) on conflict(tag_id, post_id) do update 
 		set 
 			total = total + (new.vote != 0),
 			count = count + (new.vote == 1),
-			latestVoteEventId = new.latestVoteEventId
+			latest_vote_event_id = new.vote_event_id
 	;
 end;
 
 drop trigger if exists afterUpdateVote;
 create trigger afterUpdateVote after update on Vote begin
 
-	-- update ConditionalVote set informedVote = new.vote where userId = new.userId and tagId = new.tagId and postId = new.postId ;
+	-- update ConditionalVote set informed_vote = new.vote where user_id = new.user_id and tag_id = new.tag_id and post_id = new.post_id ;
 
 	update Tally
 		set 
 			total = total + (new.vote != 0) - (old.vote != 0),
 			count = count + (new.vote == 1) - (old.vote == 1),
-			latestVoteEventId = new.latestVoteEventId
+			latest_vote_event_id = new.vote_event_id
 	where
-		tagId = new.tagId
-		and postId = new.postId
+		tag_id = new.tag_id
+		and post_id = new.post_id
 	;
 end;
 
 drop trigger if exists afterInsertConditional;
 create trigger afterInsertConditionalVote after insert on ConditionalVote begin
 
-	insert into ConditionalTally(tagId, postId, noteId, eventType, informedCount, informedTotal, uninformedCount, uninformedTotal) values (
-		new.tagId,
-		new.postId,
-		new.noteId,
-		new.eventType,
-		(new.informedVote == 1),
-		(new.informedVote != 0),
-		(new.uninformedVote == 1),
-		(new.uninformedVote != 0)
-	) on conflict(tagId, postId, noteId, eventType) do update
+	insert into ConditionalTally(tag_id, post_id, note_id, event_type, informed_count, informed_total, uninformed_count, uninformed_total) values (
+		new.tag_id,
+		new.post_id,
+		new.note_id,
+		new.event_type,
+		(new.informed_vote == 1),
+		(new.informed_vote != 0),
+		(new.uninformed_vote == 1),
+		(new.uninformed_vote != 0)
+	) on conflict(tag_id, post_id, note_id, event_type) do update
 		set
-			informedCount = informedCount + (new.informedVote == 1),
-			informedTotal = informedTotal + (new.informedVote != 0) ,
-			uninformedCount = uninformedCount + (new.uninformedVote == 1),
-			uninformedTotal = uninformedTotal + (new.uninformedVote != 0) 
+			informed_count = informed_count + (new.informed_vote == 1),
+			informed_total = informed_total + (new.informed_vote != 0) ,
+			uninformed_count = uninformed_count + (new.uninformed_vote == 1),
+			uninformed_total = uninformed_total + (new.uninformed_vote != 0) 
 	;
 
 end;
@@ -362,15 +379,15 @@ drop trigger if exists afterUpdateConditionalVote;
 create trigger afterUpdateConditionalVote after update on ConditionalVote begin
 	update ConditionalTally
 		set
-			informedCount = informedCount + ((new.informedVote == 1) - (old.informedVote == 1)),
-			informedTotal = informedTotal + ((new.informedVote != 0) - (old.informedVote != 0)),
-			uninformedCount = uninformedCount + ((new.uninformedVote == 1) - (old.uninformedVote == 1)),
-			uninformedTotal = uninformedTotal + ((new.uninformedVote != 0) - (old.uninformedVote != 0))
+			informed_count = informed_count + ((new.informed_vote == 1) - (old.informed_vote == 1)),
+			informed_total = informed_total + ((new.informed_vote != 0) - (old.informed_vote != 0)),
+			uninformed_count = uninformed_count + ((new.uninformed_vote == 1) - (old.uninformed_vote == 1)),
+			uninformed_total = uninformed_total + ((new.uninformed_vote != 0) - (old.uninformed_vote != 0))
 	where
-		tagId = new.tagId
-		and postId = new.postId
-		and noteId = new.noteId
-		and eventType = new.eventType
+		tag_id = new.tag_id
+		and post_id = new.post_id
+		and note_id = new.note_id
+		and event_type = new.event_type
 	;
 end;
 

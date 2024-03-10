@@ -10,31 +10,61 @@ struct SQLTalliesTree
 end
 
 
-Base.@kwdef struct ScoreEvent
-    voteEventId::Int
-    voteEventTime::Int
-    tagId::Int
-    parentId::Union{Int, Nothing}
-    postId::Int
-    topNoteId::Union{Int,Nothing}
-    parentQ::Union{Float64,Nothing}
-    parentP::Union{Float64,Nothing}
-    q::Float64
-    p::Float64
-    overallProb::Float64
-    parentPSampleSize::Union{Int,Nothing}
-    parentQSampleSize::Union{Int,Nothing}
-    pSampleSize::Int
-    qSampleSize::Int
-    # informedCount::Int
-    # uninformedCount::Int
-    # overallCount::Int
-    # overallSampleSize::Int
-    count::Int
-    sampleSize::Int
-    score::Float64
+Base.@kwdef struct EffectEvent
+    vote_event_id::Int
+    vote_event_time::Int
+    effect::GlobalBrain.Effect
 end
 
+
+Base.@kwdef struct ScoreEvent
+    vote_event_id::Int
+    vote_event_time::Int
+    score::GlobalBrain.Score
+end
+
+
+
+function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Effect)
+     return EffectEvent(
+         vote_event_id,
+         vote_event_time,
+         round_float_fields(e),
+      )
+end
+
+
+function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Score)
+     return ScoreEvent(
+         vote_event_id,
+         vote_event_time,
+         round_float_fields(e),
+      )
+end
+
+
+function round_float_fields(s::T) where T
+    # Get the type of the struct
+    struct_type = typeof(s)
+
+    # Create a dictionary to hold the new field values
+    new_fields = Dict{Symbol, Any}()
+
+    # Iterate over each field in the struct
+    for field in fieldnames(struct_type)
+        field_value = getfield(s, field)
+
+        # Check if the field is a Float64 and round it if it is
+        if field_value isa Float64
+            new_fields[field] = round(field_value, digits=4)
+        else
+            new_fields[field] = field_value
+        end
+    end
+
+    # Use the constructor of the struct to create a new instance
+    return struct_type(; new_fields...)
+end
 
 # Tell Tables.jl that it can access rows in the array
 # Tables.rowaccess(::Type{Vector{Score}}) = true
@@ -44,12 +74,14 @@ end
 
 
 Base.@kwdef struct VoteEvent
-    id::Int
+    vote_event_id::Int
+    vote_event_time::Int
     user_id::String
-    tag_id::Int
+    tag_id::Int64
     parent_id::Union{Int, Nothing}
-    post_id::Int
-    note_id::Union{Int, Nothing}
+    post_id::Int64
+    note_id::Union{Int64,Nothing}
     vote::Int
-    created_at::Int
+    # vote::GlobalBrain.Vote
 end
+

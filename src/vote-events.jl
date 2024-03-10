@@ -1,7 +1,7 @@
 
 function check_schema(input::Dict{String, Any})
     required_keys = Set(
-        ["voteEventId", "userId", "tagId", "parentId", "postId", "noteId", "vote", "createdAt"]
+        ["vote_event_id", "user_id", "tag_id", "parent_id", "post_id", "note_id", "vote", "vote_event_time"]
     )
     if !issubset(required_keys, collect(keys(input)))
         error("Invalid JSON for VoteEvent: $input")
@@ -9,15 +9,16 @@ function check_schema(input::Dict{String, Any})
 end
 
 function parse_vote_event(input::Dict{String, Any})::VoteEvent
+
     return VoteEvent(
-        input["voteEventId"],
-        input["userId"],
-        input["tagId"],
-        input["parentId"],
-        input["postId"],
-        input["noteId"],
-        input["vote"],
-        input["createdAt"],
+        vote_event_id = input["vote_event_id"],
+        vote_event_time = input["vote_event_time"],
+        user_id = input["user_id"],
+        tag_id = input["tag_id"],
+        parent_id = input["parent_id"],
+        post_id = input["post_id"],
+        note_id = input["note_id"],
+        vote = input["vote"],
     )
 end
 
@@ -25,27 +26,34 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
     last_processed_vote_event_id = get_last_processed_vote_event_id(db)
     @info "Last processed vote event: $last_processed_vote_event_id"
 
+
+
+
     for line in eachline(input_stream)
         json = JSON.parse(IOBuffer(line))
-        try
-            check_schema(json)
-        catch
-            @warn "Invalid JSON for VoteEvent: $line"
-            continue
-        end
+
+        check_schema(json)
+
         vote_event = parse_vote_event(json)
         @info (
-            "Got vote event $(vote_event.id) on post:"
+            "Got vote event $(vote_event.vote_event_id) on post:"
                 * " $(vote_event.post_id) at $(Dates.format(now(), "HH:MM:SS"))"
         )
 
-        processed = process_vote_event(db::SQLite.DB, vote_event) do score_event
-            json_data = JSON.json(score_event)
+
+        function emit_event(vote_event_id::Int, vote_event_time::Int, object)
+        end
+
+        processed = process_vote_event(db::SQLite.DB, vote_event) do vote_event_id::Int, vote_event_time::Int, object
+            e = create_event(vote_event_id, vote_event_time, object)
+            insert_event(db, e)
+
+            json_data = JSON.json(e)
             write(output_stream, json_data * "\n")
         end
 
         if !processed
-            @info "Already processed vote event $(vote_event.id)"
+            @info "Already processed vote event $(vote_event.vote_event_id)"
         else
             flush(output_stream)
         end
@@ -57,50 +65,34 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
 end
 
 
-function process_vote_event(output_score_event::Function, db::SQLite.DB, vote_event::VoteEvent)
+function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
     last_processed_vote_event_id = get_last_processed_vote_event_id(db)
-    if vote_event.id <= last_processed_vote_event_id
+    if vote_event.vote_event_id <= last_processed_vote_event_id
         return false
     end
 
     insert_vote_event(db, vote_event)
 
-    update_scores(
-        db, 
-        vote_event.id, 
-        vote_event.created_at
-    ) do score_event
-        output_score_event(score_event)
+    update_scores(db) do event
+        output_event(vote_event.vote_event_id, vote_event.vote_event_time, event)
     end
 
-    last_processed_vote_event_id = vote_event.id
-    set_last_processed_vote_event_id(db, vote_event.id)
+    last_processed_vote_event_id = vote_event.vote_event_id
+    set_last_processed_vote_event_id(db, vote_event.vote_event_id)
 
     return true
 end
 
 
-function update_scores(output_score_event::Function, db::SQLite.DB, vote_event_id::Int, vote_event_time::Int)
-    tallies = get_tallies(db, nothing, nothing)
+function update_scores(output_event::Function, db::SQLite.DB)
+    tallies = get_tallies(db, nothing, nothing, nothing)
 
     if length(tallies) == 0
         throw("No tallies found in the database: vote_event_id=$vote_event_id")
     end
 
     score_tree(
-        tallies,  
-        (score_data) -> begin
-            timestamp = Dates.value(now())
-            for s in score_data
-                # @info (
-                #     "Writing updated score data for post $(s.post_id):"
-                #         * " effect=$(s.effect),"
-                #         * " topNoteEffect=$(s.effect)"
-                # )
-                r = as_score_event(s, vote_event_id, vote_event_time)
-                insert_score_event(db, r)
-                output_score_event(r)
-            end
-        end
+        output_event,
+        tallies
     )
 end
