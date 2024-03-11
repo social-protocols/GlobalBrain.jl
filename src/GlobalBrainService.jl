@@ -23,6 +23,7 @@ include("simulations.jl")
 
 export get_sim_db
 export SimulationPost
+export SimulationVote
 export create_simulation_post!
 export run_simulation!
 

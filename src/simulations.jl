@@ -1,3 +1,17 @@
+struct SimulationPost
+    parent_id::Union{Int, Nothing}
+    post_id::Int
+    content::String
+    created_at::Int
+end
+
+struct SimulationVote
+    parent_id::Union{Int, Nothing}
+    post_id::Int
+    vote::Int
+    user_id::Int
+end
+
 function get_sim_db(path::String; reset::Bool = false)::SQLite.DB
     if (reset | !isfile(path))
         init_sim_db(path)
@@ -14,48 +28,45 @@ function init_sim_db(path::String)
     Base.run(pipeline(`cat sql/simulation-posts.sql`, `sqlite3 $path`))
 end
 
-struct SimulationPost
-    parent_id::Union{Int, Nothing}
-    post_id::Int
-    content::String
-end
-
-function create_simulation_post!(db::SQLite.DB, post::SimulationPost)::Bool
+function create_simulation_post!(db::SQLite.DB, post::SimulationPost)
     DBInterface.execute(
         db,
-        "insert into post (parent_id, id, content) values (?, ?, ?)",
-        [post.parent_id, post.post_id, post.content]
+        "insert into post (parent_id, id, content, created_at) values (?, ?, ?, ?)",
+        [post.parent_id, post.post_id, post.content, post.created_at]
     )
     return true
 end
 
-function run_simulation!(sim::Function, db::SQLite.DB; tag_id=nothing)
+function run_simulation!(sim::Function, db::SQLite.DB; tag_id = nothing)
     @info "Running simulation $(tag_id)..."
     sim(simulation_step!, db, tag_id)
 end
 
 function simulation_step!(
     db::SQLite.DB,
-    parent_id::Union{Int, Nothing},
-    post_id::Int,
-    draws::Vector{Bool},
-    simulation_step!::Int;
-    start_user::Int = 0,
-    tag_id = 1,
+    step::Int,
+    posts::Array{SimulationPost},
+    votes::Array{SimulationVote};
+    tag_id::Int = 1,
 )
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
-    for (i, draw) in enumerate(draws)
-        vote = draw == 1 ? 1 : -1
+    for p in posts
+        create_simulation_post!(db, p)
+    end
+
+    for v in votes
         vote_event = GlobalBrainService.VoteEvent(
             vote_event_id = vote_event_id,
-            vote_event_time = simulation_step!,
-            user_id = string(i + start_user),
+            vote_event_time = step,
+            # TODO: refactor start_user scheme in simulations
+            # user_id = string(i + start_user),
+            user_id = string(v.user_id),
             tag_id = tag_id,
-            parent_id = parent_id,
-            post_id = post_id,
+            parent_id = v.parent_id,
+            post_id = v.post_id,
             note_id = nothing,
-            vote = vote,
+            vote = v.vote,
         )
         GlobalBrainService.process_vote_event(db, vote_event) do vote_event_id::Int, vote_event_time::Int, object
             e = create_event(vote_event_id, vote_event_time, object)

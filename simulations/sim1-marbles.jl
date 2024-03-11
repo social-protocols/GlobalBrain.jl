@@ -3,11 +3,20 @@
 # users vote honestly.
 
 function marbles(step_func::Function, db::SQLite.DB, tag_id::Int)
-    post_id = 1
-    n = 100
+    # --------------------------------------------------------------------------
+    # --- STEP 1 ---------------------------------------------------------------
+    # --------------------------------------------------------------------------
+
+    A = SimulationPost(nothing, 1, "Did you draw a blue marble?", 1)
+    n_users = 100
     p = 0.37
-    draws = rand(Bernoulli(p), n)
-    step_func(db, nothing, post_id, draws, 1; tag_id = tag_id)
+    draws = rand(Bernoulli(p), n_users)
+    posts = [A]
+    votes = [
+        SimulationVote(nothing, A.post_id, d ? 1 : -1, i)
+        for (i, d) in enumerate(draws)
+    ]
+    step_func(db, 1, posts, votes; tag_id = tag_id)
 end
 
 # @testset "Expected results" begin
