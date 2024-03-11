@@ -10,10 +10,7 @@
 # these users also change vote on A accordingly
 # algorithm should estimate posterior_a close to true posterior_a
 
-include("../src/simulations.jl")
-
-run_simulation(tag_id=2) do process_votes
-
+run_simulation(db, tag_id=2) do process_votes
 
     # common priors
     p_a_given_b = .9

@@ -14,32 +14,26 @@ Base.@kwdef struct EffectEvent
     vote_event_id::Int
     vote_event_time::Int
     effect::GlobalBrain.Effect
+    function EffectEvent(vote_event_id::Int, vote_event_time::Int, effect::GlobalBrain.Effect)
+        return new(vote_event_id, vote_event_time, round_float_fields(effect))
+    end
 end
-
 
 Base.@kwdef struct ScoreEvent
     vote_event_id::Int
     vote_event_time::Int
     score::GlobalBrain.Score
+    function ScoreEvent(vote_event_id::Int, vote_event_time::Int, score::GlobalBrain.Score)
+        return new(vote_event_id, vote_event_time, round_float_fields(score))
+    end
 end
-
-
 
 function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Effect)
-     return EffectEvent(
-         vote_event_id,
-         vote_event_time,
-         round_float_fields(e),
-      )
+     return EffectEvent(vote_event_id, vote_event_time, e)
 end
 
-
 function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Score)
-     return ScoreEvent(
-         vote_event_id,
-         vote_event_time,
-         round_float_fields(e),
-      )
+     return ScoreEvent(vote_event_id, vote_event_time, e)
 end
 
 

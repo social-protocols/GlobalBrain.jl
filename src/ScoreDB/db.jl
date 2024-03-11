@@ -4,19 +4,16 @@
 Get a connection to the score database at the provided path. If the database does not
 exist, an error will be thrown.
 """
-function get_score_db(path::String)::SQLite.DB
-    init_score_db(path)
-    return SQLite.DB(path)
-end
-
-function init_score_db(database_path::String)
+function get_score_db(database_path::String)::SQLite.DB
     if !isfile(database_path)
         @info "Initializing database at $database_path"
-        run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
-        run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
-        run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
+        Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
+        Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
+        Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
     end
+    return SQLite.DB(database_path)
 end
+
 
 """
     get_tallies(
@@ -66,9 +63,6 @@ function get_tallies(
             )
         """
 
-
-
-    # println("Querying", sql_query)
     results = DBInterface.execute(db, sql_query, [tag_id, post_id, ancestor_id])
 
     return [
@@ -131,7 +125,8 @@ function get_effect(
     db::SQLite.DB,
     tag_id::Int,
     post_id::Int,
-    note_id::Int)
+    note_id::Int
+)
 
     sql = """
         select
@@ -147,7 +142,7 @@ function get_effect(
 
     r = iterate(results)
 
-    if isnothing(r) 
+    if isnothing(r)
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
@@ -178,14 +173,6 @@ end
 Insert a `Score` instance into the score database.
 """
 function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
-    # using Tables
-    #  # Tell Tables.jl that it can access rows in the array
-    # Tables.rowaccess(::Type{Vector{Score}}) = true
-
-    #  # Tell Tables.jl how to get the rows from the array
-    # Tables.rows(x::Vector{Score}) = x
-    # result = SQLite.load!([score], db, "Score", on_conflict="replace")
-
     sql = """
         insert into ScoreEvent(
               vote_event_id
@@ -204,7 +191,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
-
     """
 
     score = score_event.score
@@ -301,7 +287,6 @@ function get_last_processed_vote_event_id(db::SQLite.DB)
 end
 
 function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
-
     DBInterface.execute(
         db,
         """
@@ -330,5 +315,3 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
         )
     )
 end
-
-
