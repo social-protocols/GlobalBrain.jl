@@ -1,5 +1,3 @@
-# process_votes = init_simulation(1)
-
 # Scenario
 # post: "Did you draw a blue marble?"
 # users vote honestly.

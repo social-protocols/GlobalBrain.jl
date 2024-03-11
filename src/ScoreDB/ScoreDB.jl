@@ -9,17 +9,14 @@ include("db.jl")
 
 export SQLTalliesTree
 export Score
-# export ScoreEvent
-# export EffectEvent
 export create_event
 export VoteEvent
 
 export to_detailed_tally
-# export to_score_event
-# export as_score_event
 export as_tallies_tree
 
 export get_score_db
+export init_score_db
 export get_tallies
 
 export insert_event

@@ -2,16 +2,20 @@
     get_score_db(path::String)::SQLite.DB
 
 Get a connection to the score database at the provided path. If the database does not
-exist, an error will be thrown.
+exist, it will be created.
 """
 function get_score_db(database_path::String)::SQLite.DB
     if !isfile(database_path)
-        @info "Initializing database at $database_path"
-        Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
-        Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
-        Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
+        init_score_db(database_path)
     end
     return SQLite.DB(database_path)
+end
+
+function init_score_db(database_path::String)
+    @info "Initializing database at $database_path"
+    Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
 end
 
 
