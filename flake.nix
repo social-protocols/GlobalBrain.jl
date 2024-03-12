@@ -19,6 +19,7 @@
         devShells = {
           default = with pkgs; pkgs.mkShellNoCC {
             buildInputs = [
+              openssh
               just
               git
               julia-bin

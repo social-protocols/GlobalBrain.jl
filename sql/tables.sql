@@ -74,14 +74,11 @@ create table if not exists EffectEvent(
     , post_id           integer not null 
     , note_id            integer not null
     , p                 real not null
-    , q                 real not null
-    , r                 real not null
     , p_count       integer not null
-    , q_count       integer not null
-    , r_count       integer not null
     , p_size       integer not null
+    , q                 real not null
+    , q_count       integer not null
     , q_size       integer not null
-    , r_size       integer not null
     , primary key(vote_event_id, post_id, note_id)
 ) strict;
 
@@ -93,14 +90,11 @@ create table if not exists Effect(
     , post_id           integer not null 
     , note_id            integer not null
     , p                 real not null
-    , q                 real not null
-    , r                 real not null
     , p_count       integer not null
-    , q_count       integer not null
-    , r_count       integer not null
     , p_size       integer not null
+    , q                 real not null
+    , q_count       integer not null
     , q_size       integer not null
-    , r_size       integer not null
     , primary key(tag_id, post_id, note_id)
 ) strict;
 
@@ -119,25 +113,9 @@ create table if not exists ScoreEvent(
     , primary key(vote_event_id, post_id)
 ) strict;
 
-
-create table if not exists Score(
-    vote_event_id       integer not null
-    , vote_event_time   integer not null
-    , tag_id            integer
-    , post_id           integer not null
-    , top_note_id       integer
-    , o                 real not null
-    , o_count     integer not null
-    , o_size     integer not null
-    , p                 real not null
-    , score             real not null
-    , primary key(tag_id, post_id)
-) strict;
-
-
 create table if not exists LastVoteEvent (
     type integer,
-    importedvote_event_id integer not null default 0,
+    imported_vote_event_id integer not null default 0,
     processed_vote_event_id integer not null default 0,
     primary key(type)
 ) strict;

@@ -1,41 +1,4 @@
 
-create trigger afterInsertScoreEvent after insert on ScoreEvent begin
-    insert or replace into Score(
-        vote_event_id,
-        vote_event_time,
-        tag_id,
-        post_id,
-        top_note_id,
-        o,
-        o_count,
-        o_size,
-        p,
-        score
-    ) values (
-        new.vote_event_id,
-        new.vote_event_time,
-        new.tag_id,
-        new.post_id,
-        new.top_note_id,
-        new.o,
-        new.o_count,
-        new.o_size,
-        new.p,
-        new.score
-    ) on conflict(tag_id, post_id) do update set
-        vote_event_id = new.vote_event_id,
-        vote_event_time = new.vote_event_time,
-        top_note_id = new.top_note_id,
-        o = new.o,
-        o_count = new.o_count,
-        o_size = new.o_size,
-        p = new.p,
-        score = new.score
-    ;
-end;
-
-
-
 create trigger afterInsertEffectEvent after insert on EffectEvent begin
     insert or replace into Effect(
         vote_event_id,
@@ -44,14 +7,11 @@ create trigger afterInsertEffectEvent after insert on EffectEvent begin
         post_id,
         note_id,
         p,
-        q,
-        r,
         p_count,
-        q_count,
-        r_count,
         p_size,
-        q_size,
-        r_size
+        q,
+        q_count,
+        q_size
     ) values (
         new.vote_event_id,
         new.vote_event_time,
@@ -59,26 +19,20 @@ create trigger afterInsertEffectEvent after insert on EffectEvent begin
         new.post_id,
         new.note_id,
         new.p,
-        new.q,
-        new.r,
         new.p_count,
-        new.q_count,
-        new.r_count,
         new.p_size,
-        new.q_size,
-        new.r_size
+        new.q,
+        new.q_count,
+        new.q_size
     ) on conflict(tag_id, post_id, note_id) do update set
         vote_event_id = new.vote_event_id,
         vote_event_time = new.vote_event_time,
         p = new.p,
-        q = new.q,
-        r = new.r,
         p_count = new.p_count,
-        q_count = new.q_count,
-        r_count = new.r_count,
         p_size = new.p_size,
-        q_size = new.q_size,
-        r_size = new.r_size
+        q = new.q,
+        q_count = new.q_count,
+        q_size = new.q_size
     ;
 end;
 
@@ -102,7 +56,7 @@ begin
 		new.post_id,
 		case when new.note_id = '' then null else new.note_id end as note_id,
 		new.vote
-	where new.vote_event_id > (select importedvote_event_id from lastVoteEvent)
+	where new.vote_event_id > (select imported_vote_event_id from lastVoteEvent)
 	on conflict do nothing;
 
 	-- We don't actually have keep vote events in this database once the triggers have updated the tallies.
@@ -313,7 +267,7 @@ begin
 
 
 
-	insert into lastVoteEvent(type, importedvote_event_id) values (1, new.vote_event_id) on conflict do update set importedvote_event_id = new.vote_event_id;
+	insert into lastVoteEvent(type, imported_vote_event_id) values (1, new.vote_event_id) on conflict do update set imported_vote_event_id = new.vote_event_id;
 
 end;
 

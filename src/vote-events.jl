@@ -37,9 +37,10 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         json = JSON.parse(IOBuffer(line))
         check_schema(json)
         vote_event = parse_vote_event(json)
+        println("")
         @info (
             "Got vote event $(vote_event.vote_event_id) on post:"
-                * " $(vote_event.post_id) at $(Dates.format(now(), "HH:MM:SS"))"
+                * " $(vote_event.post_id) ($(vote_event.vote)) at $(Dates.format(now(), "HH:MM:SS"))"
         )
 
         # The `object` parameter is either a ScoreEvent or an EffectEvent depending
@@ -57,7 +58,14 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
             flush(output_stream)
         end
 
-        @info """Processed new events at $(Dates.format(now(), "HH:MM:SS"))"""
+#        @info """Processed new events at $(Dates.format(now(), "HH:MM:SS"))"""
+
+        # break_id = 4
+        # if vote_event.vote_event_id == break_id
+        #     @debug "Exiting after vote event $break_id"
+        #     break;
+        # end
+
     end
 
     close(db)

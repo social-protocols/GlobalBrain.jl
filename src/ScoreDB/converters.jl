@@ -26,14 +26,11 @@ function to_effect_event(row::SQLite.Row)::EffectEvent
             post_id = row[:post_id],
             note_id = row[:note_id],
             p = row[:p],
-            q = row[:q],
-            r = row[:r],
             p_count = row[:p_count],
-            q_count = row[:q_count],
-            r_count = row[:r_count],
+            q = row[:q],
             p_size = row[:p_size],
+            q_count = row[:q_count],
             q_size = row[:q_size],
-            r_size = row[:r_size],
         )
     )
 end

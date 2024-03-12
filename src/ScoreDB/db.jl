@@ -227,16 +227,13 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , post_id
             , note_id
             , p
-            , q
-            , r
             , p_count
-            , q_count
-            , r_count
             , p_size
+            , q
+            , q_count
             , q_size
-            , r_size
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
 
     """
@@ -252,14 +249,11 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect.post_id,
             effect.note_id,
             effect.p,
-            effect.q,
-            effect.r,
             effect.p_count,
-            effect.q_count,
-            effect.r_count,
             effect.p_size,
-            effect.q_size,
-            effect.r_size,
+            effect.q,
+            effect.q_count,
+            effect.q_size
         ),
     )
 end
