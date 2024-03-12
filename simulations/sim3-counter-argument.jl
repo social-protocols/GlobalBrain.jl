@@ -1,27 +1,95 @@
 function counter_argument(step_func::Function, db::SQLite.DB, tag_id::Int)
-    A = 1
-    B = 2
-    C = 3
-    n = 100
+    n_users = 100
 
-    supportersBeliefs = [.2, .4, .05]
-    detractorsBeliefs = [.8, .95, .6]
+    A = SimulationPost(nothing, 4, "A")
+    B = SimulationPost(A.post_id, 5, "B")
+    C = SimulationPost(B.post_id, 6, "C")
 
-    beliefs = [supportersBeliefs detractorsBeliefs]
+    beliefs = Dict(
+        "supporters" => Dict(
+            "A" => Bernoulli(0.2),
+            "A|B" => Bernoulli(0.4),
+            "A|B,C" => Bernoulli(0.05),
+        ),
+        "detractors" => Dict(
+            "A" => Bernoulli(0.8),
+            "A|B" => Bernoulli(0.95),
+            "A|B,C" => Bernoulli(0.6),
+        ),
+    )
 
-    # upvote_probability = beliefs * [n, n] / (2*n)
+    # --------------------------------------------------------------------------
+    # --- STEP 1 ---------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-    draws_A = rand.(Bernoulli.(beliefs[A,:]), n)
-    votes_A = hcat(draws_A...)[:]
-    step_func(db, nothing, A, votes_A, 1; tag_id = tag_id)
+    supporters_draws_A_step_1 = rand(
+        beliefs["supporters"]["A"],
+        trunc(Int, n_users / 2)
+    )
+    detractors_draws_A_step_1 = rand(
+        beliefs["detractors"]["A"],
+        trunc(Int, n_users / 2)
+    )
+    votes_A_step_1 = [
+        v == 1 ?
+            SimulationVote(nothing, A.post_id, 1, i) :
+            SimulationVote(nothing, A.post_id, -1, i)
+        for (i, v) in enumerate(
+            [supporters_draws_A_step_1; detractors_draws_A_step_1]
+        )
+    ]
+    step_func(db, 1, [A], votes_A_step_1; tag_id = tag_id)
 
-    draws_B = rand.(Bernoulli.(beliefs[B,:]), n)
-    votes_B = hcat(draws_B...)[:]
-    step_func(db, A, B, repeat([true], n), 2; tag_id = tag_id) # everyone upvotes B for now
-    step_func(db, nothing, A, votes_B, 2; tag_id = tag_id)
+    # --------------------------------------------------------------------------
+    # --- STEP 2 ---------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-    draws_C = rand.(Bernoulli.(beliefs[C,:]), n)
-    votes_C = hcat(draws_C...)[:]
-    step_func(db, B, C, repeat([true], n), 3; tag_id = tag_id) # everyone upvotes C for now
-    step_func(db, nothing, A, votes_C, 3; tag_id = tag_id)
+    votes_B_step_2 = [SimulationVote(A.post_id, B.post_id, 1, i) for i in 1:n_users]
+    # everyone upvotes B for now
+    step_func(db, 2, [B], votes_B_step_2; tag_id = tag_id)
+
+    supporters_draws_A_step_2 = rand(
+        beliefs["supporters"]["A|B"],
+        trunc(Int, n_users / 2)
+    )
+    detractors_draws_A_step_2 = rand(
+        beliefs["detractors"]["A|B"],
+        trunc(Int, n_users / 2)
+    )
+    votes_A_step_2 = [
+        v == 1 ?
+            SimulationVote(nothing, A.post_id, 1, i) :
+            SimulationVote(nothing, A.post_id, -1, i)
+        for (i, v) in enumerate(
+            [supporters_draws_A_step_2; detractors_draws_A_step_2]
+        )
+    ]
+    step_func(db, 2, SimulationPost[], votes_A_step_2; tag_id = tag_id)
+
+    # --------------------------------------------------------------------------
+    # --- STEP 3 ---------------------------------------------------------------
+    # --------------------------------------------------------------------------
+
+    votes_C_step_3 = [
+        SimulationVote(B.post_id, C.post_id, 1, i)
+        for i in 1:n_users
+    ]
+    # everyone upvotes C for now
+    step_func(db, 3, [C], votes_C_step_3,; tag_id = tag_id)
+
+    supporters_draws_A_step_3 = rand(
+        beliefs["supporters"]["A|B,C"],
+        trunc(Int, n_users / 2)
+    )
+    detractors_draws_A_step_3 = rand(
+        beliefs["detractors"]["A|B,C"],
+        trunc(Int, n_users / 2)
+    )
+    votes_A_step_3 = [
+        v == 1 ?
+            SimulationVote(nothing, A.post_id, 1, i) :
+            SimulationVote(nothing, A.post_id, -1, i)
+        for (i, v) in enumerate([supporters_draws_A_step_3; detractors_draws_A_step_3])
+    ]
+    step_func(db, 3, SimulationPost[], votes_A_step_3,; tag_id = tag_id)
 end
