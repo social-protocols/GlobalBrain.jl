@@ -8,7 +8,7 @@ function marbles(step_func::Function, db::SQLite.DB, tag_id::Int)
     # --- STEP 1 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
 
-    A = SimulationPost(nothing, 1, "Did you draw a blue marble?", 1)
+    A = SimulationPost(nothing, 1, "Did you draw a blue marble?")
     n_users = 100
     p = 0.37
     draws = rand(Bernoulli(p), n_users)

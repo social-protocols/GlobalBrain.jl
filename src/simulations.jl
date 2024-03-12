@@ -2,7 +2,6 @@ struct SimulationPost
     parent_id::Union{Int, Nothing}
     post_id::Int
     content::String
-    created_at::Int
 end
 
 struct SimulationVote
@@ -28,11 +27,11 @@ function init_sim_db(path::String)
     Base.run(pipeline(`cat sql/simulation-posts.sql`, `sqlite3 $path`))
 end
 
-function create_simulation_post!(db::SQLite.DB, post::SimulationPost)
+function create_simulation_post!(db::SQLite.DB, post::SimulationPost, created_at::Int)::Bool
     DBInterface.execute(
         db,
         "insert into post (parent_id, id, content, created_at) values (?, ?, ?, ?)",
-        [post.parent_id, post.post_id, post.content, post.created_at]
+        [post.parent_id, post.post_id, post.content, created_at]
     )
     return true
 end
@@ -52,7 +51,7 @@ function simulation_step!(
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
     for p in posts
-        create_simulation_post!(db, p)
+        create_simulation_post!(db, p, step)
     end
 
     for v in votes
