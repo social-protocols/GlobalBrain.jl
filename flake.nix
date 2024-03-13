@@ -24,6 +24,7 @@
               julia-bin
               libgcc
               sqlite-interactive
+              litecli
               vim
               neovim
               less

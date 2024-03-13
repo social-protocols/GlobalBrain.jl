@@ -33,7 +33,7 @@ sim:
     # && sqlite3 $SIM_DATABASE_PATH "select * from score;"
 
 sim-db:
-    sqlite3 $SIM_DATABASE_PATH
+    litecli $SIM_DATABASE_PATH
 
 ############ TESTS ##############
 
