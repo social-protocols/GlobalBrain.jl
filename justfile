@@ -32,5 +32,8 @@ app:
 
 ############ TESTS ##############
 
+unit-tests:
+    julia --project --eval "using Pkg; Pkg.test()"
+
 test:
     ./test.sh
