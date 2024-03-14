@@ -1,15 +1,13 @@
-function score(effect::Effect)::Float64 
-	return relative_entropy(effect.p, effect.q)
+function score(effect::Effect)::Float64
+    return relative_entropy(effect.p, effect.q)
 end
 
 function total_score(
     effects::Vector{Effect},
-    top_note_effect::Union{Effect, Nothing},
+    top_note_effect::Union{Effect,Nothing},
     tally::BernoulliTally,
 )::Float64
-    r = GLOBAL_PRIOR_UPVOTE_PROBABILITY |>
-        (x -> update(x, tally)) |>
-        (x -> x.mean)
+    r = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, tally)) |> (x -> x.mean)
 
     p = isnothing(top_note_effect) ? r : top_note_effect.p
 
@@ -18,4 +16,3 @@ function total_score(
 
     return post_score + note_score
 end
-

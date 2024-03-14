@@ -3,7 +3,7 @@ Base.@kwdef struct VoteEvent
     vote_event_time::Int
     user_id::String
     tag_id::Int64
-    parent_id::Union{Int, Nothing}
+    parent_id::Union{Int,Nothing}
     post_id::Int64
     note_id::Union{Int64,Nothing}
     vote::Int
@@ -31,18 +31,18 @@ end
 
 
 function as_event(vote_event_id::Int, vote_event_time::Int, e::Effect)
-     return EffectEvent(vote_event_id, vote_event_time, e)
+    return EffectEvent(vote_event_id, vote_event_time, e)
 end
 
 function as_event(vote_event_id::Int, vote_event_time::Int, e::Score)
-     return ScoreEvent(vote_event_id, vote_event_time, e)
+    return ScoreEvent(vote_event_id, vote_event_time, e)
 end
 
 
 # This function works for structs with keyword constructors
-function round_float_fields(s::T) where T
+function round_float_fields(s::T) where {T}
     struct_type = typeof(s)
-    new_fields = Dict{Symbol, Any}()
+    new_fields = Dict{Symbol,Any}()
     for field in fieldnames(struct_type)
         field_value = getfield(s, field)
         if field_value isa Float64

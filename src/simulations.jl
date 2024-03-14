@@ -1,11 +1,11 @@
 struct SimulationPost
-    parent_id::Union{Int, Nothing}
+    parent_id::Union{Int,Nothing}
     post_id::Int
     content::String
 end
 
 struct SimulationVote
-    parent_id::Union{Int, Nothing}
+    parent_id::Union{Int,Nothing}
     post_id::Int
     vote::Int
     user_id::Int
@@ -31,7 +31,7 @@ function create_simulation_post!(db::SQLite.DB, post::SimulationPost, created_at
     DBInterface.execute(
         db,
         "insert into post (parent_id, id, content, created_at) values (?, ?, ?, ?)",
-        [post.parent_id, post.post_id, post.content, created_at]
+        [post.parent_id, post.post_id, post.content, created_at],
     )
     return true
 end
@@ -67,7 +67,10 @@ function simulation_step!(
             note_id = nothing,
             vote = v.vote,
         )
-        process_vote_event(db, vote_event) do vote_event_id::Int, vote_event_time::Int, object
+        process_vote_event(
+            db,
+            vote_event,
+        ) do vote_event_id::Int, vote_event_time::Int, object
             e = as_event(vote_event_id, vote_event_time, object)
             insert_event(db, e)
         end

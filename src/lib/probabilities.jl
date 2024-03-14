@@ -11,10 +11,7 @@ Update a `BetaDistribution` with a `BernoulliTally`.
 See also [`BetaDistribution`](@ref), [`BernoulliTally`](@ref).
 """
 function update(prior::BetaDistribution, new_data::BernoulliTally)::BetaDistribution
-    return BetaDistribution(
-        bayesian_avg(prior, new_data),
-        prior.weight + new_data.size,
-    )
+    return BetaDistribution(bayesian_avg(prior, new_data), prior.weight + new_data.size)
 end
 
 
@@ -31,10 +28,7 @@ Update a `GammaDistribution` with a `PoissonTally`.
 See also [`GammaDistribution`](@ref), [`PoissonTally`](@ref).
 """
 function update(prior::GammaDistribution, new_data::PoissonTally)::GammaDistribution
-    return GammaDistribution(
-        bayesian_avg(prior, new_data),
-        prior.weight + new_data.size,
-    )
+    return GammaDistribution(bayesian_avg(prior, new_data), prior.weight + new_data.size)
 end
 
 
@@ -51,10 +45,7 @@ Calculate the Bayesian average of a distribution with new data.
 See also [`Distribution`](@ref), [`Tally`](@ref).
 """
 function bayesian_avg(prior::Distribution, new_data::Tally)::Float64
-    return (
-        (prior.mean * prior.weight + new_data.count) /
-        (prior.weight + new_data.size)
-    )
+    return ((prior.mean * prior.weight + new_data.count) / (prior.weight + new_data.size))
 end
 
 
@@ -137,5 +128,5 @@ end
 
 
 function unpack(t::Tally)
-  return (t.count, t.size)
+    return (t.count, t.size)
 end

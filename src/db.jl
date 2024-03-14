@@ -47,9 +47,9 @@ The function returns a vector of `SQLTalliesTree`s.
 """
 function get_tallies(
     db::SQLite.DB,
-    tag_id::Union{Int, Nothing},
-    post_id::Union{Int, Nothing},
-    ancestor_id::Union{Int, Nothing},
+    tag_id::Union{Int,Nothing},
+    post_id::Union{Int,Nothing},
+    ancestor_id::Union{Int,Nothing},
 )::Vector{TalliesTree}
     sql_query = """
         select
@@ -84,18 +84,12 @@ function get_tallies(
 
     return [
         SQLTalliesTree(sql_row_to_detailed_tally(row), row[:needsRecalculation], db) |>
-            as_tallies_tree
-        for row in results
+        as_tallies_tree for row in results
     ]
 end
 
 
-function get_effect(
-    db::SQLite.DB,
-    tag_id::Int,
-    post_id::Int,
-    note_id::Int
-)
+function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
 
     sql = """
         select
@@ -122,14 +116,13 @@ end
 function as_tallies_tree(t::SQLTalliesTree)
     return TalliesTree(
         # (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
-        (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, t.tally.post_id),
+        (ancestor_id) ->
+            get_tallies(t.db, t.tally.tag_id, t.tally.post_id, t.tally.post_id),
         () -> t.tally,
         () -> t.needs_recalculation,
         () -> get_effect(t.db, t.tally.tag_id, t.tally.parent_id, t.tally.post_id),
     )
 end
-
-
 
 
 """
@@ -217,7 +210,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect.p_size,
             effect.q,
             effect.q_count,
-            effect.q_size
+            effect.q_size,
         ),
     )
 end
@@ -237,7 +230,7 @@ function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
     DBInterface.execute(
         db,
         "update lastVoteEvent set processed_vote_event_id = ?",
-        [vote_event_id]
+        [vote_event_id],
     )
 end
 
@@ -275,7 +268,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
             vote_event.post_id,
             vote_event.note_id,
             vote_event.vote,
-        )
+        ),
     )
 end
 
@@ -313,6 +306,6 @@ function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
             p_size = row[:p_size],
             q_count = row[:q_count],
             q_size = row[:q_size],
-        )
+        ),
     )
 end

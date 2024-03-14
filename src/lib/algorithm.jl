@@ -11,11 +11,8 @@ Score a tree of tallies.
       writing to a database.
     * `tallies::Base.Generator`: A `Base.Generator` of `SQLTalliesTree`s.
 """
-function score_tree(
-    output_results::Function,
-    tallies::Vector{TalliesTree}
-)
-    effects = Dict{Int, Vector{Effect}}()
+function score_tree(output_results::Function, tallies::Vector{TalliesTree})
+    effects = Dict{Int,Vector{Effect}}()
 
     for post in tallies
         score_post(output_results, post, effects)
@@ -26,7 +23,7 @@ end
 function score_post(
     output_results::Function,
     post::TalliesTree,
-    effects::Dict{Int, Vector{Effect}},
+    effects::Dict{Int,Vector{Effect}},
 )
 
     this_tally = post.tally()
@@ -41,10 +38,8 @@ function score_post(
     post_id = this_tally.post_id
 
     # @info "Scoring post $post_id"
-    
-    o =
-        GLOBAL_PRIOR_UPVOTE_PROBABILITY |>
-        (x -> update(x, this_tally.overall))
+
+    o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally.overall))
 
     # @info "Overall probability in score_post for $post_id is $(o.mean)"
 
@@ -72,7 +67,7 @@ function score_post(
         o_size = this_tally.overall.size,
         p = !isnothing(top_note_effect) ? top_note_effect.p : o.mean,
         score = my_score,
-    ) 
+    )
 
     output_results(score)
 
@@ -83,7 +78,7 @@ function find_top_note_effect_relative(
     post_id::Int,
     r::BetaDistribution,
     note::TalliesTree,
-    effects::Dict{Int, Vector{Effect}},
+    effects::Dict{Int,Vector{Effect}},
 )::Union{Effect,Nothing}
 
     note_id = note.tally().post_id
@@ -101,29 +96,32 @@ function find_top_note_effect_relative(
 
     # @info "Getting child effects"
 
-    child_effects = [calc_note_effect_relative(post_id, r, child, effects) for child in children]
+    child_effects =
+        [calc_note_effect_relative(post_id, r, child, effects) for child in children]
 
     # @info "Got child effects $child_effects"
 
     for effect in child_effects
-        add!(effects, effect) 
+        add!(effects, effect)
     end
 
-    return reduce(
-        (a, b) -> begin
-            ma = isnothing(a) ? 0 : score_effect(a)
-            mb = isnothing(b) ? 0 : score_effect(b)
-            ma > mb ? a : b
-        end,
-        child_effects
-    )
+    return reduce((a, b) -> begin
+        ma = isnothing(a) ? 0 : score_effect(a)
+        mb = isnothing(b) ? 0 : score_effect(b)
+        ma > mb ? a : b
+    end, child_effects)
 end
 
 
-function calc_note_effect_relative(post_id, prior::BetaDistribution, note::TalliesTree, effects)
+function calc_note_effect_relative(
+    post_id,
+    prior::BetaDistribution,
+    note::TalliesTree,
+    effects,
+)
 
-        # this_note_effect = 
-        # @info "Calculated relative note effect $post_id, $prior, $(note.tally().post_id): $effect"
+    # this_note_effect = 
+    # @info "Calculated relative note effect $post_id, $prior, $(note.tally().post_id): $effect"
     tally = note.tally()
     note_id = tally.post_id
 
@@ -155,12 +153,13 @@ function calc_note_effect_relative(post_id, prior::BetaDistribution, note::Talli
     # end
 
 
-    top_child_effect = find_top_note_effect_relative(post_id, informed_probability, note, effects)
+    top_child_effect =
+        find_top_note_effect_relative(post_id, informed_probability, note, effects)
 
     @info "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
 
     informed_probability_adjusted = if !isnothing(top_child_effect)
-        top_child_effect.p 
+        top_child_effect.p
     else
         informed_probability.mean
     end
@@ -171,11 +170,9 @@ function calc_note_effect_relative(post_id, prior::BetaDistribution, note::Talli
         tag_id = tally.tag_id,
         post_id = post_id,
         note_id = note_id,
-
         p = informed_probability_adjusted,
         p_count = tally.informed.count,
         p_size = tally.informed.size,
-
         q = uninformed_probability,
         q_count = tally.uninformed.count,
         q_size = tally.uninformed.size,
@@ -183,7 +180,7 @@ function calc_note_effect_relative(post_id, prior::BetaDistribution, note::Talli
 end
 
 
-function add!(effects::Dict{Int, Vector{Effect}}, effect::Effect)
+function add!(effects::Dict{Int,Vector{Effect}}, effect::Effect)
     if !haskey(effects, effect.note_id)
         effects[effect.note_id] = []
     end

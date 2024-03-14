@@ -7,8 +7,8 @@ end
 
 
 struct InMemoryTree
-  tally::DetailedTally
-  children::Vector{InMemoryTree}
+    tally::DetailedTally
+    children::Vector{InMemoryTree}
 end
 
 

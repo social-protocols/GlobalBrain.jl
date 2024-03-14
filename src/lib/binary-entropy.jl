@@ -13,8 +13,8 @@ function surprisal(p::Float64, unit::Int = 2)::Float64
     @assert(p > 0.0, "Surprisal is not defined for a probability of 0")
     @assert(
         p <= 1.0,
-        "Surprisal cannot be calculated for p = $p because"
-            * " probability cannot be greater than 1.0"
+        "Surprisal cannot be calculated for p = $p because" *
+        " probability cannot be greater than 1.0"
     )
     return log(unit, 1 / p)
 end
@@ -52,10 +52,7 @@ function cross_entropy(p::Float64, q::Float64; unit = 2)::Float64
         "Bernoulli parameters need to be <= 1.0; got p = $p and q = $q"
     )
     @assert(p >= 0.0, "Bernoulli parameter p needs to be >= 0.0; got p = $p")
-    @assert(
-        1.0 > q > 0.0,
-        "Bernoulli parameter q needs to be in (0, 1); got q = $q"
-    )
+    @assert(1.0 > q > 0.0, "Bernoulli parameter q needs to be in (0, 1); got q = $q")
     return (
         ((p == 1.0) && (q == 1.0)) || ((p == 0.0) && (q == 0.0)) ? 0 :
         p * surprisal(q, unit) + (1 - p) * surprisal(1 - q, unit)
@@ -80,10 +77,7 @@ function relative_entropy(p::Float64, q::Float64)::Float64
         "Bernoulli parameters need to be <= 1.0; got p = $p and q = $q"
     )
     @assert(p >= 0.0, "Bernoulli parameter p needs to be >= 0.0; got p = $p")
-    @assert(
-        1.0 > q > 0.0,
-        "Bernoulli parameter q needs to be in (0, 1); got q = $q"
-    )
+    @assert(1.0 > q > 0.0, "Bernoulli parameter q needs to be in (0, 1); got q = $q")
     @assert(1 >= p > 0, "Bernoulli parameter p must be in (0, 1], but got p = $p")
     return cross_entropy(p, q) - entropy(p)
 end

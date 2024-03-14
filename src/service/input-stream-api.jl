@@ -1,18 +1,16 @@
-INPUT_STREAM_VOTE_EVENT_SCHEMA = Set(
-    [
-        "vote_event_id",
-        "user_id",
-        "tag_id",
-        "parent_id",
-        "post_id",
-        "note_id",
-        "vote",
-        "vote_event_time"
-    ]
-)
+INPUT_STREAM_VOTE_EVENT_SCHEMA = Set([
+    "vote_event_id",
+    "user_id",
+    "tag_id",
+    "parent_id",
+    "post_id",
+    "note_id",
+    "vote",
+    "vote_event_time",
+])
 
 
-function check_schema_or_throw(input::Dict{String, Any}, required_schema::Set)::Bool
+function check_schema_or_throw(input::Dict{String,Any}, required_schema::Set)::Bool
     is_valid_schema = issubset(required_schema, collect(keys(input)))
     if is_valid_schema
         return true
@@ -22,7 +20,7 @@ function check_schema_or_throw(input::Dict{String, Any}, required_schema::Set)::
 end
 
 
-function parse_vote_event(input::Dict{String, Any})::VoteEvent
+function parse_vote_event(input::Dict{String,Any})::VoteEvent
     return VoteEvent(
         vote_event_id = input["vote_event_id"],
         vote_event_time = input["vote_event_time"],

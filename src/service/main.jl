@@ -8,7 +8,11 @@ function julia_main()::Cint
     global_brain_service(database_path, vote_events_path, output_path)
 end
 
-function global_brain_service(database_path::String, vote_events_path::String, output_path::String)
+function global_brain_service(
+    database_path::String,
+    vote_events_path::String,
+    output_path::String,
+)
     if length(database_path) == 0
         error("Missing vote database filename argument")
     end

@@ -5,6 +5,9 @@ _default:
 instantiate:
     julia --project -e 'using Pkg; Pkg.instantiate()'
 
+format:
+    julia --project --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
+
 run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH
     tail -n +0 -F $VOTE_EVENTS_PATH | julia --project -- scripts/run.jl $DATABASE_PATH - $SCORE_EVENTS_PATH
