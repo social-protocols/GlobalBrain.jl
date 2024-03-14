@@ -1,5 +1,4 @@
-include(joinpath("..", "src", "GlobalBrainService.jl"))
-using Main.GlobalBrainService
-
+include(joinpath("..", "src", "GlobalBrain.jl"))
+using Main.GlobalBrain
 
 julia_main()

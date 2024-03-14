@@ -1,5 +1,5 @@
-include("../src/GlobalBrainService.jl")
-using Main.GlobalBrainService
+include("../src/GlobalBrain.jl")
+using Main.GlobalBrain
 using Random
 using Distributions
 using SQLite

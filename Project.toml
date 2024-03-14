@@ -1,4 +1,4 @@
-name = "GlobalBrainService"
+name = "GlobalBrain"
 uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"
 authors = ["Johannes Nakayama", "Jonathan Warden"]
 version = "1.0.0-DEV"

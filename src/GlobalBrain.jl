@@ -1,4 +1,4 @@
-module GlobalBrainService
+module GlobalBrain
 
 using JSON
 using SQLite

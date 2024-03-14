@@ -55,7 +55,7 @@ function simulation_step!(
     end
 
     for v in votes
-        vote_event = GlobalBrainService.VoteEvent(
+        vote_event = VoteEvent(
             vote_event_id = vote_event_id,
             vote_event_time = step,
             # TODO: refactor start_user scheme in simulations
@@ -67,7 +67,7 @@ function simulation_step!(
             note_id = nothing,
             vote = v.vote,
         )
-        GlobalBrainService.process_vote_event(db, vote_event) do vote_event_id::Int, vote_event_time::Int, object
+        process_vote_event(db, vote_event) do vote_event_id::Int, vote_event_time::Int, object
             e = as_event(vote_event_id, vote_event_time, object)
             insert_event(db, e)
         end
