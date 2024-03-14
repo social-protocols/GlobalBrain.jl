@@ -24,7 +24,6 @@ function init_sim_db(path::String)
         rm(path)
     end
     init_score_db(path)
-    Base.run(pipeline(`cat sql/simulation-posts.sql`, `sqlite3 $path`))
 end
 
 function create_simulation_post!(db::SQLite.DB, post::SimulationPost, created_at::Int)::Bool
