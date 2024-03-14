@@ -9,51 +9,38 @@ using Distributions
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
 include("lib/models/discussion-trees.jl")
-
 include("lib/constants.jl")
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
 include("lib/algorithm.jl")
 include("lib/score.jl")
 include("lib/note-effect.jl")
-
 include("service/events.jl")
 include("service/input-stream-api.jl")
 include("service/vote-event-processing.jl")
 include("service/main.jl")
-
 include("db.jl")
-
 include("simulations.jl")
 
-# Service
+# --- Service
 export julia_main
 export global_brain_service
 export process_vote_events_stream
 
-# Simulations
-export get_sim_db
-export SimulationPost
-export SimulationVote
-export create_simulation_post!
-export run_simulation!
-
+# --- Algorithm
+export TalliesTree
+export InMemoryTree
 export SQLTalliesTree
 export as_event
-export VoteEvent
-
 export Effect
 export Score
 export EffectEvent
 export ScoreEvent
-
-export TalliesTree
-export InMemoryTree
-
+export VoteEvent
 export score_tree
 export score
 
-# Database
+# --- Database
 export get_score_db
 export init_score_db
 export get_tallies
@@ -91,5 +78,12 @@ export entropy
 export cross_entropy
 export relative_entropy
 export information_gain
+
+# --- Simulations
+export get_sim_db
+export SimulationPost
+export SimulationVote
+export create_simulation_post!
+export run_simulation!
 
 end
