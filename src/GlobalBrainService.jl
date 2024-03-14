@@ -5,7 +5,9 @@ using SQLite
 using DataFrames
 using Dates
 
-include("lib/types.jl")
+include("lib/models/probability-models.jl")
+include("lib/models/evaluation.jl")
+include("lib/models/discussion-trees.jl")
 include("lib/constants.jl")
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
