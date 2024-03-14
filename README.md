@@ -1,50 +1,39 @@
-# Global Brain Note Scoring Service
+<h1 align="center" style="border-bottom: none">
+    The Global Brain Algorithm
+</h1>
+
 
 >[!NOTE]
->A Julia service that consumes an input stream of vote events and outputs a stream of top reply scores.
+>*This is a reference implementation and experimentation sandbox for the [Global Brain algorithm](https://social-protocols.org/global-brain/).*
 
-## Overview
+
+## Setup
 
 To get a dev shell, run `direnv allow`.
 This will copy the contents from .env.example to a .env file, set the environment variables, and fetch the required dependencies.
-
-To run with test data (located in `testdata/`), execute:
-
-```
-just runtest
-```
-
-To run with real data, execute:
-
-```
-just run
-```
-
 Make sure to check out the `.env.example` file to see the required environment variables.
 
-To inspect the produced data:
 
-```
-just sqlite
-```
+## Project Structure
 
-## Compilation to Avoid Startup Lag
+This project is structured as a Julia module, so the code is located in `src`.
+Within `src`, there are two main components: `lib` and `service`.
+The `lib` folder contains the algorithm along with the tooling around it and the service folder contains a service that consumes a vote stream and outputs a top reply score stream.
+As the service maintains some state, `db.jl` contains a SQLite database interface.
+Finally, `simulations.jl` contains a simulation framework with which simple scenarios can be created and run on the Global Brain algorithm.
 
-`just run` and `just runtest` do not run precompiled versions of the code, so the startup time might lag.
-`ScheduledScoring.jl` setup according to the structure required by [`PackageCompiler.jl`](https://github.com/JuliaLang/PackageCompiler.jl) to produce an executable app with `create_app`.
+## Workflows
 
->[!WARNING]
->This might currently be broken, since we haven't tested it after a structure change.
+We use the [`just`](https://github.com/casey/just) command runner to automate workflows.
+Following are a few of the recipes we provide.
 
-To compile the app, execute:
+- run the service: `just run`
+- reset the service database: `just reset-db`
+- open a sqlite REPL of the service database: `just db`
 
-```
-just compile
-```
+- run the simulations: `just sim`
+- open a sqlite REPL of the simulation database: `just sim-db`
+- run the simulation visualization app: `just app`
 
-To update the depedencies, navigate to the `ScheduledScoring.jl` folder and execute:
-
-```
-just up
-```
-
+- run Julia unit tests: `just unit-tests`
+- run algorithm integration tests: `just test`
