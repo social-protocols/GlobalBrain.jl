@@ -8,6 +8,7 @@ using Dates
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
 include("lib/models/discussion-trees.jl")
+
 include("lib/constants.jl")
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
@@ -21,6 +22,10 @@ include("service/main.jl")
 
 include("db.jl")
 
+include("simulations.jl")
+
+
+
 export Score
 export VoteEvent
 export julia_main
@@ -28,8 +33,10 @@ export global_brain_service
 export get_score_db
 export process_vote_events_stream
 
+export EffectEvent
+export ScoreEvent
+
 # Simulations
-include("simulations.jl")
 export get_sim_db
 export SimulationPost
 export SimulationVote
@@ -58,7 +65,6 @@ export insert_vote_event
 
 # GlobalBrain
 
-export Post
 export Model
 export BetaBernoulli
 export GammaPoisson

@@ -1,4 +1,3 @@
-
 # Global prior on the vote rate (votes / attention). By definition the prior
 # average is 1, because attention is calculated as the expected votes for the
 # average post.

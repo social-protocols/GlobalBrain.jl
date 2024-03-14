@@ -121,4 +121,3 @@ Short-hand for `Distribution{GammaPoisson}`.
 See also [`Distribution`](@ref), [`Model`](@ref).
 """
 const GammaDistribution = Distribution{GammaPoisson}
-

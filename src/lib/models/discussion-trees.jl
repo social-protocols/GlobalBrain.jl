@@ -32,4 +32,3 @@ function TalliesTree(t::InMemoryTree)
         (ancestor_id) -> nothing,
     )
 end
-

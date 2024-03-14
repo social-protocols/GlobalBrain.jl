@@ -1,4 +1,3 @@
-
 """
     score_tree(
         output_result::Function,
@@ -12,7 +11,6 @@ Score a tree of tallies.
       writing to a database.
     * `tallies::Base.Generator`: A `Base.Generator` of `SQLTalliesTree`s.
 """
-
 function score_tree(
     output_results::Function,
     tallies::Vector{TalliesTree}
@@ -121,6 +119,7 @@ function find_top_note_effect_relative(
     )
 end
 
+
 function calc_note_effect_relative(post_id, prior::BetaDistribution, note::TalliesTree, effects)
 
         # this_note_effect = 
@@ -185,17 +184,13 @@ end
 
 
 function add!(effects::Dict{Int, Vector{Effect}}, effect::Effect)
-
     if !haskey(effects, effect.note_id)
         effects[effect.note_id] = []
     end
-
     push!(effects[effect.note_id], effect)
-
 end
 
 
 function score_effect(effect::Effect)
     return relative_entropy(effect.p, effect.q) * effect.p_size
 end
-
