@@ -84,14 +84,11 @@ function calc_note_effect_bayesian_average(tally::DetailedTally)
         post_id = tally.parent_id,
         note_id = tally.post_id,
         p = informed_probability,
-        q = uninformed_probability,
-        r = uninformed_probability,
         p_count = tally.informed.count,
-        q_count = tally.uninformed.count,
-        r_count = tally.parent.count,
         p_size = tally.informed.size,
+        q = uninformed_probability,
+        q_count = tally.uninformed.count,
         q_size = tally.uninformed.size,
-        r_size = tally.uninformed.size,
     )
 end
 

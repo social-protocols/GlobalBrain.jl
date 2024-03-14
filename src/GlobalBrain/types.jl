@@ -151,13 +151,8 @@ All tallies for a post.
     * `tag_id::Int64`: The tag id.
     * `parent_id::Union{Int64, Nothing}`: The id of the parent
     of this post if any.
-<<<<<<< Updated upstream
     * `post_id::Int64`: The id of this post.
     * `parent::BernoulliTally`: The current tally tally for the **parent of
-=======
-    * `post_id::Int64`: The unique identifier of this post.
-    * `parent::BernoulliTally`: The current tally for the **parent of
->>>>>>> Stashed changes
     this post**
     * `uninformed::BernoulliTally`: The tally for the **parent of this post**
     given user was not informed of this note.
@@ -198,14 +193,11 @@ Base.@kwdef struct Effect
     post_id::Int64
     note_id::Union{Int64,Nothing}
     p::Float64
-    q::Float64
-    r::Float64
     p_count::Int64
-    q_count::Int64
-    r_count::Int64
     p_size::Int64
+    q::Float64
+    q_count::Int64
     q_size::Int64
-    r_size::Int64
 end
 
 
