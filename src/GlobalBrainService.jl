@@ -17,6 +17,7 @@ include("lib/score.jl")
 include("lib/note-effect.jl")
 
 include("service/events.jl")
+include("service/input-stream-api.jl")
 include("service/vote-event-processing.jl")
 include("service/main.jl")
 

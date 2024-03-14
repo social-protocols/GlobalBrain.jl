@@ -106,7 +106,6 @@ function get_effect(
 end
 
 
-
 function as_tallies_tree(t::SQLTalliesTree)
     return TalliesTree(
         # (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
