@@ -39,23 +39,18 @@ function create_event(vote_event_id::Int, vote_event_time::Int, e::Score)
 end
 
 
+# This function works for structs with keyword constructors
 function round_float_fields(s::T) where T
     struct_type = typeof(s)
     new_fields = Dict{Symbol, Any}()
-
-    # Iterate over each field in the struct
     for field in fieldnames(struct_type)
         field_value = getfield(s, field)
-
-        # Check if the field is a Float64 and round it if it is
         if field_value isa Float64
-            new_fields[field] = round(field_value, digits=4)
+            new_fields[field] = round(field_value, digits = 4)
         else
             new_fields[field] = field_value
         end
     end
-
-    # Use the constructor of the struct to create a new instance
     return struct_type(; new_fields...)
 end
 
