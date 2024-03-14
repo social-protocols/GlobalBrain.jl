@@ -4,44 +4,56 @@
 A data structure to represent a tree of tallies stored in an SQLite database.
 """
 struct SQLTalliesTree
-    tally::GlobalBrain.DetailedTally
+    tally::DetailedTally
     needs_recalculation::Bool
     db::SQLite.DB
+end
+
+
+Base.@kwdef struct VoteEvent
+    vote_event_id::Int
+    vote_event_time::Int
+    user_id::String
+    tag_id::Int64
+    parent_id::Union{Int, Nothing}
+    post_id::Int64
+    note_id::Union{Int64,Nothing}
+    vote::Int
+    # vote::GlobalBrain.Vote
 end
 
 
 Base.@kwdef struct EffectEvent
     vote_event_id::Int
     vote_event_time::Int
-    effect::GlobalBrain.Effect
-    function EffectEvent(vote_event_id::Int, vote_event_time::Int, effect::GlobalBrain.Effect)
+    effect::Effect
+    function EffectEvent(vote_event_id::Int, vote_event_time::Int, effect::Effect)
         return new(vote_event_id, vote_event_time, round_float_fields(effect))
     end
 end
 
+
 Base.@kwdef struct ScoreEvent
     vote_event_id::Int
     vote_event_time::Int
-    score::GlobalBrain.Score
-    function ScoreEvent(vote_event_id::Int, vote_event_time::Int, score::GlobalBrain.Score)
+    score::Score
+    function ScoreEvent(vote_event_id::Int, vote_event_time::Int, score::Score)
         return new(vote_event_id, vote_event_time, round_float_fields(score))
     end
 end
 
-function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Effect)
+
+function create_event(vote_event_id::Int, vote_event_time::Int, e::Effect)
      return EffectEvent(vote_event_id, vote_event_time, e)
 end
 
-function create_event(vote_event_id::Int, vote_event_time::Int, e::GlobalBrain.Score)
+function create_event(vote_event_id::Int, vote_event_time::Int, e::Score)
      return ScoreEvent(vote_event_id, vote_event_time, e)
 end
 
 
 function round_float_fields(s::T) where T
-    # Get the type of the struct
     struct_type = typeof(s)
-
-    # Create a dictionary to hold the new field values
     new_fields = Dict{Symbol, Any}()
 
     # Iterate over each field in the struct
@@ -65,17 +77,3 @@ end
 
 # # Tell Tables.jl how to get the rows from the array
 # Tables.rows(x::Vector{Score}) = x
-
-
-Base.@kwdef struct VoteEvent
-    vote_event_id::Int
-    vote_event_time::Int
-    user_id::String
-    tag_id::Int64
-    parent_id::Union{Int, Nothing}
-    post_id::Int64
-    note_id::Union{Int64,Nothing}
-    vote::Int
-    # vote::GlobalBrain.Vote
-end
-

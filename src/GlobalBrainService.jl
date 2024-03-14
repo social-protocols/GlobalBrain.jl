@@ -5,8 +5,16 @@ using SQLite
 using DataFrames
 using Dates
 
-include("GlobalBrain/GlobalBrain.jl")
-using .GlobalBrain
+# include("GlobalBrain/GlobalBrain.jl")
+# using .GlobalBrain
+
+include("lib/types.jl")
+include("lib/constants.jl")
+include("lib/binary-entropy.jl")
+include("lib/probabilities.jl")
+include("lib/algorithm.jl")
+include("lib/score.jl")
+include("lib/note-effect.jl")
 
 # Database
 include("types.jl")

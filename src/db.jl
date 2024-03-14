@@ -24,7 +24,7 @@ end
         db::SQLite.DB,
         tag_id::Union{Int, Nothing},
         post_id::Union{Int, Nothing},
-    )::Vector{GlobalBrain.TalliesTree}
+    )::Vector{TalliesTree}
 
 Get the detailed tallies under a given tag and post, along with a boolean indicating if the tally has 
 been updated and thus the score needs to be recalculated. If `tag_id` is `nothing`, tallies for
@@ -37,7 +37,7 @@ function get_tallies(
     tag_id::Union{Int, Nothing},
     post_id::Union{Int, Nothing},
     ancestor_id::Union{Int, Nothing},
-)::Vector{GlobalBrain.TalliesTree}
+)::Vector{TalliesTree}
     sql_query = """
         select
             tag_id
@@ -156,7 +156,7 @@ end
 
 
 function as_tallies_tree(t::SQLTalliesTree)
-    return GlobalBrain.TalliesTree(
+    return TalliesTree(
         # (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
         (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, t.tally.post_id),
         () -> t.tally,

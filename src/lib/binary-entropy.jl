@@ -1,12 +1,3 @@
-module BinaryEntropy
-
-export surprisal
-export entropy
-export cross_entropy
-export relative_entropy
-export information_gain
-
-
 """
     surprisal(p::Float64, unit::Int = 2)::Float64
 
@@ -115,6 +106,4 @@ function information_gain(p::Float64, q0::Float64, q1::Float64)::Float64
     @assert(1.0 > q0 > 0.0, "Bernoulli parameter q0 must be in (0.0, 1.0); got q0 = $q0")
     @assert(1.0 > q1 > 0.0, "Bernoulli parameter q1 must be in (0.0, 1.0); got q1 = $q1")
     return p * log2(q1 / q0) + (1 - p) * log2((1 - q1) / (1 - q0))
-end
-
 end

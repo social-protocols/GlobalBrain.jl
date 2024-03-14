@@ -1,4 +1,3 @@
-
 function score(effect::Effect)::Float64 
 	return relative_entropy(effect.p, effect.q)
 end
