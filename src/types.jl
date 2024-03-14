@@ -19,7 +19,6 @@ Base.@kwdef struct VoteEvent
     post_id::Int64
     note_id::Union{Int64,Nothing}
     vote::Int
-    # vote::GlobalBrain.Vote
 end
 
 
