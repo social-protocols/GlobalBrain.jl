@@ -24,7 +24,7 @@ The `lib` folder contains the algorithm along with the tooling around it and the
 As the service maintains some state, `db.jl` contains a SQLite database interface.
 Finally, `simulations.jl` contains a simulation framework with which simple scenarios can be created and run on the Global Brain algorithm.
 
-**`simulations/**
+**`simulations/`**
 
 Simulations created with the framework in `simulations.jl` are located in the `simulations` folder.
 
