@@ -13,13 +13,11 @@ include("lib/algorithm.jl")
 include("lib/score.jl")
 include("lib/note-effect.jl")
 
-# Database
-include("types.jl")
-include("db.jl")
+include("service/events.jl")
+include("service/vote-event-processing.jl")
+include("service/main.jl")
 
-# Service
-include("vote-events.jl")
-include("main.jl")
+include("db.jl")
 
 export Score
 export VoteEvent
