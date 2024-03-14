@@ -12,24 +12,44 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ ];
-          config.allowUnfree = false;
+          config = {
+            allowUnfree = false;
+            packageOverrides = super: let self = super.pkgs; in
+            {
+              rEnv = super.rWrapper.override {
+                packages = with self.rPackages; [
+                    shiny
+                    shinydashboard
+                    DBI
+                    RSQLite
+                    dplyr
+                    tidyr
+                    r2d3
+                    languageserver
+                ];
+              };
+            };
+          };
         };
       in
       {
         devShells = {
           default = with pkgs; pkgs.mkShellNoCC {
             buildInputs = [
-              openssh
+              # openssh
               just
               git
               julia-bin
-              libgcc
+              # libgcc
               sqlite-interactive
               litecli
               vim
               neovim
               less
               fzf
+              cloc
+              entr
+              rEnv
             ];
           };
         };
