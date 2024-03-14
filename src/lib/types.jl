@@ -231,6 +231,19 @@ struct InMemoryTree
   children::Vector{InMemoryTree}
 end
 
+
+"""
+    SQLTalliesTree <: TalliesTree
+
+A data structure to represent a tree of tallies stored in an SQLite database.
+"""
+struct SQLTalliesTree
+    tally::DetailedTally
+    needs_recalculation::Bool
+    db::SQLite.DB
+end
+
+
 function TalliesTree(t::InMemoryTree)
     return TalliesTree(
         (ancestor_id) -> map((c) -> TalliesTree(c), t.children),
@@ -239,4 +252,3 @@ function TalliesTree(t::InMemoryTree)
         (ancestor_id) -> nothing,
     )
 end
-

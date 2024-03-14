@@ -1,15 +1,3 @@
-"""
-    SQLTalliesTree <: TalliesTree
-
-A data structure to represent a tree of tallies stored in an SQLite database.
-"""
-struct SQLTalliesTree
-    tally::DetailedTally
-    needs_recalculation::Bool
-    db::SQLite.DB
-end
-
-
 Base.@kwdef struct VoteEvent
     vote_event_id::Int
     vote_event_time::Int
