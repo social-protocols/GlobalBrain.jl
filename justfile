@@ -12,7 +12,7 @@ run:
 dev:
     julia --eval "using Pkg; Pkg.develop(path = pwd())"
 
-sqlite:
+db:
     litecli $DATABASE_PATH
 
 reset-db:
