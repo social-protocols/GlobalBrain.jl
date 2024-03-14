@@ -1,5 +1,24 @@
 """
-    get_score_db(path::String)::SQLite.DB
+    init_score_db(database_path::String)
+
+Create a SQLite database with the schema required to run the Global Brain
+service at the provided path if it doesn't already exist.
+"""
+function init_score_db(database_path::String)
+    if isfile(database_path)
+        @warn "Database already exists at $database_path"
+        return
+    end
+
+    @info "Initializing database at $database_path"
+    Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
+end
+
+
+"""
+    get_score_db(database_path::String)::SQLite.DB
 
 Get a connection to the score database at the provided path. If the database does not
 exist, it will be created.
@@ -11,19 +30,13 @@ function get_score_db(database_path::String)::SQLite.DB
     return SQLite.DB(database_path)
 end
 
-function init_score_db(database_path::String)
-    @info "Initializing database at $database_path"
-    Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
-end
-
 
 """
     get_tallies(
         db::SQLite.DB,
         tag_id::Union{Int, Nothing},
         post_id::Union{Int, Nothing},
+        ancestor_id::Union{Int, Nothing},
     )::Vector{TalliesTree}
 
 Get the detailed tallies under a given tag and post, along with a boolean indicating if the tally has 
