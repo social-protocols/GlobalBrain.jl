@@ -70,7 +70,7 @@ function get_tallies(
     results = DBInterface.execute(db, sql_query, [tag_id, post_id, ancestor_id])
 
     return [
-        SQLTalliesTree(to_detailed_tally(row), row[:needsRecalculation], db) |>
+        SQLTalliesTree(sql_row_to_detailed_tally(row), row[:needsRecalculation], db) |>
             as_tallies_tree
         for row in results
     ]
@@ -102,7 +102,7 @@ function get_effect(
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
-    return to_effect_event(r[1]).effect
+    return sql_row_to_effect_event(r[1]).effect
 end
 
 
@@ -272,7 +272,7 @@ end
 
 Convert a SQLite result row to a `DetailedTally`.
 """
-function to_detailed_tally(row::SQLite.Row)::DetailedTally
+function sql_row_to_detailed_tally(row::SQLite.Row)::DetailedTally
     return DetailedTally(
         tag_id = row[:tag_id],
         ancestor_id = row[:ancestor_id] == 0 ? nothing : row[:ancestor_id],
@@ -286,7 +286,7 @@ function to_detailed_tally(row::SQLite.Row)::DetailedTally
 end
 
 
-function to_effect_event(row::SQLite.Row)::EffectEvent
+function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
     return EffectEvent(
         vote_event_id = row[:vote_event_id],
         vote_event_time = row[:vote_event_time],

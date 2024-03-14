@@ -13,7 +13,7 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
         # ScoreEvent or an EffectEvent.
         output_event = (vote_event_id::Int, vote_event_time::Int, object) -> begin
-            e = create_event(vote_event_id, vote_event_time, object)
+            e = as_event(vote_event_id, vote_event_time, object)
             insert_event(db, e)
             json_data = JSON.json(e)
             write(output_stream, json_data * "\n")

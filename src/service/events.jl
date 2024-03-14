@@ -30,11 +30,11 @@ Base.@kwdef struct ScoreEvent
 end
 
 
-function create_event(vote_event_id::Int, vote_event_time::Int, e::Effect)
+function as_event(vote_event_id::Int, vote_event_time::Int, e::Effect)
      return EffectEvent(vote_event_id, vote_event_time, e)
 end
 
-function create_event(vote_event_id::Int, vote_event_time::Int, e::Score)
+function as_event(vote_event_id::Int, vote_event_time::Int, e::Score)
      return ScoreEvent(vote_event_id, vote_event_time, e)
 end
 

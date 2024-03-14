@@ -68,7 +68,7 @@ function simulation_step!(
             vote = v.vote,
         )
         GlobalBrainService.process_vote_event(db, vote_event) do vote_event_id::Int, vote_event_time::Int, object
-            e = create_event(vote_event_id, vote_event_time, object)
+            e = as_event(vote_event_id, vote_event_time, object)
             insert_event(db, e)
         end
         vote_event_id += 1
