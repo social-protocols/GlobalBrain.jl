@@ -16,11 +16,22 @@ Make sure to check out the `.env.example` file to see the required environment v
 
 ## Project Structure
 
+**`src/`**
+
 This project is structured as a Julia module, so the code is located in `src`.
 Within `src`, there are two main components: `lib` and `service`.
 The `lib` folder contains the algorithm along with the tooling around it and the service folder contains a service that consumes a vote stream and outputs a top reply score stream.
 As the service maintains some state, `db.jl` contains a SQLite database interface.
 Finally, `simulations.jl` contains a simulation framework with which simple scenarios can be created and run on the Global Brain algorithm.
+
+**`simulations/**
+
+Simulations created with the framework in `simulations.jl` are located in the `simulations` folder.
+
+**`app/`**
+
+A visualization app with which simulations can be explored and analyzed.
+
 
 ## Workflows
 
