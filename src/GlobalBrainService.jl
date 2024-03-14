@@ -2,8 +2,9 @@ module GlobalBrainService
 
 using JSON
 using SQLite
-using DataFrames
 using Dates
+using Random
+using Distributions
 
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
