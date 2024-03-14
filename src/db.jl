@@ -77,54 +77,6 @@ function get_tallies(
 end
 
 
-# function get_score_data(
-#     db::SQLite.DB,
-#     tag_id::Int,
-#     post_id::Int,
-# )
-#     get_score_sql = """
-#         select
-#             Score.tag_id
-#             , ifnull(Score.parent_id, 0) parent_id
-#             , Score.post_id
-#             , ifnull(top_note_id, 0) top_note_id
-#             # , ifnull(p, 0) p
-#             # , ifnull(q, 0) q
-#             , upvote_probability
-#             , count
-#             , size
-#             , score
-#            -- , NeedsRecalculation.post_id is not null as needsRecalculation
-
-#         from Score
-#         -- left join NeedsRecalculation using (post_id)
-#         where 
-#             ifnull(Score.tag_id = :tag_id, true)
-#             and ifnull(Score.post_id = :post_id, true)
-#             -- Only return existing score data that is not out of date.
-#             -- and not needsRecalculation
-
-#     """
-
-#     results = DBInterface.execute(db, get_score_sql, [tag_id, post_id])
-
-#     r = iterate(results)
-
-#     if isnothing(r) 
-#         return nothing
-#     end
-
-#     # if isnothing(r[1])
-#     #     println("No result in get_score_data")
-#     #     return nothing
-#     # end
-
-#     # println("Got existing score data for post $post_id")
-
-#     return to_score_event(r[1])
-# end
-
-
 function get_effect(
     db::SQLite.DB,
     tag_id::Int,
@@ -283,6 +235,7 @@ function get_last_processed_vote_event_id(db::SQLite.DB)
     r = iterate(results)
     return r[1][:processed_vote_event_id]
 end
+
 
 function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     DBInterface.execute(
