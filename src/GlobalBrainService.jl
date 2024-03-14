@@ -1,10 +1,12 @@
 module GlobalBrainService
 
-using GlobalBrain
 using JSON
 using SQLite
 using DataFrames
 using Dates
+
+include("GlobalBrain/GlobalBrain.jl")
+using .GlobalBrain
 
 include("ScoreDB/ScoreDB.jl")
 using .ScoreDB
