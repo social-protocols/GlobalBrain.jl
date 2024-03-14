@@ -5,9 +5,6 @@ using SQLite
 using DataFrames
 using Dates
 
-# include("GlobalBrain/GlobalBrain.jl")
-# using .GlobalBrain
-
 include("lib/types.jl")
 include("lib/constants.jl")
 include("lib/binary-entropy.jl")
@@ -61,6 +58,43 @@ export get_last_processed_vote_event_id
 
 export insert_vote_event
 
+# GlobalBrain
 
+export Post
+export Model
+export BetaBernoulli
+export GammaPoisson
+export DetailedTally
+export BernoulliTally
+export PoissonTally
+export Distribution
+export BetaDistribution
+export GammaDistribution
+export alpha
+export beta
+
+export Effect
+export Score
+
+export TalliesTree
+export InMemoryTree
+
+export update
+export bayesian_avg
+export reset_weight
+export sample
+export unpack
+export +
+export -
+
+export surprisal
+export entropy
+export cross_entropy
+export relative_entropy
+export information_gain
+
+export score_tree
+
+export score
 
 end
