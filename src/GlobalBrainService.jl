@@ -25,17 +25,10 @@ include("db.jl")
 
 include("simulations.jl")
 
-
-
-export Score
-export VoteEvent
+# Service
 export julia_main
 export global_brain_service
-export get_score_db
 export process_vote_events_stream
-
-export EffectEvent
-export ScoreEvent
 
 # Simulations
 export get_sim_db
@@ -44,28 +37,34 @@ export SimulationVote
 export create_simulation_post!
 export run_simulation!
 
-# Database
 export SQLTalliesTree
-export Score
-export create_event
+export as_event
 export VoteEvent
 
-export to_detailed_tally
-export as_tallies_tree
+export Effect
+export Score
+export EffectEvent
+export ScoreEvent
 
+export TalliesTree
+export InMemoryTree
+
+export score_tree
+export score
+
+# Database
 export get_score_db
 export init_score_db
 export get_tallies
-
 export insert_event
-export insert_event
+export insert_vote_event
 export set_last_processed_vote_event_id
 export get_last_processed_vote_event_id
+export sql_row_to_detailed_tally
+export sql_row_to_effect_event
+export as_tallies_tree
 
-export insert_vote_event
-
-# GlobalBrain
-
+# --- Probability models
 export Model
 export BetaBernoulli
 export GammaPoisson
@@ -77,13 +76,6 @@ export BetaDistribution
 export GammaDistribution
 export alpha
 export beta
-
-export Effect
-export Score
-
-export TalliesTree
-export InMemoryTree
-
 export update
 export bayesian_avg
 export reset_weight
@@ -92,14 +84,11 @@ export unpack
 export +
 export -
 
+# --- Binary entropy
 export surprisal
 export entropy
 export cross_entropy
 export relative_entropy
 export information_gain
-
-export score_tree
-
-export score
 
 end
