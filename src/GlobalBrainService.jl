@@ -15,7 +15,6 @@ include("lib/note-effect.jl")
 
 # Database
 include("types.jl")
-include("converters.jl")
 include("db.jl")
 
 # Service
@@ -28,7 +27,6 @@ export julia_main
 export global_brain_service
 export get_score_db
 export process_vote_events_stream
-
 
 # Simulations
 include("simulations.jl")
