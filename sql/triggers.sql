@@ -36,6 +36,24 @@ create trigger afterInsertEffectEvent after insert on EffectEvent begin
 end;
 
 
+create trigger afterInsertScoreEvent after insert on ScoreEvent begin
+
+    insert or replace into Score
+    values (
+        new.vote_event_id
+        , new.vote_event_time
+        , new.tag_id
+        , new.post_id
+        , new.top_note_id
+        , new.o
+        , new.o_count
+        , new.o_size
+        , new.p
+        , new.score
+    );
+
+end;
+
 -- Inserting into ProcessVoteEvent will "process" the event and update the
 -- tallies, but only if the event hasn't been processed that is, if the
 -- vote_event_id is greater than lastVoteEvent.vote_event_id

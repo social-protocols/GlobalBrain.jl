@@ -102,7 +102,7 @@ create table if not exists Effect(
 create table if not exists ScoreEvent(
       vote_event_id     integer not null
     , vote_event_time   integer not null
-    , tag_id            integer
+    , tag_id            integer not null
     , post_id           integer not null
     , top_note_id       integer
     , o                 real    not null
@@ -111,6 +111,20 @@ create table if not exists ScoreEvent(
     , p                 real    not null
     , score             real    not null
     , primary key(vote_event_id, post_id)
+) strict;
+
+create table if not exists Score(
+      vote_event_id     integer not null
+    , vote_event_time   integer not null
+    , tag_id            integer not null
+    , post_id           integer not null
+    , top_note_id       integer
+    , o                 real    not null
+    , o_count           integer not null
+    , o_size            integer not null
+    , p                 real    not null
+    , score             real    not null
+    , primary key(tag_id, post_id)
 ) strict;
 
 create table if not exists LastVoteEvent(
