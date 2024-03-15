@@ -9,7 +9,7 @@ function marbles(step_func::Function)
     # --------------------------------------------------------------------------
 
     A = SimulationPost(nothing, 1, "Did you draw a blue marble?")
-    n_users = 100
+    n_users = 200
     p = 0.37
     draws = rand(Bernoulli(p), n_users)
     posts = [A]

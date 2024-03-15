@@ -26,17 +26,22 @@ function counter_argument(step_func::Function)
         for key in keys(beliefs)
     )
 
+    n_supporters = trunc(Int, n_users/2)
+    n_detractors = trunc(Int, n_users/2)
+
+
+
     # --------------------------------------------------------------------------
     # --- STEP 1 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
 
     supporters_draws_A_step_1 = rand(
         beliefs["A"]["supporters"],
-        trunc(Int, n_users / 2)
+        n_supporters
     )
     detractors_draws_A_step_1 = rand(
         beliefs["A"]["detractors"],
-        trunc(Int, n_users / 2)
+        n_detractors
     )
     votes_A_step_1 = [
         SimulationVote(nothing, A.post_id, draw == 1 ? 1 : -1, i)
@@ -60,11 +65,11 @@ function counter_argument(step_func::Function)
 
     supporters_draws_A_step_2 = rand(
         beliefs["A|B"]["supporters"],
-        trunc(Int, n_users / 2)
+        n_supporters
     )
     detractors_draws_A_step_2 = rand(
         beliefs["A|B"]["detractors"],
-        trunc(Int, n_users / 2)
+        n_detractors
     )
     votes_A_step_2 = [
         SimulationVote(nothing, A.post_id, draw == 1 ? 1 : -1, i)
@@ -85,18 +90,30 @@ function counter_argument(step_func::Function)
     # everyone upvotes C for now
     step_func(3, [C], votes_C_step_3,)
 
+    m = 10
+    supporters_who_considered_c = collect(1:m)
+    dectractors_who_considered_c = collect(n_supporters+1:n_supporters+m)
+
     supporters_draws_A_step_3 = rand(
         beliefs["A|B,C"]["supporters"],
-        trunc(Int, n_users / 2)
+        m
     )
     detractors_draws_A_step_3 = rand(
         beliefs["A|B,C"]["detractors"],
-        trunc(Int, n_users / 2)
+        m
     )
+
+    draws_step_3 = zip(
+        [supporters_who_considered_c; dectractors_who_considered_c],
+        [supporters_draws_A_step_3; detractors_draws_A_step_3]
+    )
+
     votes_A_step_3 = [
         SimulationVote(nothing, A.post_id, draw == 1 ? 1 : -1, i)
-        for (i, draw) in enumerate([supporters_draws_A_step_3; detractors_draws_A_step_3])
+        for (i, draw) in draws_step_3
     ]
+
+
     scores = step_func(3, SimulationPost[], votes_A_step_3,)
     @testset "Step 3: After counter argument" begin
         @test_broken scores[A.post_id].p ≈ means["A|B,C"] atol = 0.1
