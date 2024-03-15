@@ -108,6 +108,10 @@ begin
     from lineage ancestor 
     where ancestor.descendant_id = new.ancestor_id
     on conflict do nothing;
+end;
+
+create trigger afterInsertLineage2 after insert on Lineage
+begin
 
     -- When there is a new post, we need to record an uninformed vote for every user who has voted on the parent
     -- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
@@ -118,8 +122,8 @@ begin
         , vote.tag_id
         , vote.post_id
         , new.descendant_id as note_id
-        , 2
-        , 0
+        , 2 as informed_vote
+        , 0 as uninformed_vote
         , vote.vote
         from vote
         where vote.post_id = new.ancestor_id

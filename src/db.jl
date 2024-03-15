@@ -118,10 +118,11 @@ function as_tallies_tree(t::SQLTalliesTree)
     return TalliesTree(
         # (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
         (ancestor_id) ->
-            get_tallies(t.db, t.tally.tag_id, t.tally.post_id, t.tally.post_id),
+            get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
         () -> t.tally,
         () -> t.needs_recalculation,
-        () -> get_effect(t.db, t.tally.tag_id, t.tally.parent_id, t.tally.post_id),
+        (ancestor_id) -> nothing,
+        # () -> get_effect(t.db, t.tally.tag_id, t.tally.parent_id, t.tally.post_id),
     )
 end
 
