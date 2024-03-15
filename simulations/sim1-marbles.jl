@@ -17,5 +17,8 @@ function marbles(step_func::Function, db::SQLite.DB, tag_id::Int)
         SimulationVote(nothing, A.post_id, d ? 1 : -1, i)
         for (i, d) in enumerate(draws)
     ]
-    step_func(db, 1, posts, votes; tag_id = tag_id)
+    scores = step_func(db, 1, posts, votes; tag_id = tag_id)
+    @testset "Marbles Step 1" begin
+        @test scores[A.post_id].p ≈ 0.37 atol = 0.1
+    end
 end

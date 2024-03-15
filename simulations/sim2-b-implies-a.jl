@@ -45,7 +45,10 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(nothing, A.post_id, -1, i)
         for i in 1:n_users
     ]
-    step_func(db, 1, posts_0, votes_0; tag_id = tag_id)
+    scores = step_func(db, 1, posts_0, votes_0; tag_id = tag_id)
+    @testset "B implies A: Step 1" begin
+        @test scores[A.post_id].p ≈ 0.0 atol = 0.1
+    end
 
     # --------------------------------------------------------------------------
     # --- STEP 2 ---------------------------------------------------------------
@@ -59,10 +62,13 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(root_post_id, note_id, -1, i)
         for i in 1:n_subset
     ]
-    step_func(db, 2, posts_1, votes_1; tag_id = tag_id)
+    scores = step_func(db, 2, posts_1, votes_1; tag_id = tag_id)
+    @testset "B implies A: Step 2" begin
+        @test scores[B.post_id].p ≈ 1.0 atol = 0.1
+    end
 
     # --------------------------------------------------------------------------
-    # --- STEP 2 ---------------------------------------------------------------
+    # --- STEP 3 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
 
     votes_2 = [
@@ -71,5 +77,8 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(nothing, root_post_id, -1, i)
         for i in 1:n_subset
     ]
-    step_func(db, 3, SimulationPost[], votes_2; tag_id = tag_id)
+    scores = step_func(db, 3, SimulationPost[], votes_2; tag_id = tag_id)
+    @testset "B implies A: Step 3" begin
+        @test scores[A.post_id].p ≈ 0.9 atol = 0.1
+    end
 end

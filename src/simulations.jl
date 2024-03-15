@@ -46,7 +46,7 @@ function simulation_step!(
     posts::Array{SimulationPost},
     votes::Array{SimulationVote};
     tag_id::Int = 1,
-)
+)::Dict
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
     for p in posts
@@ -75,4 +75,12 @@ function simulation_step!(
         end
         vote_event_id += 1
     end
+
+    score_rows = DBInterface.execute(
+        db,
+        "select * from score where tag_id = :tag_id",
+        [tag_id]
+    )
+    scores = map(sql_row_to_score, score_rows)
+    return Dict(score.post_id => score for score in scores)
 end
