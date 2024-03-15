@@ -36,9 +36,9 @@
         devShells = {
           default = with pkgs; pkgs.mkShellNoCC {
             buildInputs = [
-              # openssh
               just
               git
+              openssh # Necessary to run git on macs
               julia-bin
               # libgcc
               sqlite-interactive
