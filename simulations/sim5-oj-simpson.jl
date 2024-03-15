@@ -56,50 +56,51 @@ Let's say there are 100 people in each group. Suppose they all vote after each p
 
 """
 
-include("../src/simulations.jl")
 
-run_simulation(tag_id=5) do process_votes
+# run_simulation(tag_id=5) do process_votes
 
-	post_id = 1
-	n = 100
+# 	post_id = 1
+# 	n = 100
 
-	supportersBeliefs = [.2,.4,.05,.06]
-	detractorsBeliefs = [.8,.95,.6,.8]
+# 	supportersBeliefs = [.2,.4,.05,.06]
+# 	detractorsBeliefs = [.8,.95,.6,.8]
 
-	beliefs = [supportersBeliefs detractorsBeliefs]
+# 	beliefs = [supportersBeliefs detractorsBeliefs]
 
-	upvote_probability = beliefs * [n, n] / (2*n)
-	# println("Overall prob: $upvote_probability")
+# 	upvote_probability = beliefs * [n, n] / (2*n)
+# 	# println("Overall prob: $upvote_probability")
 
-	A = 1
-	draws_A = rand.(Bernoulli.(beliefs[A,:]), n) 
-	votes_A = hcat(draws_A...)[:]
-	process_votes(nothing, A, votes_A)
+# 	A = 1
+# 	draws_A = rand.(Bernoulli.(beliefs[A,:]), n) 
+# 	votes_A = hcat(draws_A...)[:]
+# 	process_votes(nothing, A, votes_A)
 
-	B = 2
-	draws_B = rand.(Bernoulli.(beliefs[B,:]), n) 
-	votes_B = hcat(draws_B...)[:]
-    process_votes(A, B, repeat([true], n)) # everyone upvotes B for now
-	process_votes(nothing, A, votes_B)
+# 	B = 2
+# 	draws_B = rand.(Bernoulli.(beliefs[B,:]), n) 
+# 	votes_B = hcat(draws_B...)[:]
+#     process_votes(A, B, repeat([true], n)) # everyone upvotes B for now
+# 	process_votes(nothing, A, votes_B)
 
-	C = 3
-	draws_C = rand.(Bernoulli.(beliefs[C,:]), n) 
-	votes_C = hcat(draws_C...)[:]
-    process_votes(B, C, repeat([true], n)) # everyone upvotes C for now
-	process_votes(nothing, A, votes_C)
+# 	C = 3
+# 	draws_C = rand.(Bernoulli.(beliefs[C,:]), n) 
+# 	votes_C = hcat(draws_C...)[:]
+#     process_votes(B, C, repeat([true], n)) # everyone upvotes C for now
+# 	process_votes(nothing, A, votes_C)
 
-	# d = 4
-	# draws_D = rand.(Bernoulli.(beliefs[D,:]), n) 
-	# votes_D = hcat(draws_D...)[:]
-    # process_votes(C, D, repeat([true], n)) # everyone upvotes C for now
-	# process_votes(nothing, A, votes_D)
-end
+# 	# d = 4
+# 	# draws_D = rand.(Bernoulli.(beliefs[D,:]), n) 
+# 	# votes_D = hcat(draws_D...)[:]
+#     # process_votes(C, D, repeat([true], n)) # everyone upvotes C for now
+# 	# process_votes(nothing, A, votes_D)
+# end
 
 
 # draws_0_supporters = rand(Bernoulli(supportersBeliefs[1]), n)
 # draws_0_detractors = rand(Bernoulli(detractorsBeliefs[1]), n)
 
+function oj_simpson(step_func::Function)
 
+end
 
 
 

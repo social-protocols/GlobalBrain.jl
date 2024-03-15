@@ -85,7 +85,7 @@ function counter_argument(step_func::Function)
     # --------------------------------------------------------------------------
 
     # m users from each group consider C
-    m = 10
+    m = 20
     supporters_who_considered_c = collect(1:m)
     dectractors_who_considered_c = collect(n_supporters+1:n_supporters+m)
 
@@ -127,5 +127,5 @@ function counter_argument(step_func::Function)
         @test scores[A.post_id].p ≈ means["A|B,C"] atol = 0.1
     end
 
-
 end
+

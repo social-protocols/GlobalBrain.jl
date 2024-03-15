@@ -1,30 +1,24 @@
-# Scenario
-# Users have common priors wrt a/b
-# post: is a true
-# all users answer no because p_a is just under 50%
-# user U given true value of b
-# user U posts note saying b is true
+function voteGivenBeliefs(step_func, step, post, beliefs; skip_users=0)
 
-# all users trust user U
-# minority of users consider U's note and thus form same posterior belief in B
-# these users also change vote on A accordingly
-# algorithm should estimate posterior_a close to true posterior_a
+    n = length(beliefs)
+    users = collect(skip_users+1:skip_users+n)
 
-include("../src/simulations.jl")
-# include("src/simulations.jl")
+    draws = [belief > 0.5 for belief in beliefs]
 
+    votes = [
+        SimulationVote(post.parent_id, post.post_id, draw == 1 ? 1 : -1, i)
+        for (i, draw) in zip(users, draws)
+    ]
 
+    step_func(step, [post], votes)
+end
 
 
-run_simulation(tag_id=4) do process_votes
+function two_children(step_func::Function)
 
-    function voteGivenBeliefs(post, beliefs; start_user=0)
-        votes = [belief > 0.5 for belief in beliefs]
-
-        process_votes(parents[post], post, votes; start_user=start_user)
-
-    end
-
+    A = SimulationPost(nothing, 7, "A")
+    B = SimulationPost(A.post_id, 8, "B")
+    C = SimulationPost(A.post_id, 9, "C")
 
     # common priors
     p_a_given_b = .9
@@ -39,31 +33,51 @@ run_simulation(tag_id=4) do process_votes
 
     n_users = 100
 
-    parents = Dict()
-    A = 1
-    parents[A] = nothing
-    B = 2
-    parents[B] = A
-    C = 3
-    parents[C] = A
+    # Step 1: All users vote on A
+    begin
+        scores = voteGivenBeliefs(step_func, 1, A, repeat([p_a], n_users))
+
+        p = scores[A.post_id].p
+
+        @testset "Step 1: Initial beliefs ($p ≈ 0)" begin
+            @test p ≈ 0 atol = 0.1
+        end
+    end
 
 
-    voteGivenBeliefs(A, repeat([p_a], n_users))
-    # Initial vote on A
-
-
+    # Step 2
     # First 10 users vote on B
-    n_subset = 10
-    voteGivenBeliefs(B, repeat([posterior_b], n_subset))
-    # Change vote on A
-    voteGivenBeliefs(A, repeat([posterior_a], n_subset))
+    n_subset1 = 10
+    begin
+        voteGivenBeliefs(step_func, 2, B, repeat([posterior_b], n_subset1))
+        # Then Change vote on A
+        scores = voteGivenBeliefs(step_func, 2, A, repeat([posterior_a], n_subset1))
 
-    # Second 10 users vote on C
-    p_C = 1
-    voteGivenBeliefs(C, repeat([p_C], n_subset); start_user=n_subset)
-    # And change vote on A. But C didn't change minds
-    voteGivenBeliefs(A, repeat([p_a], n_subset); start_user=n_subset)
+        p = scores[A.post_id].p
+
+        @testset "Step 2: B changes mind  ($p ≈ high)" begin
+            # should approach 1 but given small sample size still be a bit below 
+            @test p ≈ .83 atol = 0.1
+        end
+    end
 
 
+    # Step 3
+    # Second 50 users vote on C
+    n_subset2 = 50
+    begin
+        p_C = 1
+        voteGivenBeliefs(step_func, 3, C, repeat([p_C], n_subset2); skip_users=n_subset1)
+
+        # And change vote on A. But C didn't change minds
+        scores = voteGivenBeliefs(step_func, 3, A, repeat([p_a], n_subset2); skip_users=n_subset1)
+
+        p = scores[A.post_id].p
+
+        @testset "Step 2: C doesn't change minds ($p ≈ high)" begin
+            # should approach 1 but given small sample size still be a bit below 
+            @test p ≈ .83 atol = 0.1
+        end
+    end
 
 end

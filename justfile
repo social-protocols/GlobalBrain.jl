@@ -24,8 +24,10 @@ reset-db:
     sqlite3 $DATABASE_PATH < sql/views.sql
     sqlite3 $DATABASE_PATH < sql/triggers.sql
 
-sim:
-    julia --project scripts/sim.jl
+
+sim name="":
+    julia --project scripts/sim.jl {{name}}
+
 
 sim-db:
     litecli $SIM_DATABASE_PATH

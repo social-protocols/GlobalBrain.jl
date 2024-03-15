@@ -29,14 +29,13 @@ end
 function create_simulation_post!(db::SQLite.DB, post::SimulationPost, created_at::Int)::Bool
     DBInterface.execute(
         db,
-        "insert into post (parent_id, id, content, created_at) values (?, ?, ?, ?)",
+        "insert into post (parent_id, id, content, created_at) values (?, ?, ?, ?) on conflict do nothing",
         [post.parent_id, post.post_id, post.content, created_at],
     )
     return true
 end
 
 function run_simulation!(sim::Function, db::SQLite.DB; tag_id = nothing)
-    @info "Running simulation $(tag_id)..."
     sim() do i, posts, votes
         simulation_step!(db, i, posts, votes; tag_id = tag_id)
     end

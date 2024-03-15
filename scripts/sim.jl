@@ -5,36 +5,44 @@ using Distributions
 using SQLite
 using Test
 
-include("../simulations/sim1-marbles.jl")
-include("../simulations/sim2-b-implies-a.jl")
-include("../simulations/sim3-counter-argument.jl")
+
+# iterate through simulations in ../simulations
+# and run them with the database
+
+simulations = Vector{Function}() 
+for simfile in readdir("simulations")
+    sim = include(joinpath("..","simulations",simfile))
+    push!(simulations, sim)
+end
 
 db = get_sim_db(ENV["SIM_DATABASE_PATH"]; reset = true)
 
-begin
-    try
-		run_simulation!(marbles, db, tag_id = get_or_insert_tag_id(db, "marbles"))
-    catch e
-        @error e
-    end
-end
+requested_sim = length(ARGS) > 0 ? ARGS[1] : nothing
 
 begin
-    try
-		run_simulation!(b_implies_a, db, tag_id = get_or_insert_tag_id(db, "b_implies_a"))
-    catch e
-        @error e
+    local sims_run = 0
+    for s in simulations
+        n = String(Symbol(s))
+        if !isnothing(requested_sim) && n != requested_sim
+            continue
+        end
+        # try    
+            @info "Running simulation $(n)..."
+            run_simulation!(s, db, tag_id = get_or_insert_tag_id(db, n))
+            sims_run += 1
+        # catch e
+            # @error e
+        # end
     end
-end
 
-begin
-    try
-		run_simulation!(counter_argument, db, tag_id = get_or_insert_tag_id(db, "counter_argument"))
-    catch e
-        @error e
+    if sims_run == 0
+        if !isnothing(requested_sim) 
+            throw("No such simulation $requested_sim")
+        else 
+            throw("No simulations run")
+        end
     end
+
 end
-
-
 
 close(db)
