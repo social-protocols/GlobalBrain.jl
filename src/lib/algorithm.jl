@@ -29,21 +29,21 @@ function score_post(
     this_tally = post.tally()
 
     if !post.needs_recalculation()
-        # @info "No recalculation needed for $(this_tally.post_id). Using existing effect data"
+        @debug "No recalculation needed for $(this_tally.post_id). Using existing effect data"
         return
     else
-        # @info "Calculating score for $(this_tally.post_id)"
+        @debug "Calculating score for $(this_tally.post_id)"
     end
 
     post_id = this_tally.post_id
 
-    # @info "Scoring post $post_id"
+    @debug "Scoring post $post_id"
 
     o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally.overall))
 
-    # @info "Overall probability in score_post for $post_id is $(o.mean)"
+    @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    # @info "Calling find_top_note_effect_relative $post_id=>$(post.tally().post_id)"
+    @debug "Calling find_top_note_effect_relative $post_id=>$(post.tally().post_id)"
 
     top_note_effect = find_top_note_effect_relative(post_id, o, post, effects)
 
@@ -83,23 +83,23 @@ function find_top_note_effect_relative(
 
     note_id = note.tally().post_id
 
-    @info "Finding top note effect relative $post_id, r=$(r.mean), $(note_id)"
+    @debug "Finding top note effect relative $post_id, r=$(r.mean), $(note_id)"
 
     children = note.children(post_id)
 
     n = length(children)
-    # @info "Got children $n children for $note_id"
+    @debug "Got children $n children for $note_id"
 
     if length(children) == 0
         return nothing
     end
 
-    # @info "Getting child effects"
+    @debug "Getting child effects"
 
     child_effects =
         [calc_note_effect_relative(post_id, r, child, effects) for child in children]
 
-    # @info "Got child effects $child_effects"
+    @debug "Got child effects $child_effects"
 
     for effect in child_effects
         add!(effects, effect)
@@ -121,7 +121,7 @@ function calc_note_effect_relative(
 )
 
     # this_note_effect = 
-    # @info "Calculated relative note effect $post_id, $prior, $(note.tally().post_id): $effect"
+    @debug "Calculated relative note effect $post_id, $prior, $(note.tally().post_id): $effect"
     tally = note.tally()
     note_id = tally.post_id
 
@@ -131,14 +131,14 @@ function calc_note_effect_relative(
         (x -> update(x, tally.uninformed)) |>
         (x -> x.mean)
 
-    @info "Uninformed probability for $post_id=>$note_id is $uninformed_probability $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
+    @debug "Uninformed probability for $post_id=>$note_id is $uninformed_probability $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
 
     informed_probability =
         prior |>
         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
         (x -> update(x, tally.informed))
 
-    @info "Informed probability for $post_id=>$note_id is $(informed_probability.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
+    @debug "Informed probability for $post_id=>$note_id is $(informed_probability.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
 
 
     # First find the top note effect on me!
@@ -156,7 +156,7 @@ function calc_note_effect_relative(
     top_child_effect =
         find_top_note_effect_relative(post_id, informed_probability, note, effects)
 
-    @info "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
+    @debug "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
 
     informed_probability_adjusted = if !isnothing(top_child_effect)
         top_child_effect.p
@@ -164,7 +164,7 @@ function calc_note_effect_relative(
         informed_probability.mean
     end
 
-    @info "informed_probability_adjusted=$informed_probability_adjusted for $post_id=>$(note.tally().post_id)"
+    @debug "informed_probability_adjusted=$informed_probability_adjusted for $post_id=>$(note.tally().post_id)"
 
     return Effect(
         tag_id = tally.tag_id,
