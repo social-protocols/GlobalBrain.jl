@@ -50,6 +50,7 @@ export set_last_processed_vote_event_id
 export get_last_processed_vote_event_id
 export sql_row_to_detailed_tally
 export sql_row_to_effect_event
+export sql_row_to_score
 export as_tallies_tree
 
 # --- Probability models

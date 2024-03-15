@@ -10,10 +10,12 @@ function init_score_db(database_path::String)
         return
     end
 
+    sql_path = joinpath(dirname(@__FILE__), "..", "sql")
+
     @info "Initializing database at $database_path"
-    Base.run(pipeline(`cat sql/tables.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat sql/views.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat sql/triggers.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat $(sql_path)/tables.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat $(sql_path)/views.sql`, `sqlite3 $database_path`))
+    Base.run(pipeline(`cat $(sql_path)/triggers.sql`, `sqlite3 $database_path`))
 end
 
 
@@ -308,4 +310,23 @@ function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
             q_size = row[:q_size],
         ),
     )
+end
+
+
+function sql_row_to_score(row::SQLite.Row)::Score
+    return Score(
+        tag_id = row[:tag_id],
+        post_id = row[:post_id],
+        top_note_id = sql_missing_to_nothing(row[:top_note_id]),
+        o = row[:o],
+        o_count = row[:o_count],
+        o_size = row[:o_size],
+        p = row[:p],
+        score = row[:score],
+    )
+end
+
+
+function sql_missing_to_nothing(val::Any)
+    return ismissing(val) ? nothing : val
 end
