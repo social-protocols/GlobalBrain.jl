@@ -37,7 +37,9 @@ end
 
 function run_simulation!(sim::Function, db::SQLite.DB; tag_id = nothing)
     @info "Running simulation $(tag_id)..."
-    sim(simulation_step!, db, tag_id)
+    sim() do i, posts, votes
+        simulation_step!(db, i, posts, votes; tag_id = tag_id)
+    end
 end
 
 function simulation_step!(

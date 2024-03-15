@@ -15,7 +15,7 @@
 # ------------------------------------------------------------------------------
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
-function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
+function b_implies_a(step_func::Function)
     root_post_id = 2
     note_id = 3
     A = SimulationPost(nothing, root_post_id, "Is A true?")
@@ -45,7 +45,7 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(nothing, A.post_id, -1, i)
         for i in 1:n_users
     ]
-    scores = step_func(db, 1, posts_0, votes_0; tag_id = tag_id)
+    scores = step_func(1, posts_0, votes_0)
     @testset "B implies A: Step 1" begin
         @test scores[A.post_id].p ≈ 0.0 atol = 0.1
     end
@@ -62,7 +62,7 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(root_post_id, note_id, -1, i)
         for i in 1:n_subset
     ]
-    scores = step_func(db, 2, posts_1, votes_1; tag_id = tag_id)
+    scores = step_func(2, posts_1, votes_1)
     @testset "B implies A: Step 2" begin
         @test scores[B.post_id].p ≈ 1.0 atol = 0.1
     end
@@ -77,7 +77,7 @@ function b_implies_a(step_func::Function, db::SQLite.DB, tag_id::Int)
             SimulationVote(nothing, root_post_id, -1, i)
         for i in 1:n_subset
     ]
-    scores = step_func(db, 3, SimulationPost[], votes_2; tag_id = tag_id)
+    scores = step_func(3, SimulationPost[], votes_2)
     @testset "B implies A: Step 3" begin
         @test scores[A.post_id].p ≈ 0.9 atol = 0.1
     end

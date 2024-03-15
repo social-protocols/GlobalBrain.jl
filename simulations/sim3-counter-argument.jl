@@ -1,4 +1,4 @@
-function counter_argument(step_func::Function, db::SQLite.DB, tag_id::Int)
+function counter_argument(step_func::Function)
     n_users = 100
 
     A = SimulationPost(nothing, 4, "A")

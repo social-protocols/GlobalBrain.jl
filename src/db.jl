@@ -330,3 +330,17 @@ end
 function sql_missing_to_nothing(val::Any)
     return ismissing(val) ? nothing : val
 end
+
+function get_or_insert_tag_id(db::SQLite.DB, tag::String)
+
+    results = DBInterface.execute(db, "insert into tag(tag) values (?) on conflict do nothing returning id", [tag])
+
+    r = iterate(results)
+
+    if length(r) == 0 
+        error("Failed to get/insert tag $tag")
+    end
+    
+    return r[1][:id]
+end
+
