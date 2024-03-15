@@ -31,13 +31,9 @@ function score_post(
     if !post.needs_recalculation()
         @debug "No recalculation needed for $(this_tally.post_id). Using existing effect data"
         return
-    else
-        @debug "Calculating score for $(this_tally.post_id)"
     end
 
     post_id = this_tally.post_id
-
-    @debug "Scoring post $post_id"
 
     o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally.overall))
 
@@ -83,7 +79,7 @@ function find_top_note_effect_relative(
 
     note_id = note.tally().post_id
 
-    @debug "Finding top note effect relative $post_id, r=$(r.mean), $(note_id)"
+    @debug "find_top_note_effect_relative $post_id=$(note_id), r=$(r.mean)"
 
     children = note.children(post_id)
 
@@ -120,8 +116,6 @@ function calc_note_effect_relative(
     effects,
 )
 
-    # this_note_effect = 
-    @debug "Calculated relative note effect $post_id, $prior, $(note.tally().post_id): $effect"
     tally = note.tally()
     note_id = tally.post_id
 
