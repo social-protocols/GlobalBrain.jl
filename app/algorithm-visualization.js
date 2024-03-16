@@ -114,17 +114,6 @@ let scaleVoteId = d3.scaleLinear()
   .domain([minVoteEventId, maxVoteEventId])
   .range([0, LINEPLOT_WIDTH])
 
-// Line data
-let lineGenerator = d3.line()
-let pathDataP = rootPostScore.map((e) => {
-  return [scaleVoteId(e.voteEventId), scaleProbability(e.p)]
-})
-let pathP = lineGenerator(pathDataP)
-let pathDataOverallProb = rootPostScore.map((e) => {
-  return [scaleVoteId(e.voteEventId), scaleProbability(e.o)] // TODO: rename back to overallProb
-})
-let pathOverallProb = lineGenerator(pathDataOverallProb)
-
 let lineGroup = r2d3.svg
   .append("g")
   .attr("transform", "translate(30, 10)")
@@ -149,7 +138,15 @@ lineGroup
   .append("g")
   .call(yAxis)
 
-// Add lines
+let lineGenerator = d3.line()
+
+
+// Overall probability line
+let pathDataOverallProb = rootPostScore.map((e) => {
+  // TODO: rename "o" back to "overallProb"
+  return [scaleVoteId(e.voteEventId), scaleProbability(e.o)]
+})
+let pathOverallProb = lineGenerator(pathDataOverallProb)
 lineGroup
   .append("path")
   .attr("d", pathOverallProb)
@@ -157,6 +154,12 @@ lineGroup
   .attr("stroke-width", 2)
   .attr("opacity", 0.5)
   .attr("fill", "none")
+
+// Informed probability line
+let pathDataP = rootPostScore.map((e) => {
+  return [scaleVoteId(e.voteEventId), scaleProbability(e.p)]
+})
+let pathP = lineGenerator(pathDataP)
 lineGroup
   .append("path")
   .attr("d", pathP)
