@@ -22,6 +22,7 @@ const POST_RECT_HEIGHT = 65
 const LINEPLOT_X_OFFSET = -5
 const LINEPLOT_Y_OFFSET = 120
 
+const LINE_PLOT_X_STEP_SIZE = 20
 const LINEPLOT_WIDTH = 300
 const LINEPLOT_HEIGHT = 100
 
@@ -140,9 +141,14 @@ let lineGroup = r2d3.svg
   .append("g")
   .attr("transform", "translate(30, 10)")
 
+let maxVoteIdLower10 = Math.floor((maxVoteEventId) / 10) * 10
+let minVoteIdLower10 = Math.floor((minVoteEventId) / 10) * 10
+let steps = ((maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE) - minVoteIdLower10) / LINE_PLOT_X_STEP_SIZE
+let xTickValues = [...Array(steps).keys()].map(v => (v * LINE_PLOT_X_STEP_SIZE) + minVoteIdLower10)
+
 // Add axes
 let xAxis = d3.axisBottom(scaleVoteId)
-  .tickValues([0, 5, 10, 15, 20])
+  .tickValues(xTickValues)
   .tickSize(3)
 let yAxis = d3.axisLeft(scaleProbability)
   .tickValues([0.0, 0.25, 0.5, 0.75, 1.0])
