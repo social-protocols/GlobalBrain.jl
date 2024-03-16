@@ -19,18 +19,10 @@ const ROOT_POST_RECT_Y = 30
 const POST_RECT_WIDTH = 250
 const POST_RECT_HEIGHT = 65
 
-const LINEPLOT_X_OFFSET = -5
-const LINEPLOT_Y_OFFSET = 120
-
 const LINE_PLOT_X_STEP_SIZE = 20
 const LINEPLOT_WIDTH = 300
 const LINEPLOT_HEIGHT = 100
 
-const USER_ICON_SVG_PATH =
-    "M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0" +
-    " 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7" +
-    " 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448" +
-    " 383.8 368.2 304 269.7 304H178.3z"
 const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 
@@ -111,7 +103,6 @@ r2d3.svg.html("")
 // -----------------------------------
 
 let rootPostScore = scoreEvents.filter((d) => d["postId"] === root["postId"])
-let rootPostVotes = voteEvents.filter((d) => d["postId"] === root["postId"])
 
 let minVoteEventId = d3.min(voteEventsByPostId[root.postId], (d) => d.voteEventId)
 let maxVoteEventId = d3.max(voteEventsByPostId[root.postId], (d) => d.voteEventId)
@@ -122,9 +113,6 @@ let scaleProbability = d3.scaleLinear()
 let scaleVoteId = d3.scaleLinear()
   .domain([minVoteEventId, maxVoteEventId])
   .range([0, LINEPLOT_WIDTH])
-let scaleUserColor = d3.scaleOrdinal()
-  .domain(rootPostVotes.map((d) => d.userId))
-  .range(d3.schemeSet2)
 
 // Line data
 let lineGenerator = d3.line()
@@ -177,74 +165,6 @@ lineGroup
   .attr("opacity", 0.5)
   .attr("fill", "none")
 
-// Add up/down/clear sequence at the bottom of the chart
-
-let upVoteEvents = rootPostVotes.filter((d) => d.vote == 1)
-let downVoteEvents = rootPostVotes.filter((d) => d.vote == -1)
-let clearVoteEvents = rootPostVotes.filter((d) => d.vote == 0)
-
-lineGroup
-  .append("g")
-  .selectAll("polygon")
-  .data(upVoteEvents)
-  .join("polygon")
-  .attr("points", (d) => {
-    let x_base = scaleVoteId(d.voteEventId) + LINEPLOT_X_OFFSET
-    let [x1, x2, x3] = [
-      x_base,
-      x_base + 10,
-      x_base + 5
-    ]
-    let [y1, y2, y3] = [
-      LINEPLOT_Y_OFFSET + 10,
-      LINEPLOT_Y_OFFSET + 10,
-      LINEPLOT_Y_OFFSET
-    ]
-    return `${x1},${y1} ${x2},${y2} ${x3},${y3}`
-  })
-  .attr("opacity", 0.5)
-  .attr("fill", "green")
-
-lineGroup
-  .append("g")
-  .selectAll("polygon")
-  .data(downVoteEvents)
-  .join("polygon")
-  .attr("points", (d) => {
-    let x_base = scaleVoteId(d.voteEventId) + LINEPLOT_X_OFFSET
-    let [x1, x2, x3] = [
-      x_base,
-      x_base + 10,
-      x_base + 5
-    ]
-    let [y1, y2, y3] = [
-      LINEPLOT_Y_OFFSET + 0,
-      LINEPLOT_Y_OFFSET + 0,
-      LINEPLOT_Y_OFFSET + 10
-    ]
-    return `${x1},${y1} ${x2},${y2} ${x3},${y3}`
-  })
-  .attr("opacity", 0.5)
-  .attr("fill", "red")
-
-lineGroup
-  .append("g")
-  .selectAll("circle")
-  .data(clearVoteEvents)
-  .join("circle")
-  .attr("cx", (d) => scaleVoteId(d.voteEventId) + LINEPLOT_X_OFFSET + 5)
-  .attr("cy", LINEPLOT_Y_OFFSET + 5)
-  .attr("r", 5)
-  .attr("fill", "lightgrey")
-
-lineGroup
-  .append("g")
-  .selectAll("text")
-  .data(rootPostVotes)
-  .join("path")
-  .attr("d", USER_ICON_SVG_PATH)
-  .attr("transform", (d) => `translate(${scaleVoteId(d.voteEventId) - 5}, 140) scale(0.02)`)
-  .attr("fill", (d) => scaleUserColor(d.userId))
 
 // -----------------------------------
 // --- EDGES -------------------------
