@@ -47,7 +47,7 @@ simulationDemoServer <- function(id) {
               JOIN idsRecursive ON p2.parent_id = idsRecursive.id
             )
             SELECT idsRecursive.*,
-              vote_event_id -- TODO: rename to lastVoteEventId or similar
+                vote_event_id -- TODO: rename to lastVoteEventId or similar
               , vote_event_time
               , top_note_id
               , o
@@ -168,14 +168,11 @@ simulationDemoServer <- function(id) {
           postId = post_id,
           noteId = note_id,
           p = p,
-          q = q,
-          r = r,
           pCount = p_count,
-          qCount = q_count,
-          rCount = r_count,
           pSize = p_size,
+          q = q,
+          qCount = q_count,
           qSize = q_size,
-          rSize = r_size,
         )
 
       discussion_tree_json <- data_to_json(discussion_tree)

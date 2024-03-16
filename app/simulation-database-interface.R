@@ -5,6 +5,7 @@ simulation_db <- function() {
   dbConnect(RSQLite::SQLite(), SIM_DATABASE_PATH)
 }
 
+# table defined in: ../sql/tables.sql:1
 get_simulation_choices <- function() {
   con <- simulation_db()
   simulation_choices <-
@@ -22,6 +23,7 @@ get_simulation_choices <- function() {
   return(simulation_choices)
 }
 
+# table defined in: ../sql/tables.sql:102
 get_score_events <- function() {
   con <- simulation_db()
   data <- dbGetQuery(con, "SELECT * FROM ScoreEvent") %>%
@@ -42,6 +44,7 @@ get_score_events <- function() {
   return(data)
 }
 
+# table defined in: ../sql/tables.sql:1
 get_vote_events <- function() {
   con <- simulation_db()
   data <- dbGetQuery(con, "SELECT * FROM VoteEvent") %>%
@@ -60,6 +63,7 @@ get_vote_events <- function() {
   return(data)
 }
 
+# table defined in: ../sql/tables.sql:72
 get_effect_events <- function() {
   con <- simulation_db()
   data <- dbGetQuery(con, "SELECT * FROM EffectEvent") %>%
@@ -72,16 +76,12 @@ get_effect_events <- function() {
       postId = post_id,
       noteId = note_id,
       p = p,
-      q = q,
-      r = r,
       pCount = p_count,
-      qCount = q_count,
-      rCount = r_count,
       pSize = p_size,
+      q = q,
+      qCount = q_count,
       qSize = q_size,
-      rSize = r_size,
     )
   dbDisconnect(con)
   return(data)
 }
-
