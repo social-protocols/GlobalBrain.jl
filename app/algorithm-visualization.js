@@ -311,19 +311,6 @@ function addUpvoteProbabilityBar(
     })
     .style("fill", fill)
     .attr("display", displayFunc)
-
-  // --- KEEP FOR POTENTIAL REUSE TO PLOT THE BAYESIAN PRIOR --->
-  // group
-  //   .append("line")
-  //   .attr("x1", x)
-  //   .attr("x2", x + 25)
-  //   .attr("y1", POST_RECT_HEIGHT / 2 - 0.75)
-  //   .attr("y2", POST_RECT_HEIGHT / 2 - 0.75)
-  //   .attr("stroke", "black")
-  //   .attr("opacity", 0.7)
-  //   .style("stroke-dasharray", "5, 2")
-  //   .style("stroke-width", 1.5)
-  // <------
 }
 
 let voteGroup = nodeGroup.append("g")
