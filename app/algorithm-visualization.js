@@ -9,6 +9,7 @@ const discussionTree = r2d3.data.discussion_tree.filter((post) => post.createdAt
 const effects = r2d3.data.effects
 const scoreEvents = r2d3.data.score_events
 const voteEvents = r2d3.data.vote_events
+const effectEvents = r2d3.data.effect_events
 
 const CHILD_NODE_SPREAD = 400
 const CHILD_PARENT_OFFSET = 150
@@ -47,6 +48,30 @@ let effectsByPostIdNoteId = {}
 effects.forEach((effect) => {
   effectsByPostIdNoteId[`${effect["postId"]}-${effect["noteId"]}`] = effect
 })
+
+
+let effectEventsByPostId = {}
+effectEvents.forEach((effectEvent) => {
+  let postId = effectEvent.postId
+  if (!effectEventsByPostId[postId]) {
+    effectEventsByPostId[postId] = [effectEvent]
+  } else {
+    effectEventsByPostId[postId].push(effectEvent)
+  }
+})
+
+let thisTreePostIds = Object.keys(postsByPostId)
+let currentEffects = {}
+thisTreePostIds.forEach((postId) => {
+  if (!(postId in effectEventsByPostId)) {
+    return
+  }
+  // https://stackoverflow.com/questions/4020796/finding-the-max-value-of-a-property-in-an-array-of-objects
+  currentEffects[postId] = effectEventsByPostId[postId].reduce(function(prev, current) {
+    return (prev && prev.voteEventId > current.voteEventId) ? prev : current
+  })
+})
+
 
 let childPostsByPostId = {}
 let childEffectsByPostId = {}
