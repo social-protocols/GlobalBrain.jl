@@ -139,9 +139,9 @@ create table if not exists LastVoteEvent(
 
 insert into LastVoteEvent values(1, 0, 0);
 
-CREATE TABLE "Tag" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "tag" TEXT NOT NULL
+create TABLE Tag (
+      id  integer NOT NULL PRIMARY KEY AUTOINCREMENT
+    , tag text NOT NULL
 ) STRICT;
 
 create index if not exists post_parent on Post(parent_id);

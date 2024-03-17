@@ -12,15 +12,15 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         # The anonymous function provided here is used by the score_tree function to output
         # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
         # ScoreEvent or an EffectEvent.
-        output_event =
-            (vote_event_id::Int, vote_event_time::Int, object) -> begin
-                e = as_event(vote_event_id, vote_event_time, object)
-                insert_event(db, e)
-                json_data = JSON.json(e)
-                write(output_stream, json_data * "\n")
-            end
-        successfully_processed =
-            process_vote_event(output_event::Function, db::SQLite.DB, vote_event)
+        successfully_processed = process_vote_event(
+            db::SQLite.DB,
+            vote_event,
+        ) do vote_event_id::Int, vote_event_time::Int, object
+            e = as_event(vote_event_id, vote_event_time, object)
+            insert_event(db, e)
+            json_data = JSON.json(e)
+            write(output_stream, json_data * "\n")
+        end
         if !successfully_processed
             @info "Already processed vote event $(vote_event.vote_event_id)"
         else

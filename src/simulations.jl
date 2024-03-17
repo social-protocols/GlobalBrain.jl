@@ -77,11 +77,8 @@ function simulation_step!(
         vote_event_id += 1
     end
 
-    score_rows = DBInterface.execute(
-        db,
-        "select * from score where tag_id = :tag_id",
-        [tag_id]
-    )
+    score_rows =
+        DBInterface.execute(db, "select * from score where tag_id = :tag_id", [tag_id])
     scores = map(sql_row_to_score, score_rows)
     return Dict(score.post_id => score for score in scores)
 end

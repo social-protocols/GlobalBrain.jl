@@ -117,8 +117,7 @@ end
 function as_tallies_tree(t::SQLTalliesTree)
     return TalliesTree(
         # (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
-        (ancestor_id) ->
-            get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
+        (ancestor_id) -> get_tallies(t.db, t.tally.tag_id, t.tally.post_id, ancestor_id),
         () -> t.tally,
         () -> t.needs_recalculation,
         (ancestor_id) -> nothing,
@@ -336,14 +335,17 @@ end
 
 function get_or_insert_tag_id(db::SQLite.DB, tag::String)
 
-    results = DBInterface.execute(db, "insert into tag(tag) values (?) on conflict do nothing returning id", [tag])
+    results = DBInterface.execute(
+        db,
+        "insert into tag(tag) values (?) on conflict do nothing returning id",
+        [tag],
+    )
 
     r = iterate(results)
 
-    if length(r) == 0 
+    if length(r) == 0
         error("Failed to get/insert tag $tag")
     end
-    
+
     return r[1][:id]
 end
-
