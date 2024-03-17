@@ -13,7 +13,7 @@ create table if not exists VoteEvent(
 create table if not exists Vote(
       vote_event_id   integer not null
     , vote_event_time integer not null
-    , user_id         text
+    , user_id         text not null
     , tag_id          integer not null
     , parent_id       integer
     , post_id         integer not null
@@ -29,16 +29,17 @@ create table if not exists Tally(
     , count                integer not null
     , total                integer not null
     , primary key(tag_id, post_id)
- ) strict;
+) strict;
 
 create table if not exists ConditionalVote(
-      user_id         text
+      user_id         text not null
     , tag_id          integer not null
     , post_id         integer not null
     , note_id         integer not null
     , event_type      integer not null
     , informed_vote   integer not null
     , uninformed_vote integer not null
+    , is_informed     integer not null
     , primary key(user_id, tag_id, post_id, note_id, event_type)
 ) strict;
 
@@ -52,7 +53,7 @@ create table if not exists ConditionalTally(
     , uninformed_count integer not null
     , uninformed_total integer not null
     , primary key(tag_id, post_id, note_id, event_type)
-) strict;
+ ) strict;
 
 create table if not exists Post(
       parent_id  integer
@@ -81,6 +82,7 @@ create table if not exists EffectEvent(
     , q               real    not null
     , q_count         integer not null
     , q_size          integer not null
+    , r               real    not null
     , primary key(vote_event_id, post_id, note_id)
 ) strict;
 
@@ -96,6 +98,7 @@ create table if not exists Effect(
     , q               real    not null
     , q_count         integer not null
     , q_size          integer not null
+    , r               real    not null
     , primary key(tag_id, post_id, note_id)
 ) strict;
 

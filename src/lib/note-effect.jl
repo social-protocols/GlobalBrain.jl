@@ -64,33 +64,33 @@ const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 2.3
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
     BetaDistribution(0.875, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
 
-function calc_note_effect_bayesian_average(tally::DetailedTally)
-    upvote_probability = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, tally.parent))
+# function calc_note_effect_bayesian_average(tally::DetailedTally)
+#     upvote_probability = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, tally.parent))
 
-    uninformed_probability =
-        upvote_probability |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.uninformed)) |>
-        (x -> x.mean)
+#     uninformed_probability =
+#         upvote_probability |>
+#         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+#         (x -> update(x, tally.uninformed)) |>
+#         (x -> x.mean)
 
-    informed_probability =
-        upvote_probability |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.informed)) |>
-        (x -> x.mean)
+#     informed_probability =
+#         upvote_probability |>
+#         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+#         (x -> update(x, tally.informed)) |>
+#         (x -> x.mean)
 
-    return Effect(
-        tag_id = tally.tag_id,
-        post_id = tally.parent_id,
-        note_id = tally.post_id,
-        p = informed_probability,
-        p_count = tally.informed.count,
-        p_size = tally.informed.size,
-        q = uninformed_probability,
-        q_count = tally.uninformed.count,
-        q_size = tally.uninformed.size,
-    )
-end
+#     return Effect(
+#         tag_id = tally.tag_id,
+#         post_id = tally.parent_id,
+#         note_id = tally.post_id,
+#         p = informed_probability,
+#         p_count = tally.informed.count,
+#         p_size = tally.informed.size,
+#         q = uninformed_probability,
+#         q_count = tally.uninformed.count,
+#         q_size = tally.uninformed.size,
+#     )
+# end
 
 # # Use HMC simulation (NUTS sampling) to calculate the note effect using the given hierarchical model
 # function calc_note_effect_hmc(model_function) 

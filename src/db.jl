@@ -191,8 +191,9 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , q
             , q_count
             , q_size
+            , r
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
 
     """
@@ -213,6 +214,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect.q,
             effect.q_count,
             effect.q_size,
+            effect.r,
         ),
     )
 end
@@ -308,6 +310,7 @@ function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
             p_size = row[:p_size],
             q_count = row[:q_count],
             q_size = row[:q_size],
+            r = row[:r],
         ),
     )
 end

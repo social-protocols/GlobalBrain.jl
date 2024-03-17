@@ -119,57 +119,57 @@ function calc_note_effect_relative(
     tally = note.tally()
     note_id = tally.post_id
 
-    uninformed_probability =
+    q =
         prior |>
         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
         (x -> update(x, tally.uninformed)) |>
         (x -> x.mean)
 
-    @debug "Uninformed probability for $post_id=>$note_id is $uninformed_probability $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
+    @debug "Uninformed probability for $post_id=>$note_id is $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
 
-    informed_probability =
+    r =
         prior |>
         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
         (x -> update(x, tally.informed))
 
-    @debug "Informed probability for $post_id=>$note_id is $(informed_probability.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
+    @debug "Partially Informed probability for $post_id=>$note_id is $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
 
 
     # First find the top note effect on me!
-    # top_subnote_effect = find_top_note_effect_relative(post_id, informed_probability, note, effects)
+    # top_subnote_effect = find_top_note_effect_relative(post_id, r, note, effects)
     # supp = calc_note_support(top_subnote_effect)
     # prior = this_note_effect.p * supp + this_note_effect.q * (1 - supp)
 
-    # informed_probability_supported = if isnothing(top_subnote_effect)
+    # r_supported = if isnothing(top_subnote_effect)
     #     this_note_effect.p
     # else
     #     top_subnote_effect.p
     # end
 
 
-    top_child_effect =
-        find_top_note_effect_relative(post_id, informed_probability, note, effects)
+    top_child_effect = find_top_note_effect_relative(post_id, r, note, effects)
 
     @debug "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
 
-    informed_probability_adjusted = if !isnothing(top_child_effect)
+    p = if !isnothing(top_child_effect)
         top_child_effect.p
     else
-        informed_probability.mean
+        r.mean
     end
 
-    @debug "informed_probability_adjusted=$informed_probability_adjusted for $post_id=>$(note.tally().post_id)"
+    @debug "p=$p for $post_id=>$(note.tally().post_id)"
 
     return Effect(
         tag_id = tally.tag_id,
         post_id = post_id,
         note_id = note_id,
-        p = informed_probability_adjusted,
+        p = p,
         p_count = tally.informed.count,
         p_size = tally.informed.size,
-        q = uninformed_probability,
+        q = q,
         q_count = tally.uninformed.count,
         q_size = tally.uninformed.size,
+        r = r.mean,
     )
 end
 

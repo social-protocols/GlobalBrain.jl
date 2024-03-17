@@ -55,6 +55,7 @@ Base.@kwdef struct Effect
     q::Float64
     q_count::Int64
     q_size::Int64
+    r::Float64
 end
 
 
