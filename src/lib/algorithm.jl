@@ -39,15 +39,15 @@ function score_post(
 
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    @debug "Calling find_top_note_effect_relative $post_id=>$(post.tally().post_id)"
+    @debug "Calling find_top_thread $post_id=>$(post.tally().post_id)"
 
-    top_note_effect = find_top_note_effect_relative(post_id, o, post, effects)
+    top_note_effect = find_top_thread(post_id, o, post, effects)
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
     for e in my_effects
         output_results(e)
     end
-    my_score = total_score(my_effects, top_note_effect, this_tally.overall)
+    my_score = ranking_score(my_effects, top_note_effect, o.mean)
 
     children = post.children(post_id)
     for child in children
@@ -70,7 +70,7 @@ function score_post(
 end
 
 
-function find_top_note_effect_relative(
+function find_top_thread(
     post_id::Int,
     r::BetaDistribution,
     note::TalliesTree,
@@ -79,7 +79,7 @@ function find_top_note_effect_relative(
 
     note_id = note.tally().post_id
 
-    @debug "find_top_note_effect_relative $post_id=$(note_id), r=$(r.mean)"
+    @debug "find_top_thread $post_id=$(note_id), r=$(r.mean)"
 
     children = note.children(post_id)
 
@@ -93,7 +93,7 @@ function find_top_note_effect_relative(
     @debug "Getting child effects"
 
     child_effects =
-        [calc_note_effect_relative(post_id, r, child, effects) for child in children]
+        [calc_thread_effect(post_id, r, child, effects) for child in children]
 
     @debug "Got child effects $child_effects"
 
@@ -102,14 +102,14 @@ function find_top_note_effect_relative(
     end
 
     return reduce((a, b) -> begin
-        ma = isnothing(a) ? 0 : score_effect(a)
-        mb = isnothing(b) ? 0 : score_effect(b)
+        ma = isnothing(a) ? 0 : thread_score(a)
+        mb = isnothing(b) ? 0 : thread_score(b)
         ma > mb ? a : b
     end, child_effects)
 end
 
 
-function calc_note_effect_relative(
+function calc_thread_effect(
     post_id,
     prior::BetaDistribution,
     note::TalliesTree,
@@ -136,7 +136,7 @@ function calc_note_effect_relative(
 
 
     # First find the top note effect on me!
-    # top_subnote_effect = find_top_note_effect_relative(post_id, r, note, effects)
+    # top_subnote_effect = find_top_thread(post_id, r, note, effects)
     # supp = calc_note_support(top_subnote_effect)
     # prior = this_note_effect.p * supp + this_note_effect.q * (1 - supp)
 
@@ -147,7 +147,7 @@ function calc_note_effect_relative(
     # end
 
 
-    top_child_effect = find_top_note_effect_relative(post_id, r, note, effects)
+    top_child_effect = find_top_thread(post_id, r, note, effects)
 
     @debug "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
 
@@ -181,7 +181,3 @@ function add!(effects::Dict{Int,Vector{Effect}}, effect::Effect)
     push!(effects[effect.note_id], effect)
 end
 
-
-function score_effect(effect::Effect)
-    return relative_entropy(effect.p, effect.q) * effect.p_size
-end
