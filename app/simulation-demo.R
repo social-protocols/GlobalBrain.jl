@@ -31,19 +31,25 @@ simulationDemoServer <- function(id) {
     effect_events <- get_effect_events()
 
     discussionTree <- reactive({
+      period <- input$period
       root_post_id <- input$postId
       con <- simulation_db()
       data <-
         dbGetQuery(
           con,
           "
-            WITH idsRecursive AS (
+            WITH currentPosts AS (
               SELECT *
               FROM post
+              WHERE created_at <= :period
+            )
+            , idsRecursive AS (
+              SELECT *
+              FROM currentPosts
               WHERE id = :root_post_id
               UNION ALL
               SELECT p2.*
-              FROM post p2
+              FROM currentPosts p2
               JOIN idsRecursive ON p2.parent_id = idsRecursive.id
             )
             SELECT idsRecursive.*,
@@ -58,7 +64,7 @@ simulationDemoServer <- function(id) {
             FROM idsRecursive
             LEFT OUTER JOIN score ON idsRecursive.id = score.post_id
           ",
-          params = list(root_post_id = root_post_id)
+          params = list(period = period, root_post_id = root_post_id)
         ) %>%
         data.frame() %>%
         mutate(parent_id = if_else(id == root_post_id, NA, parent_id)) %>%
