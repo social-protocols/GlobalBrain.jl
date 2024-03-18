@@ -43,6 +43,28 @@ simulationDemoServer <- function(id) {
               FROM post
               WHERE created_at <= :period
             )
+            , currentScoreWithMax AS (
+              SELECT
+                MAX(vote_event_id),
+                *
+              FROM ScoreEvent
+              WHERE vote_event_time <= :period
+              GROUP BY tag_id, post_id
+            )
+            , currentScore AS (
+              SELECT
+                  vote_event_id
+                , vote_event_time
+                , tag_id
+                , post_id
+                , top_note_id
+                , o
+                , o_count
+                , o_size
+                , p
+                , score
+              FROM currentScoreWithMax
+            )
             , idsRecursive AS (
               SELECT *
               FROM currentPosts
@@ -62,7 +84,8 @@ simulationDemoServer <- function(id) {
               , p
               , score
             FROM idsRecursive
-            LEFT OUTER JOIN score ON idsRecursive.id = score.post_id
+            LEFT OUTER JOIN currentScore
+            ON idsRecursive.id = currentScore.post_id
           ",
           params = list(period = period, root_post_id = root_post_id)
         ) %>%
