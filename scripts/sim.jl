@@ -28,7 +28,9 @@ begin
         end
         # try    
             @info "Running simulation $(n)..."
-            run_simulation!(s, db, tag_id = get_or_insert_tag_id(db, n))
+            @testset "$(n)" begin
+                run_simulation!(s, db, tag_id = get_or_insert_tag_id(db, n))
+            end
             sims_run += 1
         # catch e
             # @error e
