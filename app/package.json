@@ -7,7 +7,7 @@
     "serve": "webpack serve"
   },
   "dependencies": {
-    "@jlongster/sql.js": "^1.6.7",
+    "@urdeveloper/sql.js": "^1.6.2",
     "absurd-sql": "^0.0.46"
   },
   "devDependencies": {

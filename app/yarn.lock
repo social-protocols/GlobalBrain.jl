@@ -26,13 +26,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jlongster/sql.js@npm:^1.6.7":
-  version: 1.6.7
-  resolution: "@jlongster/sql.js@npm:1.6.7"
-  checksum: ee47652f8e9426dccfaad871e73402961613cf22f968baffccdf0bc0d68347dd32fbdbc9f1447dde20dd9480b253c823f1dd0a4fa62798273a1877be1f915b68
-  languageName: node
-  linkType: hard
-
 "@jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.5
   resolution: "@jridgewell/gen-mapping@npm:0.3.5"
@@ -178,6 +171,13 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: c599745243ed9ae4ca87460f18f88d02ab7424b545136aa504ed7a1d898e3a9bb133c927bcc7e861f79d7f6043ef917a173e780c8a001e129221e92f6d97b0ee
+  languageName: node
+  linkType: hard
+
+"@urdeveloper/sql.js@npm:^1.6.2":
+  version: 1.6.2
+  resolution: "@urdeveloper/sql.js@npm:1.6.2"
+  checksum: cd8e133c1158b97c32ed8ecce50098ce445bb9be467b96af15b6fde744c98d8eaa551668192f0feaeb491591cf1b7fcf83d5dbb6b042b50ae7a8cd4c0ea90213
   languageName: node
   linkType: hard
 
@@ -390,7 +390,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "absurd-example-project@workspace:."
   dependencies:
-    "@jlongster/sql.js": "npm:^1.6.7"
+    "@urdeveloper/sql.js": "npm:^1.6.2"
     absurd-sql: "npm:^0.0.46"
     html-webpack-plugin: "npm:^5.3.2"
     webpack: "npm:^5.50.0"
