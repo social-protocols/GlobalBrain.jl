@@ -72,6 +72,7 @@ thisTreePostIds.forEach((postId) => {
   })
 })
 
+// TODO: calculate magnitude in JavaScript
 
 let childPostsByPostId = {}
 let childEffectsByPostId = {}
