@@ -300,7 +300,6 @@ function addUpvoteProbabilityBar(
   x,
   fill,
   heightPercentageFunc,
-  heightNaivePercentageFunc,
   opacityFunc,
   displayFunc,
 ) {
@@ -326,17 +325,6 @@ function addUpvoteProbabilityBar(
       return POST_RECT_HEIGHT - heightPercentageFunc(d) * POST_RECT_HEIGHT
     })
     .attr("opacity", opacityFunc)
-    .style("fill", fill)
-    .attr("display", displayFunc)
-
-  group
-    .append("rect")
-    .attr("width", 5)
-    .attr("height", (d) => heightNaivePercentageFunc(d) * POST_RECT_HEIGHT)
-    .attr("x", x)
-    .attr("y", (d) => {
-      return POST_RECT_HEIGHT - heightNaivePercentageFunc(d) * POST_RECT_HEIGHT
-    })
     .style("fill", fill)
     .attr("display", displayFunc)
 }
@@ -381,7 +369,6 @@ addUpvoteProbabilityBar(
   voteGroup,
   -55,
   "black",
-  (d) => d.o,
   (d) => d.oCount / d.oSize == 0 ? 0.05 : d.oCount / d.oSize,
   (d) => 1 - (1 / (1 + 0.3 * d.oSize)),
   () => "inline"
@@ -391,7 +378,6 @@ addUpvoteProbabilityBar(
   voteGroup,
   -85,
   "steelblue",
-  (d) => d.p,
   (d) => {
     let edges = childEffectsByPostId[d.postId] || []
     let topNoteEdge = edges[0]
