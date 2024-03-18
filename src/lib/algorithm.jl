@@ -80,7 +80,7 @@ function find_top_thread(
 
     note_id = note.tally().post_id
 
-    @debug "find_top_thread $post_id=$(note_id), r=$(r.mean)"
+    @debug "find_top_thread $post_id=>$(note_id), r=$(r.mean)"
 
     children = note.children(post_id)
 

@@ -78,7 +78,10 @@ function b_implies_a(step_func::Function)
         for i in 1:n_subset
     ]
     scores = step_func(3, SimulationPost[], votes_2)
+    p = scores[A.post_id].p
     @testset "B implies A: Step 3" begin
         @test scores[A.post_id].p ≈ 0.9 atol = 0.1
+        @test scores[B.post_id].score > 5 # very high score because it changed lots of minds
+        @test (scores[A.post_id].score ≈ p * (1 + log2(p))) atol = 0.01
     end
 end
