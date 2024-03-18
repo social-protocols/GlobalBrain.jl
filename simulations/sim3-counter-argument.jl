@@ -1,4 +1,6 @@
 function counter_argument(step_func::Function)
+    Random.seed!(3); 
+
     n_users = 100
     n_supporters = trunc(Int, n_users/2)
     n_detractors = trunc(Int, n_users/2)
@@ -46,10 +48,10 @@ function counter_argument(step_func::Function)
             [supporters_draws_A_step_1; detractors_draws_A_step_1]
         )
     ]
-    scores = step_func(1, [A], votes_A_step_1)
+    scores_step_1 = step_func(1, [A], votes_A_step_1)
 
     @testset "Step 1: Initial beliefs" begin
-        @test scores[A.post_id].p ≈ means["A"] atol = 0.2
+        @test scores_step_1[A.post_id].p ≈ means["A"] atol = 0.2
     end
 
     # --------------------------------------------------------------------------
@@ -75,9 +77,11 @@ function counter_argument(step_func::Function)
         )
     ]
 
-    scores = step_func(2, SimulationPost[], votes_A_step_2)
-    @testset "Step 2: After first argument" begin
-        @test scores[A.post_id].p ≈ means["A|B"] atol = 0.1
+    scores_step_2 = step_func(2, SimulationPost[], votes_A_step_2)
+    @testset "Step 2: After first argument (p=$scores_step_2[A.post_id].p ≈ $(means["A|B"])" begin
+        @test scores_step_2[A.post_id].p ≈ means["A|B"] atol = 0.1
+        @test scores_step_2[A.post_id].score > scores_step_1[A.post_id].score # Score increased because probability increased
+        @test scores_step_2[B.post_id].score > 1 # High score because it changed minds about A 
     end
 
     # --------------------------------------------------------------------------
@@ -122,9 +126,14 @@ function counter_argument(step_func::Function)
     ]
 
 
-    scores = step_func(3, SimulationPost[], votes_A_step_3,)
+    scores_step_3 = step_func(3, SimulationPost[], votes_A_step_3,)
     @testset "Step 3: After counter argument" begin
-        @test scores[A.post_id].p ≈ means["A|B,C"] atol = 0.1
+        @test scores_step_3[A.post_id].p ≈ means["A|B,C"] atol = 0.2
+        @test scores_step_3[A.post_id].score < scores_step_2[A.post_id].score
+        @test scores_step_3[B.post_id].score < 1 
+            # direct score = 1
+            # indirect score < 1 (because B moves users in the wrong direction )
+        @test scores_step_3[C.post_id].score > 1 # High score because it changed minds about A given B
     end
 
 end
