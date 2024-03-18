@@ -4,7 +4,7 @@
 # critical thread that begins with that note. 
 #
 # ranking_score returns a score for determining how much attention a post
-# should receive -- which is the value of a user considering the note.
+# should receive -- which is the value of a user considering the post.
 #
 # These are different values. To understand the difference, suppose we have
 # posts A->B->C, P(A|not B, not C) = 10%, P(A|B, not C)=90%, and P(A|B,C) =
@@ -29,17 +29,19 @@
 # The information value of B (without C) is 
 #
 #   information_gain(p,r,q) 
-#     = information_gain(p, q) - information_gain(p, r) 
+#     = relative_entropy(p, q) - relative_entropy(p, r) 
+#     = .0176 - 2.2366 
 #     = -2.2189. 
 #
 # On the other hand, for purposes of calculating the informed probability of
 # A, the most informed thread may be: A->B->C. The relative entropy for the
 # thread is:
 #
-#    relative_entropy(p, q) = .0176
+#    relative_entropy(p, q) = relative_entropy(.15, .1) = .0176
 #
-# So unless there are threads with higher scores, B might start of the top
-# thread, even though B as a post has negative information value.
+# So unless there are threads with higher scores, B might be the start of the
+# most informative thread, even though B as a post has negative information
+# value.
 #
 # We multiple thread_score by p_size as a heuristic to deal with duplicates.
 # Suppose we have the same posts A->B->C. Before C is submitted, the informed
@@ -62,15 +64,14 @@
 # start downvoting the duplicates, so that they never receive enough
 # attention to become the top note and people don't have to respond to them.
 
-# p =  0.3952
-# q = 0.6992
-# r = 0.304
-# # p = .15
-# # q = .1
-# # r = .9
-# GlobalBrain.information_gain(p,r,q) 
+# Code for generating above calculations:
+# p = .15
+# q = .1
+# r = .9
 # GlobalBrain.relative_entropy(p, q)
 # GlobalBrain.relative_entropy(p, r)
+# GlobalBrain.information_gain(p, q, r) 
+# GlobalBrain.relative_entropy(p, q) - GlobalBrain.relative_entropy(p, r)
 
 
 function thread_score(effect::Effect)
@@ -78,23 +79,15 @@ function thread_score(effect::Effect)
 end
 
 function effect_score(effect::Effect)::Float64
-    return information_gain(effect.p, effect.r, effect.q)
+    return information_gain(effect.p, effect.q, effect.r)
 end
 
-function post_score(p)::Float64
+function direct_score(p)::Float64
     p * (1 + log2(p))
 end
 
-# The total ranking score for a post includes the information value of an
-# upvote on the post itself, plus the value of reduced cognitive dissonance
-# from voting on the post.
-
-function ranking_score(
-    effects::Vector{Effect},
-    top_note_effect::Union{Effect,Nothing},
-    o::Float64,
-)::Float64
-    p = isnothing(top_note_effect) ? o : top_note_effect.p
-
-    return post_score(p) + sum([effect_score(e) for e in effects])
+# The total ranking score for a post includes the direct score
+# the post itself, plus the value of its effects on other posts.
+function ranking_score(effects::Vector{Effect}, p::Float64)::Float64
+    return direct_score(p) + sum([effect_score(e) for e in effects])
 end

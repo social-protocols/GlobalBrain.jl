@@ -42,12 +42,13 @@ function score_post(
     @debug "Calling find_top_thread $post_id=>$(post.tally().post_id)"
 
     top_note_effect = find_top_thread(post_id, o, post, effects)
+    p = !isnothing(top_note_effect) ? top_note_effect.p : o.mean
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
     for e in my_effects
         output_results(e)
     end
-    my_score = ranking_score(my_effects, top_note_effect, o.mean)
+    my_score = ranking_score(my_effects, p)
 
     children = post.children(post_id)
     for child in children
@@ -61,7 +62,7 @@ function score_post(
         o = o.mean,
         o_count = this_tally.overall.count,
         o_size = this_tally.overall.size,
-        p = !isnothing(top_note_effect) ? top_note_effect.p : o.mean,
+        p = p,
         score = my_score,
     )
 
