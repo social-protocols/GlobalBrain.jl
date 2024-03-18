@@ -46,9 +46,9 @@ from leafNode join Lineage Ancestor on (post_id = descendant_id)
 
 union
 -- Next, select all children
-select post.id as post_id, tag_id
+select descendant_id as post_id, tag_id
 from leafNode
-join post on parent_id = post_id; -- children of item that was voted on
+join Lineage Descendant on (post_id = ancestor_id); -- children of item that was voted on
 
 
 create view VoteEventImport as
