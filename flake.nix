@@ -50,6 +50,7 @@
               cloc
               entr
               rEnv
+              yarn-berry
             ];
           };
         };
