@@ -1,10 +1,10 @@
 # thread_score returns a score for determining the top note for purposes of
-# calculating the informed probability of the post. It is the probability
-# that the user would upvote the post given they were fully informed of the
-# critical thread that begins with that note. 
+# calculating the informed probability of the post. It is a measure of how
+# much the *critical thread that starts with that note* changes the probability of
+# upvoting the post.
 #
 # ranking_score returns a score for determining how much attention a post
-# should receive -- which is the value of a user considering the post.
+# should receive -- the value of a user considering that particular post.
 #
 # These are different values. To understand the difference, suppose we have
 # posts A->B->C, P(A|not B, not C) = 10%, P(A|B, not C)=90%, and P(A|B,C) =
@@ -86,7 +86,7 @@ function direct_score(p)::Float64
     p * (1 + log2(p))
 end
 
-# The total ranking score for a post includes the direct score
+# The total ranking score for a post includes the direct score for
 # the post itself, plus the value of its effects on other posts.
 function ranking_score(effects::Vector{Effect}, p::Float64)::Float64
     return direct_score(p) + sum([effect_score(e) for e in effects])
