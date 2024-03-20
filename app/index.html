@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Brain</title>
+  </head>
+  <body>
+    <div id="app">
+      <div>
+        <form id="simulationControls">
+          <label for="simulationId">Simulation</label>
+          <select name="simulationId" id="simulationId">
+          </select>
+          <select name="postId" id="postId">
+            <option value="1">Post 1</option>
+            <option value="2">Post 2</option>
+            <option value="3">Post 3</option>
+          </select>
+          <select name="period" id="period">
+            <option value="1">Period 1</option>
+            <option value="2">Period 2</option>
+            <option value="3">Period 3</option>
+          </select>
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+      <svg></svg>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
