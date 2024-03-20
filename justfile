@@ -33,7 +33,7 @@ sim-db:
     litecli $SIM_DATABASE_PATH
 
 app:
-  find app/shiny | entr -cnr bash -c "Rscript -e \"shiny::runApp('app/shiny', port = 3456)\""
+  find shiny | entr -cnr bash -c "Rscript -e \"shiny::runApp('shiny', port = 3456)\""
 
 ############ TESTS ##############
 
