@@ -355,6 +355,76 @@ async function main() {
 
   svg.html("")
 
+  // -----------------------------------
+  // --- LINE PLOTS --------------------
+  // -----------------------------------
+
+  let rootPostScore = scoreEvents.filter((d) => d["post_id"] === root["id"])
+
+  let minVoteEventId = d3.min(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
+  let maxVoteEventId = d3.max(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
+
+  let scaleProbability = d3.scaleLinear()
+    .domain([0, 1])
+    .range([LINEPLOT_HEIGHT, 0])
+  let scaleVoteId = d3.scaleLinear()
+    .domain([minVoteEventId, maxVoteEventId])
+    .range([0, LINEPLOT_WIDTH])
+
+  let lineGroup = svg
+    .append("g")
+    .attr("transform", "translate(30, 10)")
+
+  let maxVoteIdLower10 = Math.floor((maxVoteEventId) / 10) * 10
+  let minVoteIdLower10 = Math.floor((minVoteEventId) / 10) * 10
+  let steps = ((maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE) - minVoteIdLower10) / LINE_PLOT_X_STEP_SIZE
+  let xTickValues = [...Array(steps).keys()].map(v => (v * LINE_PLOT_X_STEP_SIZE) + minVoteIdLower10)
+
+  // Add axes
+  let xAxis = d3.axisBottom(scaleVoteId)
+    .tickValues(xTickValues)
+    .tickSize(3)
+  let yAxis = d3.axisLeft(scaleProbability)
+    .tickValues([0.0, 0.25, 0.5, 0.75, 1.0])
+    .tickSize(3)
+  lineGroup
+    .append("g")
+    .attr("transform", "translate(0, 101)")
+    .call(xAxis)
+  lineGroup
+    .append("g")
+    .call(yAxis)
+
+  let lineGenerator = d3.line()
+
+  // Overall probability line
+  let pathDataOverallProb = rootPostScore.map((e) => {
+    // TODO: rename "o" back to "overallProb"
+    return [scaleVoteId(e.vote_event_id), scaleProbability(e.o)]
+  })
+  let pathOverallProb = lineGenerator(pathDataOverallProb)
+  lineGroup
+    .append("path")
+    .attr("d", pathOverallProb)
+    .attr("stroke", "black")
+    .attr("stroke-width", 2)
+    .attr("opacity", 0.5)
+    .attr("fill", "none")
+
+  // Informed probability line
+  let pathDataP = rootPostScore.map((e) => {
+    return [scaleVoteId(e.vote_event_id), scaleProbability(e.p)]
+  })
+  let pathP = lineGenerator(pathDataP)
+  lineGroup
+    .append("path")
+    .attr("d", pathP)
+    .attr("stroke", "steelblue")
+    .attr("stroke-width", 2)
+    .attr("opacity", 0.5)
+    .attr("fill", "none")
+
+
 }
 
 main()
