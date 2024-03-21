@@ -425,6 +425,52 @@ async function main() {
     .attr("fill", "none")
 
 
+  // -----------------------------------
+  // --- EDGES -------------------------
+  // -----------------------------------
+
+  type Edge = {
+    parent: PostWithScore | null,
+    post: PostWithScore,
+    edgeData: Effect,
+  }
+
+  let edges: Edge[] = discussionTree
+    .filter((row) => row["parent_id"] !== null)
+    .map((row) => {
+      return {
+        parent: postsByPostId[row["parent_id"]],
+        post: postsByPostId[row["id"]],
+        edgeData: effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`]
+      }
+    })
+
+  let edgeData = svg
+    .append("g")
+    .selectAll("g")
+    .data(edges, (d) => d.parent["id"] + "-" + d.post["id"])
+
+  let edgeGroup = edgeData
+    .join("g")
+    .attr("id", (d) => "edgeGroup" + d.parent["id"] + "-" + d.post["id"])
+
+  edgeGroup
+    .append("line")
+    .attr("x1", (d) => d.parent.x + POST_RECT_WIDTH / 2)
+    .attr("y1", (d) => d.parent.y + POST_RECT_HEIGHT)
+    .attr("x2", (d) => d.post.x + POST_RECT_WIDTH / 2)
+    .attr("y2", (d) => d.post.y)
+    .attr("stroke-width", (d) => {
+      // measured in bits (i.e., [0, Inf)), we clamp at 10 and scale down to [0, 1]
+      let maxWidth = 10
+      let width = Math.min(maxWidth, d.edgeData.magnitude) / maxWidth
+      return 1 + width * 200
+    })
+    .attr("stroke", (d) => {
+      return d.edgeData.p > d.edgeData.q ? "forestgreen" : "tomato"
+    })
+    .style("stroke-linecap", "round")
+
 }
 
 main()
