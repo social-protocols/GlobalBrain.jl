@@ -208,7 +208,32 @@ async function getEffects(db: any, tagId: number, period: number) {
   return res
 }
 
+async function getScoreEvent(db: any) {
+  let stmt = db.prepare(`SELECT * FROM ScoreEvent`)
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res
+}
 
+async function getEffectEvent(db: any) {
+  let stmt = db.prepare(`SELECT * FROM EffectEvent`)
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res
+}
+
+async function getVoteEvent(db: any) {
+  let stmt = db.prepare(`SELECT * FROM VoteEvent`)
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res
+}
 
 async function main() {
   const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
@@ -220,6 +245,14 @@ async function main() {
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
   addSimulationSelectInput(simulationIds)
 
+  let tagId = 3
+  let period = 3
+  let rootPostId = 4
+  let discussionTree = await getDiscussionTree(db, rootPostId, period)
+  let effects = await getEffects(db, tagId, period)
+  let effectEvents = await getEffectEvent(db)
+  let scoreEvents = await getScoreEvent(db)
+  let voteEvents = await getVoteEvent(db)
 }
 
 main()
