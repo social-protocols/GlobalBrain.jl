@@ -97,9 +97,9 @@ let simulationFilter: SimulationFilter = {
 function handleSubmit(e: any) {
   e.preventDefault();
   const formData = new FormData(e.target);
-  formData.entries().forEach(([key, value]: Array<string>) => {
+  for (const [key, value] of formData) {
     simulationFilter[key] = value
-  })
+  }
   rerender(simulationFilter)
 }
 
@@ -253,6 +253,77 @@ async function main() {
   let effectEvents = await getEffectEvent(db)
   let scoreEvents = await getScoreEvent(db)
   let voteEvents = await getVoteEvent(db)
+  let postsByPostId: Lookup<PostWithScore> = {}
+  discussionTree.forEach((d) => {
+    postsByPostId[d.id] = d
+  })
+
+  let voteEventsByPostId: Lookup<VoteEvent[]> = {}
+  voteEvents.forEach((voteEvent) => {
+    let postId = voteEvent.post_id
+    if (postsByPostId[postId]) {
+      if (!(postId in voteEventsByPostId)) {
+        voteEventsByPostId[postId] = [voteEvent]
+      } else {
+        voteEventsByPostId[postId].push(voteEvent)
+      }
+    }
+  })
+
+  let effectsByPostIdNoteId: Lookup<Effect> = {}
+  effects.forEach((effect) => {
+    effectsByPostIdNoteId[`${effect["post_id"]}-${effect["note_id"]}`] = effect
+  })
+
+  let effectEventsByPostId: Lookup<EffectEvent[]> = {}
+  effectEvents.forEach((effectEvent) => {
+    let postId = effectEvent.post_id
+    if (!effectEventsByPostId[postId]) {
+      effectEventsByPostId[postId] = [effectEvent]
+    } else {
+      effectEventsByPostId[postId].push(effectEvent)
+    }
+  })
+
+  let thisTreePostIds = Object.keys(postsByPostId)
+  let currentEffects: Lookup<Effect> = {}
+  thisTreePostIds.forEach((postId) => {
+    if (!(postId in effectEventsByPostId)) {
+      return
+    }
+    // https://stackoverflow.com/questions/4020796/finding-the-max-value-of-a-property-in-an-array-of-objects
+    currentEffects[postId] = effectEventsByPostId[postId].reduce(function(prev, current) {
+      return (prev && prev.vote_event_id > current.vote_event_id) ? prev : current
+    })
+  })
+
+  // TODO: calculate magnitude
+  let childPostsByPostId: Lookup<PostWithScore[]> = {}
+  let childEffectsByPostId: Lookup<Effect[]> = {}
+  discussionTree.forEach((post: PostWithScore) => {
+    let parentId = post["parent_id"]
+    if (parentId !== null) {
+      let effect = effectsByPostIdNoteId[`${parentId}-${post["id"]}`]
+      if (!(parentId in childPostsByPostId)) {
+        childEffectsByPostId[parentId] = [effect]
+      } else {
+        childEffectsByPostId[parentId].push(effect)
+        childEffectsByPostId[parentId].sort((a, b) => b.magnitude - a.magnitude)
+      }
+    }
+
+    if (!(parentId in childPostsByPostId)) {
+      childPostsByPostId[parentId] = [post]
+    } else {
+      childPostsByPostId[parentId].push(post)
+      childPostsByPostId[parentId].sort((a, b) => {
+        let effectA = effectsByPostIdNoteId[`${parentId}-${a["id"]}`].magnitude
+        let effectB = effectsByPostIdNoteId[`${parentId}-${b["id"]}`].magnitude
+        return effectB - effectA
+      })
+    }
+  })
+
 }
 
 main()
