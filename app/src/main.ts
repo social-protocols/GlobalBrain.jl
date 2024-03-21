@@ -103,25 +103,10 @@ function handleSubmit(e: any) {
   rerender(simulationFilter)
 }
 
-async function rerender(
-  simulationFilter: {
-    simulationId: number | null,
-    postId: number | null,
-    period: number | null,
-  }
-) {
-  // const discussionTreeQueryResult = await getDiscussionTree(db, Number(simulationFilter.postId!), 3)
-  // console.log(discussionTreeQueryResult)
+async function rerender(simulationFilter: SimulationFilter) {
   d3.select("svg").remove()
   const svg = d3.select("div#app").append("svg")
-  svg
-    .data([simulationFilter])
-    .append("circle")
-    .attr("cx", 50)
-    .attr("cy", 50)
-    .attr("r", 20)
-    .attr("fill", d => d.postId == 1 ? "blue" : "red")
-    .attr("opacity", 0.3)
+  // TODO
 }
 
 function addSimulationSelectInput(simulationIds: number[]) {
