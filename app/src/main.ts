@@ -324,6 +324,28 @@ async function main() {
     }
   })
 
+  function assignPositionsFromRootRecursive(postId: number) {
+    let post = postsByPostId[postId]
+    if (postId in childPostsByPostId) {
+      let spread = 0
+      let stepSize = 0
+      if (childPostsByPostId[postId].length > 1) {
+        spread = CHILD_NODE_SPREAD
+        stepSize = spread / (childPostsByPostId[postId].length - 1)
+      }
+      childPostsByPostId[postId].forEach((child, i) => {
+        child.x = post.x + i * stepSize
+        child.y = post.y + CHILD_PARENT_OFFSET
+        assignPositionsFromRootRecursive(child["id"])
+      })
+    }
+  }
+
+  let root = childPostsByPostId["null"][0]
+  root.x = ROOT_POST_RECT_X
+  root.y = ROOT_POST_RECT_Y
+  assignPositionsFromRootRecursive(root["id"])
+
 }
 
 main()
