@@ -4,6 +4,22 @@ import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
 import * as d3 from 'd3'
 
 let simulationFilter: {
+const CHILD_NODE_SPREAD = 400
+const CHILD_PARENT_OFFSET = 150
+
+const ROOT_POST_RECT_X = 450
+const ROOT_POST_RECT_Y = 30
+
+const POST_RECT_WIDTH = 250
+const POST_RECT_HEIGHT = 65
+
+const LINE_PLOT_X_STEP_SIZE = 20
+const LINEPLOT_WIDTH = 300
+const LINEPLOT_HEIGHT = 100
+
+const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
+const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
+
   simulationId: number | null,
   postId: number | null,
   period: number | null,
