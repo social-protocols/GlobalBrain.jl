@@ -253,6 +253,13 @@ async function main() {
   let effectEvents = await getEffectEvent(db)
   let scoreEvents = await getScoreEvent(db)
   let voteEvents = await getVoteEvent(db)
+
+  d3.select("svg").remove()
+  const svg = d3.select("div#app")
+    .append("svg")
+    .attr("width", 1600)
+    .attr("height", 1600)
+
   let postsByPostId: Lookup<PostWithScore> = {}
   discussionTree.forEach((d) => {
     postsByPostId[d.id] = d
@@ -345,6 +352,8 @@ async function main() {
   root.x = ROOT_POST_RECT_X
   root.y = ROOT_POST_RECT_Y
   assignPositionsFromRootRecursive(root["id"])
+
+  svg.html("")
 
 }
 
