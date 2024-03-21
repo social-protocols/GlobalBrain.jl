@@ -471,6 +471,169 @@ async function main() {
     })
     .style("stroke-linecap", "round")
 
+  // -----------------------------------
+  // --- NODES -------------------------
+  // -----------------------------------
+
+  let nodeData = svg
+    .append("g")
+    .selectAll("g")
+    .data(discussionTree, (d) => d["id"])
+
+  let nodeGroup = nodeData
+    .join("g")
+    .attr("id", (d) => "nodeGroup" + d["id"])
+    .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
+
+  // Post container
+  nodeGroup.append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", POST_RECT_WIDTH)
+    .attr("height", POST_RECT_HEIGHT)
+    .style("fill", "white")
+    .attr("stroke", "black")
+  // TODO: fix -> no parentP and parentQ on discussionTree anymore
+  // .attr("stroke", (d) => {
+  //   if (d.parentP == d.parentQ) {
+  //     return "black"
+  //   }
+  //   return d.parentP > d.parentQ ? "forestgreen" : "tomato"
+  // })
+
+  // Post content
+  nodeGroup.append("foreignObject")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", POST_RECT_WIDTH)
+    .attr("height", POST_RECT_HEIGHT)
+    .append("xhtml:div")
+    .style("width", `${POST_RECT_WIDTH}px`)
+    .style("height", `${POST_RECT_HEIGHT}px`)
+    .style("overflow", "auto")
+    .style("box-sizing", "border-box")
+    .style("padding", "5px")
+    .html((d) => d.content)
+
+
+  // TODO: fix (doesn't work since porting to TypeScript)
+  // https://stackoverflow.com/questions/2685911/is-there-a-way-to-round-numbers-into-a-reader-friendly-format-e-g-1-1k
+  function numberToText(num: number) {
+    let decPlaces = 10
+    let abbrev = ["k", "m", "b", "t"]
+    let numStringified = ""
+    for (let i = abbrev.length - 1; i >= 0; i--) {
+      let size = Math.pow(10, (i + 1) * 3)
+      if (size <= num) {
+        num = Math.round(num * decPlaces / size) / decPlaces
+        if ((num == 1000) && (i < abbrev.length - 1)) {
+          num = 1
+          i++
+        }
+        numStringified = num + abbrev[i]
+        break
+      }
+    }
+    return numStringified
+  }
+
+  function addUpvoteProbabilityBar(
+    groupSelection,
+    x: number,
+    fill: string,
+    heightPercentageFunc: Function,
+    opacityFunc: Function,
+    displayFunc: Function,
+  ) {
+    let group = groupSelection.append("g")
+
+    group
+      .append("rect")
+      .attr("width", 25)
+      .attr("height", POST_RECT_HEIGHT)
+      .attr("x", x)
+      .attr("y", 0)
+      .attr("opacity", 0.05)
+      .style("fill", "transparent")
+      .attr("stroke", "black")
+      .attr("display", displayFunc)
+
+    group
+      .append("rect")
+      .attr("width", 25)
+      .attr("height", (d) => heightPercentageFunc(d) * POST_RECT_HEIGHT)
+      .attr("x", x)
+      .attr("y", (d) => {
+        return POST_RECT_HEIGHT - heightPercentageFunc(d) * POST_RECT_HEIGHT
+      })
+      .attr("opacity", opacityFunc)
+      .style("fill", fill)
+      .attr("display", displayFunc)
+  }
+
+  let voteGroup = nodeGroup.append("g")
+
+  // Upvote arrow
+  voteGroup
+    .append("g")
+    .attr("transform", `translate(-20, ${POST_RECT_HEIGHT / 2 - 15})`)
+    .append("polygon")
+    .attr("points", UP_ARROW_SVG_POLYGON_COORDS)
+    .attr("opacity", (d) => d.o_count / d.o_size)
+
+  // Downvote arrow
+  voteGroup
+    .append("g")
+    .attr("transform", `translate(-20, ${POST_RECT_HEIGHT / 2 + 5})`)
+    .append("polygon")
+    .attr("points", DOWN_ARROW_SVG_POLYGON_COORDS)
+    .attr("opacity", (d) => (d.o_size - d.o_count) / d.o_size)
+
+  // Upvote count
+  voteGroup
+    .append("text")
+    .text((d) => numberToText(d.o_count))
+    .attr("width", 10)
+    .attr("x", -15)
+    .attr("y", POST_RECT_HEIGHT / 2 - 20)
+    .attr("text-anchor", "middle")
+
+  // Downvote count
+  voteGroup
+    .append("text")
+    .text((d) => numberToText(d.o_size - d.o_count))
+    .attr("width", 10)
+    .attr("x", -15)
+    .attr("y", POST_RECT_HEIGHT / 2 + 30)
+    .attr("text-anchor", "middle")
+
+  addUpvoteProbabilityBar(
+    voteGroup,
+    -55,
+    "black",
+    (d: PostWithScore) => d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
+    (d: PostWithScore) => 1 - (1 / (1 + 0.3 * d.o_size)),
+    () => "inline"
+  )
+
+  addUpvoteProbabilityBar(
+    voteGroup,
+    -85,
+    "steelblue",
+    (d: PostWithScore) => {
+      let edges = childEffectsByPostId[d.id] || []
+      let topNoteEdge = edges[0]
+      return topNoteEdge && (topNoteEdge.p_count !== 0) ?
+        topNoteEdge.p_count / topNoteEdge.p_size :
+        0.05
+    },
+    (d: PostWithScore) => {
+      let edges = childEffectsByPostId[d.id] || []
+      let topNoteEdge = edges[0]
+      return topNoteEdge && 1 - (1 / (1 + 0.3 * topNoteEdge.p_size))
+    },
+    (d: PostWithScore) => childPostsByPostId[d.id] ? "inline" : "none"
+  )
 }
 
 main()
