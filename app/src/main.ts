@@ -1,5 +1,5 @@
 import './style.css'
-import initSqlJs, { SqlJsStatic } from 'sql.js'
+import initSqlJs from 'sql.js'
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
 import * as d3 from 'd3'
 
@@ -19,7 +19,6 @@ function handleSubmit(e: any) {
   formData.entries().forEach(([key, value]: Array<string>) => {
     simulationFilter[key] = value
   })
-  console.log(simulationFilter)
   rerender(simulationFilter)
 }
 
@@ -30,10 +29,8 @@ async function rerender(
     period: number | null,
   }
 ) {
-  console.log(simulationFilter.postId)
-
-  const discussionTreeQueryResult = await getDiscussionTree(db, Number(simulationFilter.postId!), 3)
-  console.log(discussionTreeQueryResult)
+  // const discussionTreeQueryResult = await getDiscussionTree(db, Number(simulationFilter.postId!), 3)
+  // console.log(discussionTreeQueryResult)
   d3.select("svg").remove()
   const svg = d3.select("div#app").append("svg")
   svg
@@ -137,6 +134,7 @@ async function main() {
   const simulationsQueryResult = db.exec("select id from tag")
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
   addSimulationSelectInput(simulationIds)
+
 }
 
 main()
