@@ -125,6 +125,25 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
   return res
 }
 
+
+async function getEffects(db: any, tagId: number, period: number) {
+  let stmt = db.prepare(`
+    SELECT MAX(vote_event_id) AS max_id, *
+    FROM EffectEvent
+    WHERE tag_id = :tagId
+    AND vote_event_time <= :period
+    GROUP BY post_id, note_id
+  `)
+  stmt.bind({ ':tagId': tagId, ':period': period })
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res
+}
+
+
+
 async function main() {
   const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
   const dataPromise = fetch("/sim.db").then(res => res.arrayBuffer())
