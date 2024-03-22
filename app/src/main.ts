@@ -239,12 +239,6 @@ async function main() {
   let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(discussionTree, effectsByPostIdNoteId)
   let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(discussionTree, effectsByPostIdNoteId)
 
-  d3.select("svg").remove()
-  const svg = d3.select("div#app")
-    .append("svg")
-    .attr("width", 1600)
-    .attr("height", 1600)
-
   function assignPositionsFromRootRecursive(postId: number) {
     let post = postsByPostId[postId]
     if (postId in childrenByPostId) {
@@ -268,6 +262,12 @@ async function main() {
   root.x = ROOT_POST_RECT_X
   root.y = ROOT_POST_RECT_Y
   assignPositionsFromRootRecursive(root["id"])
+
+  d3.select("svg").remove()
+  const svg = d3.select("div#app")
+    .append("svg")
+    .attr("width", 1600)
+    .attr("height", 1600)
 
   svg.html("")
 
