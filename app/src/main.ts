@@ -3,6 +3,13 @@ import initSqlJs from 'sql.js'
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
 import * as d3 from 'd3'
 import relativeEntropy from './entropy.ts'
+import {
+  Effect,
+  EffectEvent,
+  PostWithScore,
+  SimulationFilter,
+  VoteEvent,
+} from './types.ts'
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -29,74 +36,6 @@ const LINEPLOT_HEIGHT = 100
 
 const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
-
-type SimulationFilter = {
-  simulationId: number | null,
-  postId: number | null,
-  period: number | null,
-}
-
-type PostWithScore = {
-  parent_id: number | null,
-  id: number,
-  top_note_id: number | null,
-  content: string,
-  created_at: number,
-  vote_event_id: number,
-  vote_event_time: number,
-  o: number,
-  o_count: number,
-  o_size: number,
-  p: number,
-  score: number,
-  // positioned posts
-  x: number | null,
-  y: number | null
-}
-
-
-type VoteEvent = {
-  vote_event_id: number,
-  vote_event_time: number,
-  user_id: string,
-  tag_id: number,
-  parent_id: number | null,
-  post_id: number,
-  note_id: number | null,
-  vote: number,
-}
-
-type Effect = {
-  vote_event_id: number,
-  vote_event_time: number,
-  tag_id: number,
-  post_id: number,
-  note_id: number,
-  p: number,
-  p_count: number,
-  p_size: number,
-  q: number,
-  q_count: number,
-  q_size: number,
-  r: number,
-  magnitude: number,
-}
-
-type EffectEvent = {
-  vote_event_id: number,
-  vote_event_time: number,
-  tag_id: number,
-  post_id: number,
-  note_id: number,
-  p: number,
-  p_count: number,
-  p_size: number,
-  q: number,
-  q_count: number,
-  q_size: number,
-  r: number,
-  magnitude: number,
-}
 
 interface Lookup<T> {
   [Key: string]: T;
@@ -337,7 +276,6 @@ async function main() {
     })
   })
 
-  // TODO: calculate magnitude
   let childPostsByPostId: Lookup<PostWithScore[]> = {}
   let childEffectsByPostId: Lookup<Effect[]> = {}
   discussionTree.forEach((post: PostWithScore) => {
