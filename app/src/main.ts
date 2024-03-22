@@ -3,6 +3,16 @@ import initSqlJs from 'sql.js'
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
 import * as d3 from 'd3'
 
+// Architecture:
+// - Unidirectional data flow from mutable state to view
+// - central mutable state, which represents the form
+// - Once form is submitted:
+//   - the state is updated
+//   - state is used to fetch data from the database
+//   - data is used for derived lookups, created by pure functions in another file
+//   - A single render call, which takes the data and renders/updates the view
+
+
 const CHILD_NODE_SPREAD = 400
 const CHILD_PARENT_OFFSET = 150
 
@@ -38,10 +48,11 @@ type PostWithScore = {
   o_size: number,
   p: number,
   score: number,
+  // positioned posts
+  x: number | null,
+  y: number | null
 }
 
-// TODO: use for positioned posts
-type PostWithCoords = PostWithScore & { x: number, y: number }
 
 type VoteEvent = {
   vote_event_id: number,
@@ -67,6 +78,7 @@ type Effect = {
   q_count: number,
   q_size: number,
   r: number,
+  magnitude: number,
 }
 
 type EffectEvent = {
@@ -82,28 +94,16 @@ type EffectEvent = {
   q_count: number,
   q_size: number,
   r: number,
+  magnitude: number,
 }
 
 interface Lookup<T> {
   [Key: string]: T;
 }
 
-let simulationFilter: SimulationFilter = {
-  simulationId: null,
-  postId: null,
-  period: null,
-}
-
-function handleSubmit(e: any) {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  for (const [key, value] of formData) {
-    simulationFilter[key] = value
-  }
-  rerender(simulationFilter)
-}
 
 async function rerender(simulationFilter: SimulationFilter) {
+  console.log("new simulation filter", simulationFilter)
   d3.select("svg").remove()
   const svg = d3.select("div#app").append("svg")
   // TODO
@@ -111,16 +111,14 @@ async function rerender(simulationFilter: SimulationFilter) {
 
 function addSimulationSelectInput(simulationIds: number[]) {
   const simulationSelect = document.getElementById("simulationId")
-  simulationIds.forEach((id) => {
+  simulationIds.forEach((id, i) => {
     const option = document.createElement("option")
     option.value = id.toString()
     option.text = id.toString()
+    if (i === 0) option.selected = true
     simulationSelect?.appendChild(option)
   })
 }
-
-const simulationControls = document.getElementById("simulationControls")
-simulationControls?.addEventListener("submit", handleSubmit)
 
 function unpackDBResult(result: { columns: string[], values: any[] }) {
   const columns = result.columns;
@@ -245,6 +243,32 @@ async function main() {
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
   addSimulationSelectInput(simulationIds)
 
+
+  let simulationFilter: SimulationFilter = {
+    simulationId: null,
+    postId: null,
+    period: null,
+  }
+
+
+  function handleControlFormSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    simulationFilter = {
+      simulationId: formData.get("simulationId") ? parseInt(formData.get("simulationId") as string) : null,
+      postId: formData.get("postId") ? parseInt(formData.get("postId") as string) : null,
+      period: formData.get("period") ? parseInt(formData.get("period") as string) : null,
+    }
+    rerender(simulationFilter)
+  }
+
+  const controlForm = document.getElementById("controlForm")
+  controlForm?.addEventListener("submit", handleControlFormSubmit)
+
+  // to test the form submission
+  // document.getElementById("submitbutton")!.click()
+
+
   let tagId = 3
   let period = 3
   let rootPostId = 4
@@ -319,15 +343,18 @@ async function main() {
       }
     }
 
-    if (!(parentId in childPostsByPostId)) {
-      childPostsByPostId[parentId] = [post]
-    } else {
-      childPostsByPostId[parentId].push(post)
-      childPostsByPostId[parentId].sort((a, b) => {
-        let effectA = effectsByPostIdNoteId[`${parentId}-${a["id"]}`].magnitude
-        let effectB = effectsByPostIdNoteId[`${parentId}-${b["id"]}`].magnitude
-        return effectB - effectA
-      })
+    {
+      let parentIdOrRoot = parentId || 0
+      if (!(parentIdOrRoot in childPostsByPostId)) {
+        childPostsByPostId[parentIdOrRoot] = [post]
+      } else {
+        childPostsByPostId[parentIdOrRoot].push(post)
+        childPostsByPostId[parentIdOrRoot].sort((a, b) => {
+          let effectA = effectsByPostIdNoteId[`${parentId}-${a["id"]}`].magnitude
+          let effectB = effectsByPostIdNoteId[`${parentId}-${b["id"]}`].magnitude
+          return effectB - effectA
+        })
+      }
     }
   })
 
@@ -341,6 +368,8 @@ async function main() {
         stepSize = spread / (childPostsByPostId[postId].length - 1)
       }
       childPostsByPostId[postId].forEach((child, i) => {
+        if (post.x === null) throw new Error("post.x is null")
+        if (post.y === null) throw new Error("post.x is null")
         child.x = post.x + i * stepSize
         child.y = post.y + CHILD_PARENT_OFFSET
         assignPositionsFromRootRecursive(child["id"])
@@ -348,7 +377,7 @@ async function main() {
     }
   }
 
-  let root = childPostsByPostId["null"][0]
+  let root = childPostsByPostId[0][0]
   root.x = ROOT_POST_RECT_X
   root.y = ROOT_POST_RECT_Y
   assignPositionsFromRootRecursive(root["id"])
@@ -398,7 +427,7 @@ async function main() {
   let lineGenerator = d3.line()
 
   // Overall probability line
-  let pathDataOverallProb = rootPostScore.map((e) => {
+  let pathDataOverallProb: Array<[number, number]> = rootPostScore.map((e) => {
     // TODO: rename "o" back to "overallProb"
     return [scaleVoteId(e.vote_event_id), scaleProbability(e.o)]
   })
@@ -412,7 +441,7 @@ async function main() {
     .attr("fill", "none")
 
   // Informed probability line
-  let pathDataP = rootPostScore.map((e) => {
+  let pathDataP: Array<[number, number]> = rootPostScore.map((e) => {
     return [scaleVoteId(e.vote_event_id), scaleProbability(e.p)]
   })
   let pathP = lineGenerator(pathDataP)
@@ -448,7 +477,7 @@ async function main() {
   let edgeData = svg
     .append("g")
     .selectAll("g")
-    .data(edges, (d) => d.parent["id"] + "-" + d.post["id"])
+    .data(edges, (d: Edge) => d.parent!["id"] + "-" + d.post["id"])
 
   let edgeGroup = edgeData
     .join("g")
