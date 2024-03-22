@@ -1,28 +1,14 @@
 import './style.css'
 import initSqlJs from 'sql.js'
-import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
+import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
 import * as d3 from 'd3'
 import {
   Effect,
-  EffectEvent,
   PostWithScore,
   SimulationFilter,
-  VoteEvent,
 } from './types.ts'
-import {
-  Lookup,
-  getLookupPostsByPostId,
-  getLookupVoteEventsByPostId,
-  getLookupEffectsByPostIdNoteId,
-  getLookupEffectEventsByPostId,
-  getLookupCurrentEffectsByPostId,
-  getLookupChildrenByPostId,
-  getLookupChildEffectsByPostId,
-} from './lookups.ts';
-import {
-  getData,
-  unpackDBResult,
-} from './database.ts';
+import { getLookups } from './lookups.ts'
+import { getData, unpackDBResult } from './database.ts'
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -109,25 +95,18 @@ async function main() {
   let rootPostId = 4
 
   let data = await getData(db, tagId, rootPostId, period)
-
-  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(data.discussionTree)
-  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(data.voteEvents, postsByPostId)
-  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(data.effects)
-  let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(data.effectEvents)
-  let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(postsByPostId, effectEventsByPostId)
-  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(data.discussionTree, effectsByPostIdNoteId)
-  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(data.discussionTree, effectsByPostIdNoteId)
+  let lookups = getLookups(data)
 
   function assignPositionsFromRootRecursive(postId: number) {
-    let post = postsByPostId[postId]
-    if (postId in childrenByPostId) {
+    let post = lookups.postsByPostId[postId]
+    if (postId in lookups.childrenByPostId) {
       let spread = 0
       let stepSize = 0
-      if (childrenByPostId[postId].length > 1) {
+      if (lookups.childrenByPostId[postId].length > 1) {
         spread = CHILD_NODE_SPREAD
-        stepSize = spread / (childrenByPostId[postId].length - 1)
+        stepSize = spread / (lookups.childrenByPostId[postId].length - 1)
       }
-      childrenByPostId[postId].forEach((child, i) => {
+      lookups.childrenByPostId[postId].forEach((child, i) => {
         if (post.x === null) throw new Error("post.x is null")
         if (post.y === null) throw new Error("post.x is null")
         child.x = post.x + i * stepSize
@@ -137,7 +116,7 @@ async function main() {
     }
   }
 
-  let root = childrenByPostId[0][0]
+  let root = lookups.childrenByPostId[0][0]
   root.x = ROOT_POST_RECT_X
   root.y = ROOT_POST_RECT_Y
   assignPositionsFromRootRecursive(root["id"])
@@ -156,8 +135,8 @@ async function main() {
 
   let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root["id"])
 
-  let minVoteEventId = d3.min(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
-  let maxVoteEventId = d3.max(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
+  let minVoteEventId = d3.min(lookups.voteEventsByPostId[root.id], (d) => d.vote_event_id)!
+  let maxVoteEventId = d3.max(lookups.voteEventsByPostId[root.id], (d) => d.vote_event_id)!
 
   let scaleProbability = d3.scaleLinear()
     .domain([0, 1])
@@ -234,9 +213,9 @@ async function main() {
     .filter((row) => row["parent_id"] !== null)
     .map((row) => {
       return {
-        parent: postsByPostId[row["parent_id"]],
-        post: postsByPostId[row["id"]],
-        edgeData: effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`]
+        parent: lookups.postsByPostId[row["parent_id"]],
+        post: lookups.postsByPostId[row["id"]],
+        edgeData: lookups.effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`]
       }
     })
 
@@ -416,18 +395,18 @@ async function main() {
     -85,
     "steelblue",
     (d: PostWithScore) => {
-      let edges = childEffectsByPostId[d.id] || []
+      let edges = lookups.childEffectsByPostId[d.id] || []
       let topNoteEdge = edges[0]
       return topNoteEdge && (topNoteEdge.p_count !== 0) ?
         topNoteEdge.p_count / topNoteEdge.p_size :
         0.05
     },
     (d: PostWithScore) => {
-      let edges = childEffectsByPostId[d.id] || []
+      let edges = lookups.childEffectsByPostId[d.id] || []
       let topNoteEdge = edges[0]
       return topNoteEdge && 1 - (1 / (1 + 0.3 * topNoteEdge.p_size))
     },
-    (d: PostWithScore) => childrenByPostId[d.id] ? "inline" : "none"
+    (d: PostWithScore) => lookups.childrenByPostId[d.id] ? "inline" : "none"
   )
 }
 
