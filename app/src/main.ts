@@ -236,7 +236,7 @@ async function main() {
   let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(effects)
   let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(effectEvents)
   let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(postsByPostId, effectEventsByPostId)
-  let childPostsByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(discussionTree, effectsByPostIdNoteId)
+  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(discussionTree, effectsByPostIdNoteId)
   let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(discussionTree, effectsByPostIdNoteId)
 
   d3.select("svg").remove()
@@ -247,14 +247,14 @@ async function main() {
 
   function assignPositionsFromRootRecursive(postId: number) {
     let post = postsByPostId[postId]
-    if (postId in childPostsByPostId) {
+    if (postId in childrenByPostId) {
       let spread = 0
       let stepSize = 0
-      if (childPostsByPostId[postId].length > 1) {
+      if (childrenByPostId[postId].length > 1) {
         spread = CHILD_NODE_SPREAD
-        stepSize = spread / (childPostsByPostId[postId].length - 1)
+        stepSize = spread / (childrenByPostId[postId].length - 1)
       }
-      childPostsByPostId[postId].forEach((child, i) => {
+      childrenByPostId[postId].forEach((child, i) => {
         if (post.x === null) throw new Error("post.x is null")
         if (post.y === null) throw new Error("post.x is null")
         child.x = post.x + i * stepSize
@@ -264,7 +264,7 @@ async function main() {
     }
   }
 
-  let root = childPostsByPostId[0][0]
+  let root = childrenByPostId[0][0]
   root.x = ROOT_POST_RECT_X
   root.y = ROOT_POST_RECT_Y
   assignPositionsFromRootRecursive(root["id"])
@@ -548,7 +548,7 @@ async function main() {
       let topNoteEdge = edges[0]
       return topNoteEdge && 1 - (1 / (1 + 0.3 * topNoteEdge.p_size))
     },
-    (d: PostWithScore) => childPostsByPostId[d.id] ? "inline" : "none"
+    (d: PostWithScore) => childrenByPostId[d.id] ? "inline" : "none"
   )
 }
 
