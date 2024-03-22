@@ -10,6 +10,16 @@ import {
   SimulationFilter,
   VoteEvent,
 } from './types.ts'
+import {
+  Lookup,
+  getLookupPostsByPostId,
+  getLookupVoteEventsByPostId,
+  getLookupEffectsByPostIdNoteId,
+  getLookupEffectEventsByPostId,
+  getLookupCurrentEffectsByPostId,
+  getLookupChildrenByPostId,
+  getLookupChildEffectsByPostId,
+} from './lookups.ts';
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -36,11 +46,6 @@ const LINEPLOT_HEIGHT = 100
 
 const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
-
-interface Lookup<T> {
-  [Key: string]: T;
-}
-
 
 async function rerender(simulationFilter: SimulationFilter) {
   console.log("new simulation filter", simulationFilter)
@@ -226,84 +231,19 @@ async function main() {
   let scoreEvents = await getScoreEvent(db)
   let voteEvents = await getVoteEvent(db)
 
+  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(discussionTree)
+  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(voteEvents, postsByPostId)
+  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(effects)
+  let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(effectEvents)
+  let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(postsByPostId, effectEventsByPostId)
+  let childPostsByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(discussionTree, effectsByPostIdNoteId)
+  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(discussionTree, effectsByPostIdNoteId)
+
   d3.select("svg").remove()
   const svg = d3.select("div#app")
     .append("svg")
     .attr("width", 1600)
     .attr("height", 1600)
-
-  let postsByPostId: Lookup<PostWithScore> = {}
-  discussionTree.forEach((d) => {
-    postsByPostId[d.id] = d
-  })
-
-  let voteEventsByPostId: Lookup<VoteEvent[]> = {}
-  voteEvents.forEach((voteEvent) => {
-    let postId = voteEvent.post_id
-    if (postsByPostId[postId]) {
-      if (!(postId in voteEventsByPostId)) {
-        voteEventsByPostId[postId] = [voteEvent]
-      } else {
-        voteEventsByPostId[postId].push(voteEvent)
-      }
-    }
-  })
-
-  let effectsByPostIdNoteId: Lookup<Effect> = {}
-  effects.forEach((effect) => {
-    effectsByPostIdNoteId[`${effect["post_id"]}-${effect["note_id"]}`] = effect
-  })
-
-  let effectEventsByPostId: Lookup<EffectEvent[]> = {}
-  effectEvents.forEach((effectEvent) => {
-    let postId = effectEvent.post_id
-    if (!effectEventsByPostId[postId]) {
-      effectEventsByPostId[postId] = [effectEvent]
-    } else {
-      effectEventsByPostId[postId].push(effectEvent)
-    }
-  })
-
-  let thisTreePostIds = Object.keys(postsByPostId)
-  let currentEffects: Lookup<Effect> = {}
-  thisTreePostIds.forEach((postId) => {
-    if (!(postId in effectEventsByPostId)) {
-      return
-    }
-    // https://stackoverflow.com/questions/4020796/finding-the-max-value-of-a-property-in-an-array-of-objects
-    currentEffects[postId] = effectEventsByPostId[postId].reduce(function(prev, current) {
-      return (prev && prev.vote_event_id > current.vote_event_id) ? prev : current
-    })
-  })
-
-  let childPostsByPostId: Lookup<PostWithScore[]> = {}
-  let childEffectsByPostId: Lookup<Effect[]> = {}
-  discussionTree.forEach((post: PostWithScore) => {
-    let parentId = post["parent_id"]
-    if (parentId !== null) {
-      let effect = effectsByPostIdNoteId[`${parentId}-${post["id"]}`]
-      if (!(parentId in childPostsByPostId)) {
-        childEffectsByPostId[parentId] = [effect]
-      } else {
-        childEffectsByPostId[parentId].push(effect)
-        childEffectsByPostId[parentId].sort((a, b) => b.magnitude - a.magnitude)
-      }
-    }
-
-    {
-      let parentIdOrRoot = parentId || 0
-      if (!(parentIdOrRoot in childPostsByPostId)) {
-        childPostsByPostId[parentIdOrRoot] = [post]
-      } else {
-        childPostsByPostId[parentIdOrRoot].push(post)
-        childPostsByPostId[parentIdOrRoot].sort((a, b) => {
-          let effectA = effectsByPostIdNoteId[`${parentId}-${a["id"]}`].magnitude
-          let effectB = effectsByPostIdNoteId[`${parentId}-${b["id"]}`].magnitude
-          return effectB - effectA
-        })
-      }
-    }
-  })
 
   function assignPositionsFromRootRecursive(postId: number) {
     let post = postsByPostId[postId]
