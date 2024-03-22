@@ -2,6 +2,7 @@ import './style.css'
 import initSqlJs from 'sql.js'
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url";
 import * as d3 from 'd3'
+import relativeEntropy from './entropy.ts'
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -203,7 +204,11 @@ async function getEffects(db: any, tagId: number, period: number) {
   while (stmt.step()) {
     res.push(stmt.getAsObject())
   }
-  return res
+  const effectsWithMagnitude = res.map((effect) => {
+    effect.magnitude = relativeEntropy(effect.p, effect.q)
+    return effect
+  })
+  return effectsWithMagnitude
 }
 
 async function getScoreEvent(db: any) {
@@ -221,7 +226,11 @@ async function getEffectEvent(db: any) {
   while (stmt.step()) {
     res.push(stmt.getAsObject())
   }
-  return res
+  const effectsWithMagnitude = res.map((effect) => {
+    effect.magnitude = relativeEntropy(effect.p, effect.q)
+    return effect
+  })
+  return effectsWithMagnitude
 }
 
 async function getVoteEvent(db: any) {
