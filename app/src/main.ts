@@ -20,12 +20,8 @@ import {
   getLookupChildEffectsByPostId,
 } from './lookups.ts';
 import {
+  getData,
   unpackDBResult,
-  getDiscussionTree,
-  getEffects,
-  getEffectEvent,
-  getScoreEvent,
-  getVoteEvent,
 } from './database.ts';
 
 // Architecture:
@@ -111,19 +107,16 @@ async function main() {
   let tagId = 3
   let period = 3
   let rootPostId = 4
-  let discussionTree = await getDiscussionTree(db, rootPostId, period)
-  let effects = await getEffects(db, tagId, period)
-  let effectEvents = await getEffectEvent(db)
-  let scoreEvents = await getScoreEvent(db)
-  let voteEvents = await getVoteEvent(db)
 
-  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(discussionTree)
-  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(voteEvents, postsByPostId)
-  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(effects)
-  let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(effectEvents)
+  let data = await getData(db, tagId, rootPostId, period)
+
+  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(data.discussionTree)
+  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(data.voteEvents, postsByPostId)
+  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(data.effects)
+  let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(data.effectEvents)
   let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(postsByPostId, effectEventsByPostId)
-  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(discussionTree, effectsByPostIdNoteId)
-  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(discussionTree, effectsByPostIdNoteId)
+  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(data.discussionTree, effectsByPostIdNoteId)
+  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(data.discussionTree, effectsByPostIdNoteId)
 
   function assignPositionsFromRootRecursive(postId: number) {
     let post = postsByPostId[postId]
@@ -161,7 +154,7 @@ async function main() {
   // --- LINE PLOTS --------------------
   // -----------------------------------
 
-  let rootPostScore = scoreEvents.filter((d) => d["post_id"] === root["id"])
+  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root["id"])
 
   let minVoteEventId = d3.min(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
   let maxVoteEventId = d3.max(voteEventsByPostId[root.id], (d) => d.vote_event_id)!
@@ -237,7 +230,7 @@ async function main() {
     edgeData: Effect,
   }
 
-  let edges: Edge[] = discussionTree
+  let edges: Edge[] = data.discussionTree
     .filter((row) => row["parent_id"] !== null)
     .map((row) => {
       return {
@@ -280,7 +273,7 @@ async function main() {
   let nodeData = svg
     .append("g")
     .selectAll("g")
-    .data(discussionTree, (d) => d["id"])
+    .data(data.discussionTree, (d) => d["id"])
 
   let nodeGroup = nodeData
     .join("g")

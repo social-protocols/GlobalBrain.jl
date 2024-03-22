@@ -1,5 +1,35 @@
 import relativeEntropy from "./entropy"
 
+// TODO: return types of database functions
+export type VisualizationData = {
+  discussionTree: any[],
+  effects: any[],
+  scoreEvents: any[],
+  effectEvents: any[],
+  voteEvents: any[]
+}
+
+export async function getData(
+  db: any,
+  tagId: number,
+  rootPostId: number,
+  period: number,
+): Promise<VisualizationData> {
+  let discussionTree = await getDiscussionTree(db, rootPostId, period)
+  let effects = await getEffects(db, tagId, period)
+  let effectEvents = await getEffectEvent(db)
+  let scoreEvents = await getScoreEvent(db)
+  let voteEvents = await getVoteEvent(db)
+
+  return {
+    discussionTree: discussionTree,
+    effects: effects,
+    scoreEvents: scoreEvents,
+    effectEvents: effectEvents,
+    voteEvents: voteEvents
+  }
+}
+
 export function unpackDBResult(result: { columns: string[], values: any[] }) {
   const columns = result.columns;
   const values = result.values;
@@ -11,7 +41,7 @@ export function unpackDBResult(result: { columns: string[], values: any[] }) {
   })
 }
 
-export async function getDiscussionTree(db: any, postId: number, period: number) {
+async function getDiscussionTree(db: any, postId: number, period: number) {
   const stmt = db.prepare(`
     WITH currentPosts AS(
       SELECT *
@@ -69,7 +99,7 @@ export async function getDiscussionTree(db: any, postId: number, period: number)
   return res
 }
 
-export async function getEffects(db: any, tagId: number, period: number) {
+async function getEffects(db: any, tagId: number, period: number) {
   let stmt = db.prepare(`
     SELECT MAX(vote_event_id) AS max_id, *
     FROM EffectEvent
@@ -89,7 +119,7 @@ export async function getEffects(db: any, tagId: number, period: number) {
   return effectsWithMagnitude
 }
 
-export async function getScoreEvent(db: any) {
+async function getScoreEvent(db: any) {
   let stmt = db.prepare(`SELECT * FROM ScoreEvent`)
   let res = []
   while (stmt.step()) {
@@ -98,7 +128,7 @@ export async function getScoreEvent(db: any) {
   return res
 }
 
-export async function getEffectEvent(db: any) {
+async function getEffectEvent(db: any) {
   let stmt = db.prepare(`SELECT * FROM EffectEvent`)
   let res = []
   while (stmt.step()) {
@@ -111,7 +141,7 @@ export async function getEffectEvent(db: any) {
   return effectsWithMagnitude
 }
 
-export async function getVoteEvent(db: any) {
+async function getVoteEvent(db: any) {
   let stmt = db.prepare(`SELECT * FROM VoteEvent`)
   let res = []
   while (stmt.step()) {
