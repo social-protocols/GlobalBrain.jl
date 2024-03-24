@@ -379,14 +379,12 @@ async function main() {
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
   addSimulationSelectInput(simulationIds)
 
-  const simulationSelectInput = document.getElementById("simulationId")!
-  simulationSelectInput.addEventListener("change", (e) => {
+  function setPeriodsSelectInput(db: any, simulationId: number) {
     const periodIdsQueryResult = db.exec(
       "select distinct vote_event_time from VoteEvent where tag_id = :simulationId",
-      { ":simulationId": e.target?.value }
+      { ":simulationId": simulationId }
     )
     const periods = unpackDBResult(periodIdsQueryResult[0]).map((x: any) => x.vote_event_time)
-    console.log(periods)
     const periodSelect = document.getElementById("period")!
     periodSelect.innerHTML = ''
     periods.forEach((id, i) => {
@@ -396,11 +394,19 @@ async function main() {
       if (i === 0) option.selected = true
       periodSelect?.appendChild(option)
     })
+  }
+
+  const simulationSelectInput = document.getElementById("simulationId")!
+  setPeriodsSelectInput(db, parseInt((simulationSelectInput as HTMLInputElement).value))
+
+  simulationSelectInput.addEventListener("change", (e) => {
+    setPeriodsSelectInput(db, parseInt((e.target as HTMLInputElement).value))
   })
 
+  // TODO: set default more robustly
   let simulationFilter: SimulationFilter = {
-    simulationId: null,
-    period: null,
+    simulationId: 1,
+    period: 1,
   }
 
   function handleControlFormSubmit(e: SubmitEvent) {
@@ -410,7 +416,6 @@ async function main() {
       simulationId: formData.get("simulationId") ? parseInt(formData.get("simulationId") as string) : null,
       period: formData.get("period") ? parseInt(formData.get("period") as string) : null,
     }
-    console.log(simulationFilter)
     render(db, simulationFilter)
   }
 
