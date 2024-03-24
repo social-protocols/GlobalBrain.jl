@@ -8,7 +8,7 @@ import {
   SimulationFilter,
 } from './types.ts'
 import { getLookups } from './lookups.ts'
-import { VisualizationData, getData, unpackDBResult } from './database.ts'
+import { getData, unpackDBResult } from './database.ts'
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -36,79 +36,10 @@ const LINEPLOT_HEIGHT = 100
 const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 
-async function rerender(simulationFilter: SimulationFilter) {
-  console.log("new simulation filter", simulationFilter)
-  d3.select("svg").remove()
-  const svg = d3.select("div#app").append("svg")
-  // TODO
-}
-
-
-async function main() {
-  const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
-  const dataPromise = fetch("/sim.db").then(res => res.arrayBuffer())
-  const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
-  const db = new SQL.Database(new Uint8Array(buf))
-
-  function addSimulationSelectInput(simulationIds: number[]) {
-    const simulationSelect = document.getElementById("simulationId")
-    simulationIds.forEach((id, i) => {
-      const option = document.createElement("option")
-      option.value = id.toString()
-      option.text = id.toString()
-      if (i === 0) option.selected = true
-      simulationSelect?.appendChild(option)
-    })
-  }
-
-  const simulationsQueryResult = db.exec("select id from tag")
-  const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
-  addSimulationSelectInput(simulationIds)
-
-  const simulationSelectInput = document.getElementById("simulationId")!
-  simulationSelectInput.addEventListener("change", (e) => {
-    const periodIdsQueryResult = db.exec(
-      "select distinct vote_event_time from VoteEvent where tag_id = :simulationId",
-      { ":simulationId": e.target?.value }
-    )
-    const periods = unpackDBResult(periodIdsQueryResult[0]).map((x: any) => x.vote_event_time)
-    console.log(periods)
-    const periodSelect = document.getElementById("period")!
-    periodSelect.innerHTML = ''
-    periods.forEach((id, i) => {
-      const option = document.createElement("option")
-      option.value = id.toString()
-      option.text = id.toString()
-      if (i === 0) option.selected = true
-      periodSelect?.appendChild(option)
-    })
-  })
-
-  let simulationFilter: SimulationFilter = {
-    simulationId: null,
-    period: null,
-  }
-
-  function handleControlFormSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    simulationFilter = {
-      simulationId: formData.get("simulationId") ? parseInt(formData.get("simulationId") as string) : null,
-      period: formData.get("period") ? parseInt(formData.get("period") as string) : null,
-    }
-    rerender(simulationFilter)
-  }
-
-  const controlForm = document.getElementById("controlForm")
-  controlForm?.addEventListener("submit", handleControlFormSubmit)
-
-  // to test the form submission
-  // document.getElementById("submitbutton")!.click()
-
-
-  let tagId = 3
-  let period = 3
-  let rootPostId = 4
+async function render(db: any, simulationFilter: SimulationFilter) {
+  let tagId = simulationFilter.simulationId!
+  let period = simulationFilter.period!
+  let rootPostId = 4 // TODO
 
   let data = await getData(db, tagId, rootPostId, period)
   let lookups = getLookups(data)
@@ -424,6 +355,69 @@ async function main() {
     },
     (d: PostWithScore) => lookups.childrenByPostId[d.id] ? "inline" : "none"
   )
+}
+
+
+async function main() {
+  const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
+  const dataPromise = fetch("/sim.db").then(res => res.arrayBuffer())
+  const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
+  const db = new SQL.Database(new Uint8Array(buf))
+
+  function addSimulationSelectInput(simulationIds: number[]) {
+    const simulationSelect = document.getElementById("simulationId")
+    simulationIds.forEach((id, i) => {
+      const option = document.createElement("option")
+      option.value = id.toString()
+      option.text = id.toString()
+      if (i === 0) option.selected = true
+      simulationSelect?.appendChild(option)
+    })
+  }
+
+  const simulationsQueryResult = db.exec("select id from tag")
+  const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
+  addSimulationSelectInput(simulationIds)
+
+  const simulationSelectInput = document.getElementById("simulationId")!
+  simulationSelectInput.addEventListener("change", (e) => {
+    const periodIdsQueryResult = db.exec(
+      "select distinct vote_event_time from VoteEvent where tag_id = :simulationId",
+      { ":simulationId": e.target?.value }
+    )
+    const periods = unpackDBResult(periodIdsQueryResult[0]).map((x: any) => x.vote_event_time)
+    console.log(periods)
+    const periodSelect = document.getElementById("period")!
+    periodSelect.innerHTML = ''
+    periods.forEach((id, i) => {
+      const option = document.createElement("option")
+      option.value = id.toString()
+      option.text = id.toString()
+      if (i === 0) option.selected = true
+      periodSelect?.appendChild(option)
+    })
+  })
+
+  let simulationFilter: SimulationFilter = {
+    simulationId: null,
+    period: null,
+  }
+
+  function handleControlFormSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    simulationFilter = {
+      simulationId: formData.get("simulationId") ? parseInt(formData.get("simulationId") as string) : null,
+      period: formData.get("period") ? parseInt(formData.get("period") as string) : null,
+    }
+    console.log(simulationFilter)
+    render(db, simulationFilter)
+  }
+
+  const controlForm = document.getElementById("controlForm")
+  controlForm?.addEventListener("submit", handleControlFormSubmit)
+
+  render(db, simulationFilter)
 }
 
 main()
