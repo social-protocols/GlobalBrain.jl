@@ -8,7 +8,7 @@ import {
   SimulationFilter,
 } from './types.ts'
 import { getLookups } from './lookups.ts'
-import { getData, unpackDBResult } from './database.ts'
+import { getData, getRootPostIds, unpackDBResult } from './database.ts'
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -39,7 +39,9 @@ const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 async function render(db: any, simulationFilter: SimulationFilter) {
   let tagId = simulationFilter.simulationId!
   let period = simulationFilter.period!
-  let rootPostId = 4 // TODO
+  // TODO: handle case with several root post ids
+  let rootPostIds = await getRootPostIds(db, tagId)
+  let rootPostId = rootPostIds[0].post_id
 
   let data = await getData(db, tagId, rootPostId, period)
   let lookups = getLookups(data)

@@ -41,6 +41,21 @@ export function unpackDBResult(result: { columns: string[], values: any[] }) {
   })
 }
 
+export async function getRootPostIds(db: any, tagId: number) {
+  let stmt = db.prepare(`
+    SELECT DISTINCT post_id
+    FROM VoteEvent
+    WHERE tag_id = :tagId
+    AND parent_id IS NULL
+  `)
+  stmt.bind({ ':tagId': tagId })
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res
+}
+
 async function getDiscussionTree(db: any, postId: number, period: number) {
   const stmt = db.prepare(`
     WITH currentPosts AS(
