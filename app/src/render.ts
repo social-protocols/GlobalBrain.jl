@@ -170,7 +170,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
       // measured in bits (i.e., [0, Inf)), we clamp at 10 and scale down to [0, 1]
       let maxWidth = 10
       let width = Math.min(maxWidth, d.edgeData.magnitude) / maxWidth
-      return 1 + width * 200
+      return 1 + width * 10
     })
     .attr("stroke", (d) => {
       return d.edgeData.p > d.edgeData.q ? "forestgreen" : "tomato"
