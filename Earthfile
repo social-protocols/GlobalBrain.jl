@@ -1,12 +1,6 @@
+# https://docs.earthly.dev/basics
+
 VERSION 0.8
-
-
-# lint:
-# 	FROM +setup-julia
-# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
-# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
-# 	RUN ls -l global-brain-service/bin
-# 	RUN ./global-brain-service/bin/GlobalBrainService
 
 
 flake:
@@ -18,24 +12,13 @@ flake:
   # install packages from the packages section in flake.nix
   RUN nix profile install --impure -L '.#ci'
 
-vis-setup:
+sim-setup:
   FROM +flake
-  WORKDIR /app/app
-  COPY app/package.json app/package-lock.json ./
-  RUN npm install
-  COPY app/tsconfig.json app/index.html ./
-  COPY --dir app/src/ ./
-
-vis-build:
-  FROM +vis-setup
-  RUN npm run build
-  COPY +sim-run/sim.db dist/sim.db
-  SAVE ARTIFACT dist/
-
-# vis-dev:
-#   # TODO: expose port: because https://github.com/earthly/earthly/issues/2047
-#   FROM +setup-visualization
-#   RUN --interactive npm run dev 
+  # FROM julia:1.10.1-bookworm
+  WORKDIR /app
+  # julia
+  COPY Manifest.toml Project.toml ./
+  RUN julia --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 sim-run:
   FROM +sim-setup
@@ -44,12 +27,51 @@ sim-run:
   RUN julia --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
-
-sim-setup:
+vis-setup:
   FROM +flake
-  # FROM julia:1.10.1-bookworm
-  WORKDIR /app
-  # julia
-  COPY Manifest.toml Project.toml ./
-  RUN julia --project=@. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  WORKDIR /app/app
+  COPY app/package.json app/package-lock.json ./
+  RUN npm install
+  COPY app/tsconfig.json app/index.html app/vite.config.js ./
+  COPY --dir app/src/ ./
 
+vis-build:
+  FROM +vis-setup
+  RUN npx tsc
+  COPY +sim-run/sim.db public/sim.db
+  RUN npx vite build
+  SAVE ARTIFACT dist AS LOCAL app/dist
+
+# vis-dev:
+#   # TODO: expose port: because https://github.com/earthly/earthly/issues/2047
+#   FROM +setup-visualization
+#   RUN --interactive npm run dev 
+
+sim-test-unit:
+  FROM +sim-setup
+  COPY --dir src/ test/ ./
+  RUN julia --project --eval "using Pkg; Pkg.test()"
+
+sim-test:
+  FROM +sim-setup
+  COPY --dir src/ test/ test-data/ sql/ scripts/ ./
+  COPY test.sh ./
+  RUN ./test.sh
+
+# TODO:
+# sim-lint:
+# 	FROM +setup-julia
+# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
+# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
+# 	RUN ls -l global-brain-service/bin
+# 	RUN ./global-brain-service/bin/GlobalBrainService
+
+
+ci-test:
+  BUILD +sim-test-unit
+  BUILD +sim-test
+  BUILD +vis-build
+
+ci-deploy:
+  BUILD +ci-test
+  BUILD +vis-build

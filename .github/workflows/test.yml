@@ -1,11 +1,13 @@
-name: Deploy
+name: Test
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
     env:
       EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
@@ -22,12 +24,6 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: Run build
-      run: earthly --output --auto-skip +ci-deploy
+    - name: Test
+      run: earthly --auto-skip +ci-test
 
-    - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: app/dist
-        clean: true # keep old files if not overridden
-        single-commit: true # don't keep history
