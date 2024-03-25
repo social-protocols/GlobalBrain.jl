@@ -13,6 +13,7 @@ jobs:
       EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
       EARTHLY_SATELLITE: ${{ secrets.EARTHLY_SATELLITE }}
       EARTHLY_ORG: ${{ secrets.EARTHLY_ORG }}
+      EARTHLY_CI: true
       FORCE_COLOR: 1
 
     steps:
@@ -24,7 +25,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Run build
-      run: earthly --ci +vis-build
+      run: earthly --output +vis-build
 
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4
