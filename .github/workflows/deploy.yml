@@ -24,4 +24,14 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Run build
-      run: earthly --ci +vis-build
+      run: 
+        set -e
+        earthly --ci +vis-build
+        tree app/dist
+
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: app/dist
+        clean: true # keep old files if not overridden
+        single-commit: true # don't keep history
