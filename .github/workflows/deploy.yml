@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
     env:
       EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
-      EARTHLY_SATELLITE: ${{ vars.EARTHLY_SATELLITE }}
+      EARTHLY_SATELLITE: ${{ secrets.EARTHLY_SATELLITE }}
+      EARTHLY_ORG: ${{ secrets.EARTHLY_ORG }}
       FORCE_COLOR: 1
 
     steps:
