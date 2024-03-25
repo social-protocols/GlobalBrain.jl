@@ -24,7 +24,7 @@ sim-setup:
   WORKDIR /app
   # julia
   COPY Manifest.toml Project.toml ./
-  RUN julia --project=@. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN julia --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 sim-run:
   FROM +sim-setup
@@ -68,3 +68,6 @@ ci-test:
   BUILD +sim-test-unit
   BUILD +sim-test
 
+ci-deploy:
+  BUILD +ci-test
+  BUILD +vis-build

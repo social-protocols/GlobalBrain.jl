@@ -3,8 +3,6 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-  pull_request:
-    types: [opened, synchronize]
 
 jobs:
   build:
@@ -25,7 +23,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Run build
-      run: earthly --output +vis-build
+      run: earthly --output --auto-skip +ci-deploy
 
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4
