@@ -24,10 +24,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Run build
-      run: 
-        set -e
-        earthly --ci +vis-build
-        tree app/dist
+      run: earthly --ci +vis-build
 
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4
