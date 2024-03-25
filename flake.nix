@@ -56,8 +56,20 @@
                 entr
                 rEnv
                 nodejs
+                earthly
               ];
             };
+
+        };
+        packages = {
+          ci = pkgs.buildEnv {
+            name = "ci-build-env";
+            paths = with pkgs; [
+                julia-bin
+                nodejs
+                sqlite
+            ];
+          };
         };
       }
     );
