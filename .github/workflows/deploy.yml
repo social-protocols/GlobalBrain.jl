@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
     env:
       EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
