@@ -205,7 +205,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .attr("y", 0)
     .attr("width", POST_RECT_WIDTH)
     .attr("height", POST_RECT_HEIGHT)
-    .style("fill", "white")
+    // .style("fill", "white")
     .attr("stroke", "black")
   // TODO: fix -> no parentP and parentQ on discussionTree anymore
   // .attr("stroke", (d) => {
@@ -228,6 +228,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .style("overflow", "auto")
     .style("box-sizing", "border-box")
     .style("padding", "5px")
+    .classed("post-content", true)
     .html((d) => d.content)
 
   // TODO: fix (doesn't work since porting to TypeScript)
