@@ -28,8 +28,9 @@ vis-setup:
 
 vis-build:
   FROM +vis-setup
+  RUN npx tsc
   COPY +sim-run/sim.db public/sim.db
-  RUN npm run build
+  RUN npx vite build
   SAVE ARTIFACT dist AS LOCAL app/dist
 
 # vis-dev:
