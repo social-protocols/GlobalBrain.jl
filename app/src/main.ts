@@ -1,4 +1,5 @@
 import "./style.css"
+import simDbUrl from "../public/sim.db?url"
 import initSqlJs from "sql.js"
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
 import { SimulationFilter } from "./types.ts"
@@ -16,7 +17,7 @@ import { render } from "./render.ts"
 
 async function main() {
   const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
-  const dataPromise = fetch("/sim.db").then((res) => res.arrayBuffer())
+  const dataPromise = fetch(simDbUrl).then((res) => res.arrayBuffer())
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
