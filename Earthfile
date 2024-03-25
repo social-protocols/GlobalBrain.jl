@@ -28,8 +28,8 @@ vis-setup:
 
 vis-build:
   FROM +vis-setup
+  COPY +sim-run/sim.db public/sim.db
   RUN npm run build
-  COPY +sim-run/sim.db dist/sim.db
   SAVE ARTIFACT dist AS LOCAL app/dist
 
 # vis-dev:
