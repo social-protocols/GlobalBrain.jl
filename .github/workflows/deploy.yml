@@ -1,0 +1,26 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    env:
+      EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
+      EARTHLY_SATELLITE: ${{ env.EARTHLY_SATELLITE }}
+      FORCE_COLOR: 1
+
+    steps:
+
+    - uses: earthly/actions-setup@v1
+      with:
+        version: v0.8.0
+
+    - uses: actions/checkout@v4
+
+    - name: Run build
+      run: earthly --ci +vis-build
