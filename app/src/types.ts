@@ -16,10 +16,9 @@ export type PostWithScore = {
   o_size: number
   p: number
   score: number
-  // positioned posts
-  x: number | null
-  y: number | null
 }
+
+export type PostWithScoreWithPosition = PostWithScore & { x: number; y: number }
 
 export type VoteEvent = {
   vote_event_id: number

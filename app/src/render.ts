@@ -1,20 +1,20 @@
 import { getData, getRootPostIds } from "./database"
 import { getLookups } from "./lookups"
-import { Effect, PostWithScore, SimulationFilter } from "./types"
+import { Effect, PostWithScore, PostWithScoreWithPosition, SimulationFilter } from "./types"
 import * as d3 from "d3"
 
-const CHILD_NODE_SPREAD = 400
-const CHILD_PARENT_OFFSET = 150
+export const CHILD_NODE_SPREAD = 400
+export const CHILD_PARENT_OFFSET = 150
 
-const ROOT_POST_RECT_X = 450
-const ROOT_POST_RECT_Y = 30
+export const ROOT_POST_RECT_X = 450
+export const ROOT_POST_RECT_Y = 30
 
-const POST_RECT_WIDTH = 250
-const POST_RECT_HEIGHT = 65
+export const POST_RECT_WIDTH = 250
+export const POST_RECT_HEIGHT = 65
 
-const LINE_PLOT_X_STEP_SIZE = 20
-const LINEPLOT_WIDTH = 300
-const LINEPLOT_HEIGHT = 100
+export const LINE_PLOT_X_STEP_SIZE = 20
+export const LINEPLOT_WIDTH = 300
+export const LINEPLOT_HEIGHT = 100
 
 const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
@@ -29,29 +29,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let data = await getData(db, tagId, rootPostId, period)
   let lookups = getLookups(data)
 
-  function assignPositionsFromRootRecursive(postId: number) {
-    let post = lookups.postsByPostId[postId]
-    if (postId in lookups.childrenByPostId) {
-      let spread = 0
-      let stepSize = 0
-      if (lookups.childrenByPostId[postId].length > 1) {
-        spread = CHILD_NODE_SPREAD
-        stepSize = spread / (lookups.childrenByPostId[postId].length - 1)
-      }
-      lookups.childrenByPostId[postId].forEach((child, i) => {
-        if (post.x === null) throw new Error("post.x is null")
-        if (post.y === null) throw new Error("post.x is null")
-        child.x = post.x + i * stepSize
-        child.y = post.y + CHILD_PARENT_OFFSET
-        assignPositionsFromRootRecursive(child["id"])
-      })
-    }
-  }
-
-  let root = lookups.childrenByPostId[0][0]
-  root.x = ROOT_POST_RECT_X
-  root.y = ROOT_POST_RECT_Y
-  assignPositionsFromRootRecursive(root["id"])
+  let root = lookups.postsByPostId[lookups.childrenIdsByPostId[0][0]]
 
   d3.select("svg").remove()
   const svg = d3
@@ -67,7 +45,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // -----------------------------------
 
   let rootPostScore = data.scoreEvents.filter(
-    (d) => d["post_id"] === root["id"],
+    (d) => d["post_id"] === root.id,
   )
 
   let minVoteEventId = d3.min(
@@ -142,8 +120,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // -----------------------------------
 
   type Edge = {
-    parent: PostWithScore | null
-    post: PostWithScore
+    parent: PostWithScoreWithPosition | null
+    post: PostWithScoreWithPosition
     edgeData: Effect
   }
 
@@ -161,16 +139,16 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let edgeData = svg
     .append("g")
     .selectAll("g")
-    .data(edges, (d: Edge) => d.parent!["id"] + "-" + d.post["id"])
+    .data(edges, (d: any) => (d.parent?.id + "-" + d.post.id))
 
   let edgeGroup = edgeData
     .join("g")
-    .attr("id", (d) => "edgeGroup" + d.parent["id"] + "-" + d.post["id"])
+    .attr("id", (d) => "edgeGroup" + d.parent?.id + "-" + d.post["id"])
 
   edgeGroup
     .append("line")
-    .attr("x1", (d) => d.parent.x + POST_RECT_WIDTH / 2)
-    .attr("y1", (d) => d.parent.y + POST_RECT_HEIGHT)
+    .attr("x1", (d) => d.parent?.x! + POST_RECT_WIDTH / 2)
+    .attr("y1", (d) => d.parent?.y! + POST_RECT_HEIGHT)
     .attr("x2", (d) => d.post.x + POST_RECT_WIDTH / 2)
     .attr("y2", (d) => d.post.y)
     .attr("stroke-width", (d) => {
@@ -191,11 +169,11 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let nodeData = svg
     .append("g")
     .selectAll("g")
-    .data(data.discussionTree, (d) => d["id"])
+    .data(data.discussionTree.map((row) => lookups.postsByPostId[row.id]), (d:any) => d.id)
 
   let nodeGroup = nodeData
     .join("g")
-    .attr("id", (d) => "nodeGroup" + d["id"])
+    .attr("id", (d) => "nodeGroup" + d.id)
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
 
   // Post container
@@ -253,12 +231,12 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   }
 
   function addUpvoteProbabilityBar(
-    groupSelection,
+    groupSelection: d3.Selection<SVGGElement, any, SVGGElement, unknown>,
     x: number,
     fill: string,
-    heightPercentageFunc: Function,
-    opacityFunc: Function,
-    displayFunc: Function,
+    heightPercentageFunc: (post:PostWithScoreWithPosition) => number,
+    opacityFunc: (post:PostWithScoreWithPosition) => number,
+    displayFunc: (post:PostWithScoreWithPosition) => string,
   ) {
     let group = groupSelection.append("g")
 
@@ -348,6 +326,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
       let topNoteEdge = edges[0]
       return topNoteEdge && 1 - 1 / (1 + 0.3 * topNoteEdge.p_size)
     },
-    (d: PostWithScore) => (lookups.childrenByPostId[d.id] ? "inline" : "none"),
+    (d: PostWithScore) =>
+      lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
   )
 }

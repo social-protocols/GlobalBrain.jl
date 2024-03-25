@@ -1,55 +1,108 @@
 import { VisualizationData } from "./database"
-import { PostWithScore, VoteEvent, Effect, EffectEvent } from "./types"
+import {
+  CHILD_NODE_SPREAD,
+  CHILD_PARENT_OFFSET,
+  ROOT_POST_RECT_X,
+  ROOT_POST_RECT_Y,
+} from "./render"
+import {
+  PostWithScore,
+  VoteEvent,
+  Effect,
+  EffectEvent,
+  PostWithScoreWithPosition,
+} from "./types"
 
 export interface Lookup<T> {
   [Key: string]: T
 }
 
 export type LookupData = {
-  postsByPostId: Lookup<PostWithScore>
+  postsByPostId: Lookup<PostWithScoreWithPosition>
   voteEventsByPostId: Lookup<VoteEvent[]>
   effectsByPostIdNoteId: Lookup<Effect>
   effectEventsByPostId: Lookup<EffectEvent[]>
   currentEffects: Lookup<Effect>
-  childrenByPostId: Lookup<PostWithScore[]>
+  childrenIdsByPostId: Lookup<number[]>
   childEffectsByPostId: Lookup<Effect[]>
 }
 
 export function getLookups(data: VisualizationData): LookupData {
-  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(
+  const postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(
     data.discussionTree,
   )
-  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(
-    data.voteEvents,
-    postsByPostId,
-  )
-  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(
+  const effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(
     data.effects,
   )
-  let effectEventsByPostId: Lookup<EffectEvent[]> =
+  const effectEventsByPostId: Lookup<EffectEvent[]> =
     getLookupEffectEventsByPostId(data.effectEvents)
-  let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(
-    postsByPostId,
-    effectEventsByPostId,
-  )
-  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(
+
+  const childrenIdsByPostId: Lookup<number[]> = getLookupChildrenByPostId(
     data.discussionTree,
     effectsByPostIdNoteId,
   )
-  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(
+  const postsByPostIdWithPosition: Lookup<PostWithScoreWithPosition> =
+    assignPositionsFromRootRecursive(postsByPostId, childrenIdsByPostId)
+  const voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(
+    data.voteEvents,
+    postsByPostId,
+  )
+  const currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(
+    postsByPostId,
+    effectEventsByPostId,
+  )
+  const childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(
     data.discussionTree,
     effectsByPostIdNoteId,
   )
 
   return {
-    postsByPostId: postsByPostId,
+    postsByPostId: postsByPostIdWithPosition,
     voteEventsByPostId: voteEventsByPostId,
     effectsByPostIdNoteId: effectsByPostIdNoteId,
     effectEventsByPostId: effectEventsByPostId,
     currentEffects: currentEffects,
-    childrenByPostId: childrenByPostId,
+    childrenIdsByPostId: childrenIdsByPostId,
     childEffectsByPostId: childEffectsByPostId,
   }
+}
+
+function assignPositionsFromRootRecursive(
+  postsByPostId: Lookup<PostWithScore>,
+  childrenByPostId: Lookup<number[]>,
+): Lookup<PostWithScoreWithPosition> {
+  const rootOld = postsByPostId[childrenByPostId[0][0]]
+  const root: PostWithScoreWithPosition = {
+    ...rootOld,
+    x: ROOT_POST_RECT_X,
+    y: ROOT_POST_RECT_Y,
+  }
+  const postByPostIdWithPosition: Lookup<PostWithScoreWithPosition> = {
+    [root.id]: root,
+  }
+  function recurse(postId: number, postX: number, postY: number) {
+    let postOld = postsByPostId[postId]
+    let post = { ...postOld, x: postX, y: postY }
+    postByPostIdWithPosition[postId] = post
+
+    if (postId in childrenByPostId) {
+      // prepare spread and step size to position children
+      let spread = 0
+      let stepSize = 0
+      if (childrenByPostId[postId].length > 1) {
+        spread = CHILD_NODE_SPREAD
+        stepSize = spread / (childrenByPostId[postId].length - 1)
+      }
+
+      childrenByPostId[postId].forEach((childId, i) => {
+        const x =  postX + i * stepSize
+        const y = postY + CHILD_PARENT_OFFSET
+        recurse(childId, x, y)
+      })
+    }
+  }
+  recurse(root.id, root.x, root.y)
+  return postByPostIdWithPosition
 }
 
 function getLookupPostsByPostId(
@@ -128,18 +181,18 @@ function getLookupCurrentEffectsByPostId(
 function getLookupChildrenByPostId(
   discussionTree: PostWithScore[],
   effectsByPostIdNoteId: Lookup<Effect>,
-): Lookup<PostWithScore[]> {
-  let childrenByPostId: Lookup<PostWithScore[]> = {}
+): Lookup<number[]> {
+  let childrenByPostId: Lookup<number[]> = {}
   discussionTree.forEach((post: PostWithScore) => {
     let parentId = post["parent_id"]
     let parentIdOrRoot = parentId || 0
     if (!(parentIdOrRoot in childrenByPostId)) {
-      childrenByPostId[parentIdOrRoot] = [post]
+      childrenByPostId[parentIdOrRoot] = [post.id]
     } else {
-      childrenByPostId[parentIdOrRoot].push(post)
+      childrenByPostId[parentIdOrRoot].push(post.id)
       childrenByPostId[parentIdOrRoot].sort((a, b) => {
-        let effectA = effectsByPostIdNoteId[`${parentId}-${a["id"]}`].magnitude
-        let effectB = effectsByPostIdNoteId[`${parentId}-${b["id"]}`].magnitude
+        let effectA = effectsByPostIdNoteId[`${parentId}-${a}`].magnitude
+        let effectB = effectsByPostIdNoteId[`${parentId}-${b}`].magnitude
         return effectB - effectA
       })
     }
