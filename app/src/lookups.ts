@@ -1,34 +1,45 @@
-import { VisualizationData } from './database';
-import {
-  PostWithScore,
-  VoteEvent,
-  Effect,
-  EffectEvent,
-} from './types'
+import { VisualizationData } from "./database"
+import { PostWithScore, VoteEvent, Effect, EffectEvent } from "./types"
 
 export interface Lookup<T> {
-  [Key: string]: T;
+  [Key: string]: T
 }
 
 export type LookupData = {
-  postsByPostId: Lookup<PostWithScore>,
-  voteEventsByPostId: Lookup<VoteEvent[]>,
-  effectsByPostIdNoteId: Lookup<Effect>,
-  effectEventsByPostId: Lookup<EffectEvent[]>,
-  currentEffects: Lookup<Effect>,
-  childrenByPostId: Lookup<PostWithScore[]>,
-  childEffectsByPostId: Lookup<Effect[]>,
+  postsByPostId: Lookup<PostWithScore>
+  voteEventsByPostId: Lookup<VoteEvent[]>
+  effectsByPostIdNoteId: Lookup<Effect>
+  effectEventsByPostId: Lookup<EffectEvent[]>
+  currentEffects: Lookup<Effect>
+  childrenByPostId: Lookup<PostWithScore[]>
+  childEffectsByPostId: Lookup<Effect[]>
 }
 
-
 export function getLookups(data: VisualizationData): LookupData {
-  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(data.discussionTree)
-  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(data.voteEvents, postsByPostId)
-  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(data.effects)
-  let effectEventsByPostId: Lookup<EffectEvent[]> = getLookupEffectEventsByPostId(data.effectEvents)
-  let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(postsByPostId, effectEventsByPostId)
-  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(data.discussionTree, effectsByPostIdNoteId)
-  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(data.discussionTree, effectsByPostIdNoteId)
+  let postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(
+    data.discussionTree,
+  )
+  let voteEventsByPostId: Lookup<VoteEvent[]> = getLookupVoteEventsByPostId(
+    data.voteEvents,
+    postsByPostId,
+  )
+  let effectsByPostIdNoteId: Lookup<Effect> = getLookupEffectsByPostIdNoteId(
+    data.effects,
+  )
+  let effectEventsByPostId: Lookup<EffectEvent[]> =
+    getLookupEffectEventsByPostId(data.effectEvents)
+  let currentEffects: Lookup<Effect> = getLookupCurrentEffectsByPostId(
+    postsByPostId,
+    effectEventsByPostId,
+  )
+  let childrenByPostId: Lookup<PostWithScore[]> = getLookupChildrenByPostId(
+    data.discussionTree,
+    effectsByPostIdNoteId,
+  )
+  let childEffectsByPostId: Lookup<Effect[]> = getLookupChildEffectsByPostId(
+    data.discussionTree,
+    effectsByPostIdNoteId,
+  )
 
   return {
     postsByPostId: postsByPostId,
@@ -42,7 +53,7 @@ export function getLookups(data: VisualizationData): LookupData {
 }
 
 function getLookupPostsByPostId(
-  discussionTree: PostWithScore[]
+  discussionTree: PostWithScore[],
 ): Lookup<PostWithScore> {
   let postsByPostId: Lookup<PostWithScore> = {}
   discussionTree.forEach((d) => {
@@ -53,7 +64,7 @@ function getLookupPostsByPostId(
 
 function getLookupVoteEventsByPostId(
   voteEvents: VoteEvent[],
-  postsByPostId: Lookup<PostWithScore>
+  postsByPostId: Lookup<PostWithScore>,
 ): Lookup<VoteEvent[]> {
   let voteEventsByPostId: Lookup<VoteEvent[]> = {}
   voteEvents.forEach((voteEvent) => {
@@ -69,9 +80,7 @@ function getLookupVoteEventsByPostId(
   return voteEventsByPostId
 }
 
-function getLookupEffectsByPostIdNoteId(
-  effects: Effect[]
-): Lookup<Effect> {
+function getLookupEffectsByPostIdNoteId(effects: Effect[]): Lookup<Effect> {
   let effectsByPostIdNoteId: Lookup<Effect> = {}
   effects.forEach((effect) => {
     effectsByPostIdNoteId[`${effect["post_id"]}-${effect["note_id"]}`] = effect
@@ -80,7 +89,7 @@ function getLookupEffectsByPostIdNoteId(
 }
 
 function getLookupEffectEventsByPostId(
-  effectEvents: EffectEvent[]
+  effectEvents: EffectEvent[],
 ): Lookup<EffectEvent[]> {
   let effectEventsByPostId: Lookup<EffectEvent[]> = {}
   effectEvents.forEach((effectEvent) => {
@@ -96,7 +105,7 @@ function getLookupEffectEventsByPostId(
 
 function getLookupCurrentEffectsByPostId(
   postsByPostId: Lookup<PostWithScore>,
-  effectEventsByPostId: Lookup<EffectEvent[]>
+  effectEventsByPostId: Lookup<EffectEvent[]>,
 ): Lookup<Effect> {
   let currentEffects: Lookup<Effect> = {}
   let thisTreePostIds = Object.keys(postsByPostId)
@@ -105,9 +114,13 @@ function getLookupCurrentEffectsByPostId(
       return
     }
     // https://stackoverflow.com/questions/4020796/finding-the-max-value-of-a-property-in-an-array-of-objects
-    currentEffects[postId] = effectEventsByPostId[postId].reduce(function(prev, current) {
-      return (prev && prev.vote_event_id > current.vote_event_id) ? prev : current
-    })
+    currentEffects[postId] = effectEventsByPostId[postId].reduce(
+      function (prev, current) {
+        return prev && prev.vote_event_id > current.vote_event_id
+          ? prev
+          : current
+      },
+    )
   })
   return currentEffects
 }

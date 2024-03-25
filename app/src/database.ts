@@ -2,10 +2,10 @@ import relativeEntropy from "./entropy"
 
 // TODO: return types of database functions
 export type VisualizationData = {
-  discussionTree: any[],
-  effects: any[],
-  scoreEvents: any[],
-  effectEvents: any[],
+  discussionTree: any[]
+  effects: any[]
+  scoreEvents: any[]
+  effectEvents: any[]
   voteEvents: any[]
 }
 
@@ -26,18 +26,18 @@ export async function getData(
     effects: effects,
     scoreEvents: scoreEvents,
     effectEvents: effectEvents,
-    voteEvents: voteEvents
+    voteEvents: voteEvents,
   }
 }
 
-export function unpackDBResult(result: { columns: string[], values: any[] }) {
-  const columns = result.columns;
-  const values = result.values;
+export function unpackDBResult(result: { columns: string[]; values: any[] }) {
+  const columns = result.columns
+  const values = result.values
   return values.map((value) => {
     return columns.reduce<Record<string, any>>((obj, col, index) => {
-      obj[col] = value[index];
-      return obj;
-    }, {});
+      obj[col] = value[index]
+      return obj
+    }, {})
   })
 }
 
@@ -48,7 +48,7 @@ export async function getRootPostIds(db: any, tagId: number) {
     WHERE tag_id = :tagId
     AND parent_id IS NULL
   `)
-  stmt.bind({ ':tagId': tagId })
+  stmt.bind({ ":tagId": tagId })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())
@@ -106,7 +106,7 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
     LEFT OUTER JOIN currentScore
     ON idsRecursive.id = currentScore.post_id
   `)
-  stmt.bind({ ':root_post_id': postId, ':period': period })
+  stmt.bind({ ":root_post_id": postId, ":period": period })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())
@@ -122,7 +122,7 @@ async function getEffects(db: any, tagId: number, period: number) {
     AND vote_event_time <= :period
     GROUP BY post_id, note_id
   `)
-  stmt.bind({ ':tagId': tagId, ':period': period })
+  stmt.bind({ ":tagId": tagId, ":period": period })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())

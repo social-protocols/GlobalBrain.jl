@@ -1,7 +1,7 @@
 import { getData, getRootPostIds } from "./database"
 import { getLookups } from "./lookups"
 import { Effect, PostWithScore, SimulationFilter } from "./types"
-import * as d3 from 'd3'
+import * as d3 from "d3"
 
 const CHILD_NODE_SPREAD = 400
 const CHILD_PARENT_OFFSET = 150
@@ -54,7 +54,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   assignPositionsFromRootRecursive(root["id"])
 
   d3.select("svg").remove()
-  const svg = d3.select("div#app")
+  const svg = d3
+    .select("div#app")
     .append("svg")
     .attr("width", 1600)
     .attr("height", 1600)
@@ -65,41 +66,47 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // --- LINE PLOTS --------------------
   // -----------------------------------
 
-  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root["id"])
+  let rootPostScore = data.scoreEvents.filter(
+    (d) => d["post_id"] === root["id"],
+  )
 
-  let minVoteEventId = d3.min(lookups.voteEventsByPostId[root.id], (d) => d.vote_event_id)!
-  let maxVoteEventId = d3.max(lookups.voteEventsByPostId[root.id], (d) => d.vote_event_id)!
+  let minVoteEventId = d3.min(
+    lookups.voteEventsByPostId[root.id],
+    (d) => d.vote_event_id,
+  )!
+  let maxVoteEventId = d3.max(
+    lookups.voteEventsByPostId[root.id],
+    (d) => d.vote_event_id,
+  )!
 
-  let scaleProbability = d3.scaleLinear()
+  let scaleProbability = d3
+    .scaleLinear()
     .domain([0, 1])
     .range([LINEPLOT_HEIGHT, 0])
-  let scaleVoteId = d3.scaleLinear()
+  let scaleVoteId = d3
+    .scaleLinear()
     .domain([minVoteEventId, maxVoteEventId])
     .range([0, LINEPLOT_WIDTH])
 
-  let lineGroup = svg
-    .append("g")
-    .attr("transform", "translate(30, 10)")
+  let lineGroup = svg.append("g").attr("transform", "translate(30, 10)")
 
-  let maxVoteIdLower10 = Math.floor((maxVoteEventId) / 10) * 10
-  let minVoteIdLower10 = Math.floor((minVoteEventId) / 10) * 10
-  let steps = ((maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE) - minVoteIdLower10) / LINE_PLOT_X_STEP_SIZE
-  let xTickValues = [...Array(steps).keys()].map(v => (v * LINE_PLOT_X_STEP_SIZE) + minVoteIdLower10)
+  let maxVoteIdLower10 = Math.floor(maxVoteEventId / 10) * 10
+  let minVoteIdLower10 = Math.floor(minVoteEventId / 10) * 10
+  let steps =
+    (maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE - minVoteIdLower10) /
+    LINE_PLOT_X_STEP_SIZE
+  let xTickValues = [...Array(steps).keys()].map(
+    (v) => v * LINE_PLOT_X_STEP_SIZE + minVoteIdLower10,
+  )
 
   // Add axes
-  let xAxis = d3.axisBottom(scaleVoteId)
-    .tickValues(xTickValues)
-    .tickSize(3)
-  let yAxis = d3.axisLeft(scaleProbability)
+  let xAxis = d3.axisBottom(scaleVoteId).tickValues(xTickValues).tickSize(3)
+  let yAxis = d3
+    .axisLeft(scaleProbability)
     .tickValues([0.0, 0.25, 0.5, 0.75, 1.0])
     .tickSize(3)
-  lineGroup
-    .append("g")
-    .attr("transform", "translate(0, 101)")
-    .call(xAxis)
-  lineGroup
-    .append("g")
-    .call(yAxis)
+  lineGroup.append("g").attr("transform", "translate(0, 101)").call(xAxis)
+  lineGroup.append("g").call(yAxis)
 
   let lineGenerator = d3.line()
 
@@ -130,15 +137,14 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .attr("opacity", 0.5)
     .attr("fill", "none")
 
-
   // -----------------------------------
   // --- EDGES -------------------------
   // -----------------------------------
 
   type Edge = {
-    parent: PostWithScore | null,
-    post: PostWithScore,
-    edgeData: Effect,
+    parent: PostWithScore | null
+    post: PostWithScore
+    edgeData: Effect
   }
 
   let edges: Edge[] = data.discussionTree
@@ -147,7 +153,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
       return {
         parent: lookups.postsByPostId[row["parent_id"]],
         post: lookups.postsByPostId[row["id"]],
-        edgeData: lookups.effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`]
+        edgeData:
+          lookups.effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`],
       }
     })
 
@@ -192,7 +199,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .attr("transform", (d) => `translate(${d.x}, ${d.y})`)
 
   // Post container
-  nodeGroup.append("rect")
+  nodeGroup
+    .append("rect")
     .attr("x", 0)
     .attr("y", 0)
     .attr("width", POST_RECT_WIDTH)
@@ -208,7 +216,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // })
 
   // Post content
-  nodeGroup.append("foreignObject")
+  nodeGroup
+    .append("foreignObject")
     .attr("x", 0)
     .attr("y", 0)
     .attr("width", POST_RECT_WIDTH)
@@ -221,7 +230,6 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .style("padding", "5px")
     .html((d) => d.content)
 
-
   // TODO: fix (doesn't work since porting to TypeScript)
   // https://stackoverflow.com/questions/2685911/is-there-a-way-to-round-numbers-into-a-reader-friendly-format-e-g-1-1k
   function numberToText(num: number) {
@@ -231,8 +239,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     for (let i = abbrev.length - 1; i >= 0; i--) {
       let size = Math.pow(10, (i + 1) * 3)
       if (size <= num) {
-        num = Math.round(num * decPlaces / size) / decPlaces
-        if ((num == 1000) && (i < abbrev.length - 1)) {
+        num = Math.round((num * decPlaces) / size) / decPlaces
+        if (num == 1000 && i < abbrev.length - 1) {
           num = 1
           i++
         }
@@ -317,9 +325,10 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     voteGroup,
     -55,
     "black",
-    (d: PostWithScore) => d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
-    (d: PostWithScore) => 1 - (1 / (1 + 0.3 * d.o_size)),
-    () => "inline"
+    (d: PostWithScore) =>
+      d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
+    (d: PostWithScore) => 1 - 1 / (1 + 0.3 * d.o_size),
+    () => "inline",
   )
 
   addUpvoteProbabilityBar(
@@ -329,15 +338,15 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     (d: PostWithScore) => {
       let edges = lookups.childEffectsByPostId[d.id] || []
       let topNoteEdge = edges[0]
-      return topNoteEdge && (topNoteEdge.p_count !== 0) ?
-        topNoteEdge.p_count / topNoteEdge.p_size :
-        0.05
+      return topNoteEdge && topNoteEdge.p_count !== 0
+        ? topNoteEdge.p_count / topNoteEdge.p_size
+        : 0.05
     },
     (d: PostWithScore) => {
       let edges = lookups.childEffectsByPostId[d.id] || []
       let topNoteEdge = edges[0]
-      return topNoteEdge && 1 - (1 / (1 + 0.3 * topNoteEdge.p_size))
+      return topNoteEdge && 1 - 1 / (1 + 0.3 * topNoteEdge.p_size)
     },
-    (d: PostWithScore) => lookups.childrenByPostId[d.id] ? "inline" : "none"
+    (d: PostWithScore) => (lookups.childrenByPostId[d.id] ? "inline" : "none"),
   )
 }

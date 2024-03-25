@@ -1,9 +1,9 @@
-import './style.css'
-import initSqlJs from 'sql.js'
+import "./style.css"
+import initSqlJs from "sql.js"
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
-import { SimulationFilter } from './types.ts'
-import { unpackDBResult } from './database.ts'
-import { render } from './render.ts'
+import { SimulationFilter } from "./types.ts"
+import { unpackDBResult } from "./database.ts"
+import { render } from "./render.ts"
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -16,7 +16,7 @@ import { render } from './render.ts'
 
 async function main() {
   const sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
-  const dataPromise = fetch("/sim.db").then(res => res.arrayBuffer())
+  const dataPromise = fetch("/sim.db").then((res) => res.arrayBuffer())
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
@@ -32,17 +32,21 @@ async function main() {
   }
 
   const simulationsQueryResult = db.exec("select id from tag")
-  const simulationIds = unpackDBResult(simulationsQueryResult[0]).map((x: any) => x.id)
+  const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
+    (x: any) => x.id,
+  )
   addSimulationSelectInput(simulationIds)
 
   function setPeriodsSelectInput(db: any, simulationId: number) {
     const periodIdsQueryResult = db.exec(
       "select distinct vote_event_time from VoteEvent where tag_id = :simulationId",
-      { ":simulationId": simulationId }
+      { ":simulationId": simulationId },
     )
-    const periods = unpackDBResult(periodIdsQueryResult[0]).map((x: any) => x.vote_event_time)
+    const periods = unpackDBResult(periodIdsQueryResult[0]).map(
+      (x: any) => x.vote_event_time,
+    )
     const periodSelect = document.getElementById("period")!
-    periodSelect.innerHTML = ''
+    periodSelect.innerHTML = ""
     periods.forEach((id, i) => {
       const option = document.createElement("option")
       option.value = id.toString()
@@ -53,7 +57,10 @@ async function main() {
   }
 
   const simulationSelectInput = document.getElementById("simulationId")!
-  setPeriodsSelectInput(db, parseInt((simulationSelectInput as HTMLInputElement).value))
+  setPeriodsSelectInput(
+    db,
+    parseInt((simulationSelectInput as HTMLInputElement).value),
+  )
 
   simulationSelectInput.addEventListener("change", (e) => {
     setPeriodsSelectInput(db, parseInt((e.target as HTMLInputElement).value))
@@ -66,11 +73,15 @@ async function main() {
   }
 
   function handleControlFormSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+    e.preventDefault()
+    const formData = new FormData(e.target as HTMLFormElement)
     simulationFilter = {
-      simulationId: formData.get("simulationId") ? parseInt(formData.get("simulationId") as string) : null,
-      period: formData.get("period") ? parseInt(formData.get("period") as string) : null,
+      simulationId: formData.get("simulationId")
+        ? parseInt(formData.get("simulationId") as string)
+        : null,
+      period: formData.get("period")
+        ? parseInt(formData.get("period") as string)
+        : null,
     }
     render(db, simulationFilter)
   }
