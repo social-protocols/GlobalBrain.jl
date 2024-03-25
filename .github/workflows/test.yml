@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    env:
+      EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
+      EARTHLY_SATELLITE: ${{ secrets.EARTHLY_SATELLITE }}
+      EARTHLY_ORG: ${{ secrets.EARTHLY_ORG }}
+      EARTHLY_CI: true
+      FORCE_COLOR: 1
+
+    steps:
+
+    - uses: earthly/actions-setup@v1
+      with:
+        version: v0.8.0
+
+    - uses: actions/checkout@v4
+
+    - name: Test
+      run: earthly +ci-test
+
