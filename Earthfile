@@ -1,12 +1,6 @@
+# https://docs.earthly.dev/basics
+
 VERSION 0.8
-
-
-# lint:
-# 	FROM +setup-julia
-# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
-# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
-# 	RUN ls -l global-brain-service/bin
-# 	RUN ./global-brain-service/bin/GlobalBrainService
 
 
 flake:
@@ -64,9 +58,19 @@ sim-test:
   COPY test.sh ./
   RUN ./test.sh
 
+# TODO:
+# sim-lint:
+# 	FROM +setup-julia
+# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
+# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
+# 	RUN ls -l global-brain-service/bin
+# 	RUN ./global-brain-service/bin/GlobalBrainService
+
+
 ci-test:
   BUILD +sim-test-unit
   BUILD +sim-test
+  BUILD +vis-build
 
 ci-deploy:
   BUILD +ci-test
