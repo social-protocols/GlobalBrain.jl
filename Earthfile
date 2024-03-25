@@ -30,7 +30,7 @@ vis-build:
   FROM +vis-setup
   RUN npm run build
   COPY +sim-run/sim.db dist/sim.db
-  SAVE ARTIFACT dist/
+  SAVE ARTIFACT dist AS LOCAL app/dist
 
 # vis-dev:
 #   # TODO: expose port: because https://github.com/earthly/earthly/issues/2047
