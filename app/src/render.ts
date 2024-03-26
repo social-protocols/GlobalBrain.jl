@@ -484,7 +484,7 @@ async function renderGoogleLineChart(
   var chart = new google.visualization.LineChart(plotDiv)
 
   function onmouseoverHandler(properties: { row: number; column: number }) {
-    setPeriodHandler(properties.row)
+    // setPeriodHandler(properties.row)
   }
 
   function selectHandler(e: MouseEvent) {
