@@ -7,6 +7,7 @@ instantiate:
 
 format:
     julia --project --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
+    cd app && npx prettier --write .
 
 run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH
