@@ -92,8 +92,14 @@ async function main() {
 
   controlForm.addEventListener("submit", handleControlFormSubmit)
 
-  document.getElementById("simulationId")!.addEventListener("change", function() { updateSimulationFilter() });
-  document.getElementById("period")!.addEventListener("change", function() { updateSimulationFilter() });
+  document
+    .getElementById("simulationId")!
+    .addEventListener("change", function () {
+      updateSimulationFilter()
+    })
+  document.getElementById("period")!.addEventListener("change", function () {
+    updateSimulationFilter()
+  })
 
   render(db, simulationFilter)
 }

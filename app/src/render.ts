@@ -64,20 +64,20 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root.id)
 
   function setPeriodHandler(n: number) {
-
     const voteEvent = rootPostScore[n]!
-    if(voteEvent === undefined) {
+    if (voteEvent === undefined) {
       return
     }
-    const voteEventTime = voteEvent.vote_event_time;
- 
+    const voteEventTime = voteEvent.vote_event_time
+
     const e = document.getElementById("period")! as HTMLSelectElement
-    if(e.value != voteEventTime) {
+    if (e.value != voteEventTime) {
       e.value = voteEventTime
-      const formData = new FormData(document.getElementById("controlForm") as HTMLFormElement)
+      const formData = new FormData(
+        document.getElementById("controlForm") as HTMLFormElement,
+      )
       const simulationFilter = {
-        simulationId: 
-          formData.get("simulationId")
+        simulationId: formData.get("simulationId")
           ? (formData.get("simulationId") as string)
           : null,
         period: voteEventTime,
@@ -85,7 +85,6 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
       render(db, simulationFilter)
     }
   }
-
 
   await renderGoogleLineChart(data, lookups, root.id, setPeriodHandler)
 }
@@ -491,7 +490,6 @@ async function renderGoogleLineChart(
     var n = chart.getSelection()[0].row!
     setPeriodHandler(n)
   }
-
 
   google.visualization.events.addListener(chart, "select", selectHandler)
   google.visualization.events.addListener(
