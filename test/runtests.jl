@@ -1,6 +1,10 @@
 using GlobalBrain
 using Test
 
-include("binary-entropy.jl")
-include("probability-models.jl")
-include("algorithm.jl")
+
+for testfile in readdir(".")
+	if endswith(testfile, ".jl") && testfile != "runtests.jl"
+		include(testfile)
+	end
+end
+
