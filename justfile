@@ -36,7 +36,8 @@ test-db:
     litecli $SOCIAL_PROTOCOLS_DATADIR/test.db
 
 app:
-  find shiny | entr -cnr bash -c "Rscript -e \"shiny::runApp('shiny', port = 3456)\""
+    cd app && npm install && npm run dev
+
 
 ############ TESTS ##############
 
