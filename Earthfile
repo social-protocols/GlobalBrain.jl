@@ -42,6 +42,11 @@ vis-build:
   RUN npx vite build
   SAVE ARTIFACT dist AS LOCAL app/dist
 
+vis-format-check:
+  FROM +vis-setup
+  COPY app/.prettierrc ./
+  RUN npx prettier --check .
+
 # vis-dev:
 #   # TODO: expose port: because https://github.com/earthly/earthly/issues/2047
 #   FROM +setup-visualization
@@ -71,6 +76,7 @@ ci-test:
   BUILD +sim-test-unit
   BUILD +sim-test
   BUILD +vis-build
+  BUILD +vis-format-check
 
 ci-deploy:
   BUILD +ci-test

@@ -1,6 +1,11 @@
 import { getData, getRootPostIds } from "./database"
 import { getLookups } from "./lookups"
-import { Effect, PostWithScore, PostWithScoreWithPosition, SimulationFilter } from "./types"
+import {
+  Effect,
+  PostWithScore,
+  PostWithScoreWithPosition,
+  SimulationFilter,
+} from "./types"
 import * as d3 from "d3"
 
 export const CHILD_NODE_SPREAD = 400
@@ -44,9 +49,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // --- LINE PLOTS --------------------
   // -----------------------------------
 
-  let rootPostScore = data.scoreEvents.filter(
-    (d) => d["post_id"] === root.id,
-  )
+  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root.id)
 
   let minVoteEventId = d3.min(
     lookups.voteEventsByPostId[root.id],
@@ -139,7 +142,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let edgeData = svg
     .append("g")
     .selectAll("g")
-    .data(edges, (d: any) => (d.parent?.id + "-" + d.post.id))
+    .data(edges, (d: any) => d.parent?.id + "-" + d.post.id)
 
   let edgeGroup = edgeData
     .join("g")
@@ -169,7 +172,10 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   let nodeData = svg
     .append("g")
     .selectAll("g")
-    .data(data.discussionTree.map((row) => lookups.postsByPostId[row.id]), (d:any) => d.id)
+    .data(
+      data.discussionTree.map((row) => lookups.postsByPostId[row.id]),
+      (d: any) => d.id,
+    )
 
   let nodeGroup = nodeData
     .join("g")
@@ -234,9 +240,9 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     groupSelection: d3.Selection<SVGGElement, any, SVGGElement, unknown>,
     x: number,
     fill: string,
-    heightPercentageFunc: (post:PostWithScoreWithPosition) => number,
-    opacityFunc: (post:PostWithScoreWithPosition) => number,
-    displayFunc: (post:PostWithScoreWithPosition) => string,
+    heightPercentageFunc: (post: PostWithScoreWithPosition) => number,
+    opacityFunc: (post: PostWithScoreWithPosition) => number,
+    displayFunc: (post: PostWithScoreWithPosition) => string,
   ) {
     let group = groupSelection.append("g")
 

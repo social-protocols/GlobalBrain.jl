@@ -1,3 +1,3 @@
 export default {
-  base: '/GlobalBrain.jl/',
+  base: "/GlobalBrain.jl/",
 }

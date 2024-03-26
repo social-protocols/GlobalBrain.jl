@@ -95,7 +95,7 @@ function assignPositionsFromRootRecursive(
       }
 
       childrenByPostId[postId].forEach((childId, i) => {
-        const x =  postX + i * stepSize
+        const x = postX + i * stepSize
         const y = postY + CHILD_PARENT_OFFSET
         recurse(childId, x, y)
       })
