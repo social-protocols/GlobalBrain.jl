@@ -35,7 +35,7 @@ sim-db:
 test-db:
     litecli $SOCIAL_PROTOCOLS_DATADIR/test.db
 
-app:
+visualize:
     cd app && npm install && npm run dev
 
 
