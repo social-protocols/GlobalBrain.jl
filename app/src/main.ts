@@ -21,26 +21,27 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-  function addSimulationSelectInput(simulationIds: number[]) {
+  function addSimulationSelectInput(simulationIds: string[]) {
     const simulationSelect = document.getElementById("simulationId")
     simulationIds.forEach((id, i) => {
       const option = document.createElement("option")
-      option.value = id.toString()
-      option.text = id.toString()
+      option.value = id
+      option.text = id
       if (i === 0) option.selected = true
       simulationSelect?.appendChild(option)
     })
   }
 
-  const simulationsQueryResult = db.exec("select id from tag")
+  const simulationsQueryResult = db.exec("select tag from tag")
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
-    (x: any) => x.id,
+    (x: any) => x.tag,
   )
+
   addSimulationSelectInput(simulationIds)
 
-  function setPeriodsSelectInput(db: any, simulationId: number) {
+  function setPeriodsSelectInput(db: any, simulationId: string) {
     const periodIdsQueryResult = db.exec(
-      "select distinct vote_event_time from VoteEvent where tag_id = :simulationId",
+      "select distinct vote_event_time from VoteEvent join Tag on (Tag.id = tag_id) where tag = :simulationId",
       { ":simulationId": simulationId },
     )
     const periods = unpackDBResult(periodIdsQueryResult[0]).map(
@@ -58,18 +59,15 @@ async function main() {
   }
 
   const simulationSelectInput = document.getElementById("simulationId")!
-  setPeriodsSelectInput(
-    db,
-    parseInt((simulationSelectInput as HTMLInputElement).value),
-  )
+  setPeriodsSelectInput(db, (simulationSelectInput as HTMLInputElement).value)
 
   simulationSelectInput.addEventListener("change", (e) => {
-    setPeriodsSelectInput(db, parseInt((e.target as HTMLInputElement).value))
+    setPeriodsSelectInput(db, (e.target as HTMLInputElement).value)
   })
 
   // TODO: set default more robustly
   let simulationFilter: SimulationFilter = {
-    simulationId: 1,
+    simulationId: "marbles",
     period: 1,
   }
 
@@ -78,7 +76,7 @@ async function main() {
     const formData = new FormData(e.target as HTMLFormElement)
     simulationFilter = {
       simulationId: formData.get("simulationId")
-        ? parseInt(formData.get("simulationId") as string)
+        ? (formData.get("simulationId") as string)
         : null,
       period: formData.get("period")
         ? parseInt(formData.get("period") as string)

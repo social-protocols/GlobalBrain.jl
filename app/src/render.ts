@@ -1,4 +1,4 @@
-import { getData, getRootPostIds } from "./database"
+import { getData, getRootPostIds, getTagId } from "./database"
 import { getLookups } from "./lookups"
 import {
   Effect,
@@ -25,7 +25,9 @@ const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 
 export async function render(db: any, simulationFilter: SimulationFilter) {
-  let tagId = simulationFilter.simulationId!
+  let simulationId = simulationFilter.simulationId!
+  let tagId = await getTagId(db, simulationId)
+
   let period = simulationFilter.period!
   // TODO: handle case with several root post ids
   let rootPostIds = await getRootPostIds(db, tagId)

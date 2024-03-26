@@ -56,6 +56,18 @@ export async function getRootPostIds(db: any, tagId: number) {
   return res
 }
 
+export async function getTagId(db: any, tag: string) {
+  let stmt = db.prepare(`
+    SELECT id from tag where tag = :tag
+  `)
+  stmt.bind({ ":tag": tag })
+  let res = []
+  while (stmt.step()) {
+    res.push(stmt.getAsObject())
+  }
+  return res[0]!.id
+}
+
 async function getDiscussionTree(db: any, postId: number, period: number) {
   const stmt = db.prepare(`
     WITH currentPosts AS(
