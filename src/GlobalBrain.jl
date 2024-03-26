@@ -8,7 +8,7 @@ using Distributions
 
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
-include("lib/models/discussion-trees.jl")
+include("lib/models/tallies-data.jl")
 include("lib/constants.jl")
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
@@ -28,9 +28,9 @@ export global_brain_service
 export process_vote_events_stream
 
 # --- Algorithm
-export TalliesTree
-export InMemoryTree
-export SQLTalliesTree
+export ConditionalTally
+export TalliesData
+export SQLTalliesData
 export as_event
 export Effect
 export Score
@@ -58,7 +58,6 @@ export get_or_insert_tag_id
 export Model
 export BetaBernoulli
 export GammaPoisson
-export DetailedTally
 export BernoulliTally
 export PoissonTally
 export Distribution

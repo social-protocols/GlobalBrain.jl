@@ -1,100 +1,77 @@
-"""
-    score_tree(
-        output_result::Function,
-        tallies::Base.Generator,
-    )::Vector{Score}
-
-Score a tree of tallies.
-
-# Parameters
-    * `output_result::Function`: A function to output the score or effect. This function can be used for side effects, such as
-      writing to a database.
-    * `tallies::Base.Generator`: A `Base.Generator` of `SQLTalliesTree`s.
-"""
-function score_tree(output_results::Function, tallies::Vector{TalliesTree})
+function score_posts(output::Function, posts::Vector{TalliesData})
     effects = Dict{Int,Vector{Effect}}()
 
-    for post in tallies
-        score_post(output_results, post, effects)
+    for post in posts
+        score_post(output, post, effects)
     end
-
 end
 
-function score_post(
-    output_results::Function,
-    post::TalliesTree,
-    effects::Dict{Int,Vector{Effect}},
-)
+function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector{Effect}})
+    post_id = post.post_id
+    @debug "In score post $post_id"
+
+    if !post.needs_recalculation
+        @debug "No recalculation needed for $(post_id). Using existing effect data"
+        return Vector{Score}()
+    end
 
     this_tally = post.tally()
 
-    if !post.needs_recalculation()
-        @debug "No recalculation needed for $(this_tally.post_id). Using existing effect data"
-        return
-    end
-
-    post_id = this_tally.post_id
-
-    o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally.overall))
+    o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally))
 
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    @debug "Calling find_top_thread $post_id=>$(post.tally().post_id)"
-
-    top_note_effect = find_top_thread(post_id, o, post, effects)
+    top_note_effect = find_top_thread(post_id, post, o, effects)
     p = !isnothing(top_note_effect) ? top_note_effect.p : o.mean
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
-    for e in my_effects
-        output_results(e)
-    end
-    my_score = ranking_score(my_effects, p)
 
-    children = post.children(post_id)
-    for child in children
-        score_post(output_results, child, effects)
+    for e in my_effects
+        yield(e)
+    end
+
+    for child in post.children()
+        score_post(yield, child, effects)
     end
 
     score = Score(
-        tag_id = this_tally.tag_id,
+        tag_id = post.tag_id,
         post_id = post_id,
         top_note_id = !isnothing(top_note_effect) ? top_note_effect.note_id : nothing,
         o = o.mean,
-        o_count = this_tally.overall.count,
-        o_size = this_tally.overall.size,
+        o_count = this_tally.count,
+        o_size = this_tally.size,
         p = p,
-        score = my_score,
+        score = ranking_score(my_effects, p),
     )
 
-    output_results(score)
-
+    yield(score)
 end
 
 
 function find_top_thread(
     post_id::Int,
+    note::TalliesData,
     r::BetaDistribution,
-    note::TalliesTree,
     effects::Dict{Int,Vector{Effect}},
 )::Union{Effect,Nothing}
 
-    note_id = note.tally().post_id
+    note_id = note.post_id
 
     @debug "find_top_thread $post_id=>$(note_id), r=$(r.mean)"
 
-    children = note.children(post_id)
+    children = note.children()
 
     n = length(children)
-    @debug "Got children $n children for $note_id"
+    @debug "Got $n children for $note_id"
 
     if length(children) == 0
         return nothing
     end
 
-    @debug "Getting child effects"
+    @debug "Getting effects of children of $note_id on $post_id"
 
-    child_effects =
-        [calc_thread_effect(post_id, r, child, effects) for child in children]
+    child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
 
     @debug "Got child effects $child_effects"
 
@@ -111,46 +88,25 @@ end
 
 
 function calc_thread_effect(
-    post_id,
+    post_id::Int,
+    note::TalliesData,
     prior::BetaDistribution,
-    note::TalliesTree,
     effects,
 )
 
-    tally = note.tally()
-    note_id = tally.post_id
+    note_id = note.post_id
 
-    q =
-        prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.uninformed)) |>
-        (x -> x.mean)
+    if !note.needs_recalculation
+        return note.effect(post_id)
+    end
 
-    @debug "Uninformed probability for $post_id=>$note_id is $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
+    tally = note.conditional_tally(post_id)
 
-    r =
-        prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.informed))
+    (q, r) = upvote_probabilities(prior, tally) 
 
-    @debug "Partially Informed probability for $post_id=>$note_id is $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
+    top_child_effect = find_top_thread(post_id, note, r, effects)
 
-
-    # First find the top note effect on me!
-    # top_subnote_effect = find_top_thread(post_id, r, note, effects)
-    # supp = calc_note_support(top_subnote_effect)
-    # prior = this_note_effect.p * supp + this_note_effect.q * (1 - supp)
-
-    # r_supported = if isnothing(top_subnote_effect)
-    #     this_note_effect.p
-    # else
-    #     top_subnote_effect.p
-    # end
-
-
-    top_child_effect = find_top_thread(post_id, r, note, effects)
-
-    @debug "top_child_effect=$top_child_effect for $post_id=>$(note.tally().post_id)"
+    @debug "top_child_effect=$top_child_effect for $post_id=>$note_id"
 
     p = if !isnothing(top_child_effect)
         top_child_effect.p
@@ -158,10 +114,10 @@ function calc_thread_effect(
         r.mean
     end
 
-    @debug "p=$p for $post_id=>$(note.tally().post_id)"
+    @debug "p=$p for $post_id=>$note_id"
 
     return Effect(
-        tag_id = tally.tag_id,
+        tag_id = note.tag_id,
         post_id = post_id,
         note_id = note_id,
         p = p,
@@ -181,4 +137,3 @@ function add!(effects::Dict{Int,Vector{Effect}}, effect::Effect)
     end
     push!(effects[effect.note_id], effect)
 end
-

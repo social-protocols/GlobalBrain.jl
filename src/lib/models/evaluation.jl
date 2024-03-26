@@ -1,33 +1,10 @@
-"""
-    DetailedTally
-
-All tallies for a post.
-
-# Fields
-
-    * `tag_id::Int64`: The tag id.
-    * `parent_id::Union{Int64, Nothing}`: The id of the parent
-    of this post if any.
-    * `post_id::Int64`: The id of this post.
-    * `parent::BernoulliTally`: The current tally tally for the **parent of
-    this post**
-    * `uninformed::BernoulliTally`: The tally for the **parent of this post**
-    given user was not informed of this note.
-    * `informed::BernoulliTally`: The tally for the **parent of this post**
-    given user was informed of this note.
-    * `overall::BernoulliTally`: The current tally for this post.
-"""
-Base.@kwdef struct DetailedTally
-    tag_id::Int64
-    ancestor_id::Union{Int64,Nothing}
-    parent_id::Union{Int64,Nothing}
-    post_id::Int64
-    parent::BernoulliTally
-    informed::BernoulliTally
-    uninformed::BernoulliTally
-    overall::BernoulliTally
+Base.@kwdef struct ConditionalTally
+    tag_id::Int
+    post_id::Int
+    note_id::Int
+    informed::Tally
+    uninformed::Tally
 end
-
 
 """
     Effect

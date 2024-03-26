@@ -14,7 +14,6 @@ function magnitude(effect::Union{Effect,Nothing})::Float64
     return abs(effect.q - effect.p)
 end
 
-
 """
     calc_note_support(
         informed_probability::Float64,
@@ -39,58 +38,35 @@ function calc_note_support(e::Effect)::Float64
 end
 
 
-"""
-    calc_note_effect(tally::DetailedTally)::Effect
-
-Calculate the effect of a note on a post from the informed tally for the note
-and the post.
-
-# Parameters
-
-    * `tally::DetailedTally`: The informed tallies for the note and the post.
-"""
-function calc_note_effect(tally::DetailedTally)::Effect
-    return calc_note_effect_bayesian_average(tally)
-    # return calc_note_effect_hmc(hierarchical_model1)(tally)
-    # return calc_note_effect_hmc(hierarchical_model2)(tally)
+function upvote_probabilities(prior::BetaDistribution, tally::ConditionalTally)
+    return upvote_probabilities_bayesian_average(prior, tally)
 end
-
 
 # Global prior constants. These should be estimated periodically using a Monte-Carlo chain on the full data set. 
 # But once estimated, then cay be treated as constants.
-
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 2.3
 const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 2.3
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
     BetaDistribution(0.875, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
 
-# function calc_note_effect_bayesian_average(tally::DetailedTally)
-#     upvote_probability = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, tally.parent))
+function upvote_probabilities_bayesian_average(prior::BetaDistribution, tally::ConditionalTally)
+    q =
+        prior |>
+        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+        (x -> update(x, tally.uninformed)) |>
+        (x -> x.mean)
 
-#     uninformed_probability =
-#         upvote_probability |>
-#         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-#         (x -> update(x, tally.uninformed)) |>
-#         (x -> x.mean)
+    @debug "Uninformed probability for $post_id=>$note_id is $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
 
-#     informed_probability =
-#         upvote_probability |>
-#         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-#         (x -> update(x, tally.informed)) |>
-#         (x -> x.mean)
+    r =
+        prior |>
+        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+        (x -> update(x, tally.informed))
 
-#     return Effect(
-#         tag_id = tally.tag_id,
-#         post_id = tally.parent_id,
-#         note_id = tally.post_id,
-#         p = informed_probability,
-#         p_count = tally.informed.count,
-#         p_size = tally.informed.size,
-#         q = uninformed_probability,
-#         q_count = tally.uninformed.count,
-#         q_size = tally.uninformed.size,
-#     )
-# end
+    @debug "Partially Informed probability for $post_id=>$note_id is $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
+
+    return (q, r)
+end
 
 # # Use HMC simulation (NUTS sampling) to calculate the note effect using the given hierarchical model
 # function calc_note_effect_hmc(model_function) 

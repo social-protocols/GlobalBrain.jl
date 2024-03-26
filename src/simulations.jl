@@ -67,11 +67,8 @@ function simulation_step!(
             note_id = nothing,
             vote = v.vote,
         )
-        process_vote_event(
-            db,
-            vote_event,
-        ) do vote_event_id::Int, vote_event_time::Int, object
-            e = as_event(vote_event_id, vote_event_time, object)
+        process_vote_event(db, vote_event) do object
+            e = as_event(vote_event_id, step, object)
             insert_event(db, e)
         end
         vote_event_id += 1

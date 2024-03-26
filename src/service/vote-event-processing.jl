@@ -12,11 +12,8 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         # The anonymous function provided here is used by the score_tree function to output
         # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
         # ScoreEvent or an EffectEvent.
-        successfully_processed = process_vote_event(
-            db::SQLite.DB,
-            vote_event,
-        ) do vote_event_id::Int, vote_event_time::Int, object
-            e = as_event(vote_event_id, vote_event_time, object)
+        successfully_processed = process_vote_event(db::SQLite.DB, vote_event) do object
+            e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
             insert_event(db, e)
             json_data = JSON.json(e)
             write(output_stream, json_data * "\n")
@@ -44,22 +41,11 @@ function process_vote_event(
 
     insert_vote_event(db, vote_event)
 
-    update_scores(db, last_processed_vote_event_id) do event
-        output_event(vote_event.vote_event_id, vote_event.vote_event_time, event)
-    end
+    tallies_data = get_tallies_data(db, vote_event.tag_id, nothing)
+
+    score_posts(output_event, tallies_data)
 
     set_last_processed_vote_event_id(db, vote_event.vote_event_id)
 
     return true
-end
-
-
-function update_scores(output_event::Function, db::SQLite.DB, vote_event_id::Int)
-    tallies = get_tallies(db, nothing, nothing, nothing)
-
-    if length(tallies) == 0
-        throw("No tallies found in the database: vote_event_id=$vote_event_id")
-    end
-
-    return score_tree(output_event, tallies)
 end

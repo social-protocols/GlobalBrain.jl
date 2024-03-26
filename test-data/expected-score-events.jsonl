@@ -124,7 +124,7 @@
 {"vote_event_id":27,"vote_event_time":1709893523603,"effect":{"tag_id":1,"post_id":1,"note_id":12,"p":0.5684,"p_count":0,"p_size":0,"q":0.5684,"q_count":0,"q_size":0,"r":0.5684}}
 {"vote_event_id":27,"vote_event_time":1709893523603,"effect":{"tag_id":1,"post_id":8,"note_id":12,"p":0.9393,"p_count":1,"p_size":1,"q":0.9393,"q_count":1,"q_size":1,"r":0.9393}}
 {"vote_event_id":27,"vote_event_time":1709893523603,"score":{"tag_id":1,"post_id":12,"top_note_id":null,"o":0.9129,"o_count":1,"o_size":1,"p":0.9129,"score":0.7928}}
-{"vote_event_id":27,"vote_event_time":1709893523603,"score":{"tag_id":1,"post_id":8,"top_note_id":9,"o":0.9129,"o_count":1,"o_size":1,"p":0.9577,"score":0.9493}}
+{"vote_event_id":27,"vote_event_time":1709893523603,"score":{"tag_id":1,"post_id":8,"top_note_id":9,"o":0.9129,"o_count":1,"o_size":1,"p":0.9577,"score":0.9494}}
 {"vote_event_id":27,"vote_event_time":1709893523603,"score":{"tag_id":1,"post_id":1,"top_note_id":2,"o":0.5684,"o_count":1,"o_size":3,"p":0.3952,"score":-0.1341}}
 {"vote_event_id":28,"vote_event_time":1709893558599,"effect":{"tag_id":1,"post_id":1,"note_id":8,"p":0.5684,"p_count":0,"p_size":0,"q":0.4353,"q_count":1,"q_size":3,"r":0.5684}}
 {"vote_event_id":28,"vote_event_time":1709893558599,"effect":{"tag_id":1,"post_id":1,"note_id":9,"p":0.5684,"p_count":0,"p_size":0,"q":0.5684,"q_count":0,"q_size":0,"r":0.5684}}
