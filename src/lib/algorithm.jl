@@ -102,7 +102,7 @@ function calc_thread_effect(
 
     tally = note.conditional_tally(post_id)
 
-    (q, r) = upvote_probabilities(prior, tally) 
+    (q, r) = upvote_probabilities(prior, tally)
 
     top_child_effect = find_top_thread(post_id, note, r, effects)
 

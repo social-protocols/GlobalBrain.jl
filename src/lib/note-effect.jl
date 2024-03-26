@@ -49,7 +49,10 @@ const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 2.3
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
     BetaDistribution(0.875, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
 
-function upvote_probabilities_bayesian_average(prior::BetaDistribution, tally::ConditionalTally)
+function upvote_probabilities_bayesian_average(
+    prior::BetaDistribution,
+    tally::ConditionalTally,
+)
     q =
         prior |>
         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
