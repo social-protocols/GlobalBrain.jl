@@ -116,13 +116,6 @@ prototypeDemoServer <- function(id) {
       data
     })
 
-    detailedTallies <- reactive({
-      con <- service_db()
-      data <- dbGetQuery(con, "SELECT * FROM DetailedTally") %>% data.frame()
-      dbDisconnect(con)
-      data
-    })
-
     noteEffects <- reactive({
       con <- prototype_db()
       tree <- discussionTree()
