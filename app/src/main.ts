@@ -49,11 +49,12 @@ async function main() {
     )
     const periodSelect = document.getElementById("period")!
     periodSelect.innerHTML = ""
+
     periods.forEach((id, i) => {
       const option = document.createElement("option")
       option.value = id.toString()
       option.text = id.toString()
-      if (i === 0) option.selected = true
+      if (i === periods.length-1) option.selected = true
       periodSelect?.appendChild(option)
     })
   }
