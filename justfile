@@ -7,7 +7,7 @@ instantiate:
 
 format:
     julia --project --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
-    cd app && npx prettier --write .
+    cd app && npx prettier --write --ignore-path public/google-charts-loader.js .
 
 run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH
@@ -39,6 +39,8 @@ test-db:
 visualize:
     cd app && npm install && npm run dev
 
+typecheck: 
+    cd app && npx tsc
 
 ############ TESTS ##############
 

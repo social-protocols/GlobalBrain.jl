@@ -5,7 +5,6 @@ import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
 import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 import { render } from "./render.ts"
-
 // Architecture:
 // - Unidirectional data flow from mutable state to view
 // - central mutable state, which represents the form
@@ -54,7 +53,7 @@ async function main() {
       const option = document.createElement("option")
       option.value = id.toString()
       option.text = id.toString()
-      if (i === periods.length-1) option.selected = true
+      if (i === periods.length - 1) option.selected = true
       periodSelect?.appendChild(option)
     })
   }
@@ -74,7 +73,12 @@ async function main() {
 
   function handleControlFormSubmit(e: SubmitEvent) {
     e.preventDefault()
-    const formData = new FormData(e.target as HTMLFormElement)
+  }
+
+  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
+
+  function updateSimulationFilter() {
+    const formData = new FormData(controlForm as HTMLFormElement)
     simulationFilter = {
       simulationId: formData.get("simulationId")
         ? (formData.get("simulationId") as string)
@@ -86,10 +90,16 @@ async function main() {
     render(db, simulationFilter)
   }
 
-  const controlForm = document.getElementById("controlForm")
-  controlForm?.addEventListener("submit", handleControlFormSubmit)
+  controlForm.addEventListener("submit", handleControlFormSubmit)
+
+  document.getElementById("simulationId")!.addEventListener("change", function() { updateSimulationFilter() });
+  document.getElementById("period")!.addEventListener("change", function() { updateSimulationFilter() });
 
   render(db, simulationFilter)
 }
 
-main()
+google.charts.load("current", { packages: ["corechart", "line"] })
+google.charts.setOnLoadCallback(main)
+window.addEventListener("resize", main, false)
+
+// main()

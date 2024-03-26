@@ -13,11 +13,15 @@
           <select name="simulationId" id="simulationId"></select>
           <label for="period">Period</label>
           <select name="period" id="period"></select>
-          <button type="submit" id="submitbutton">Submit</button>
         </form>
       </div>
-      <svg></svg>
+      <div style="width: 100%; border: solid 1px; display: flex"> 
+        <div id="line-chart">
+        </div>
+        <div id="tree-chart">
+        </div>
     </div>
+    <script type="text/javascript" src="public/google-charts-loader.js"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

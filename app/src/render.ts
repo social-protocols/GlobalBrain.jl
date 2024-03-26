@@ -1,10 +1,16 @@
-import { getData, getRootPostIds, getTagId } from "./database"
-import { getLookups } from "./lookups"
+import {
+  getData,
+  getRootPostIds,
+  getTagId,
+  type VisualizationData,
+} from "./database"
+import { getLookups, type LookupData } from "./lookups"
 import {
   Effect,
   PostWithScore,
   PostWithScoreWithPosition,
   SimulationFilter,
+  VoteEvent,
 } from "./types"
 import * as d3 from "d3"
 
@@ -38,9 +44,9 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
 
   let root = lookups.postsByPostId[lookups.childrenIdsByPostId[0][0]]
 
-  d3.select("svg").remove()
+  d3.select("div#tree-chart svg").remove()
   const svg = d3
-    .select("div#app")
+    .select("div#tree-chart")
     .append("svg")
     .attr("width", 1600)
     .attr("height", 1600)
@@ -51,16 +57,75 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // --- LINE PLOTS --------------------
   // -----------------------------------
 
+  await renderLineChart(svg, data, lookups, root.id)
+
+  await renderTreeChart(svg, data, lookups)
+
   let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root.id)
 
-  let minVoteEventId = d3.min(
-    lookups.voteEventsByPostId[root.id],
-    (d) => d.vote_event_id,
+  function setPeriodHandler(n: number) {
+
+    const voteEvent = rootPostScore[n]!
+    if(voteEvent === undefined) {
+      return
+    }
+    const voteEventTime = voteEvent.vote_event_time;
+ 
+    const e = document.getElementById("period")! as HTMLSelectElement
+    if(e.value != voteEventTime) {
+      e.value = voteEventTime
+      const formData = new FormData(document.getElementById("controlForm") as HTMLFormElement)
+      const simulationFilter = {
+        simulationId: 
+          formData.get("simulationId")
+          ? (formData.get("simulationId") as string)
+          : null,
+        period: voteEventTime,
+      }
+      render(db, simulationFilter)
+    }
+  }
+
+
+  await renderGoogleLineChart(data, lookups, root.id, setPeriodHandler)
+}
+
+function getXAxis(
+  rootId: number,
+  lookups: LookupData,
+): [number, number, Array<number>] {
+  let minVoteEventId: number = d3.min(
+    lookups.voteEventsByPostId[rootId],
+    (d: VoteEvent) => d.vote_event_id,
   )!
-  let maxVoteEventId = d3.max(
-    lookups.voteEventsByPostId[root.id],
-    (d) => d.vote_event_id,
+  let maxVoteEventId: number = d3.max(
+    lookups.voteEventsByPostId[rootId],
+    (d: VoteEvent) => d.vote_event_id,
   )!
+
+  let maxVoteIdLower10 = Math.floor(maxVoteEventId / 10) * 10
+  let minVoteIdLower10 = Math.floor(minVoteEventId / 10) * 10
+  let steps =
+    (maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE - minVoteIdLower10) /
+    LINE_PLOT_X_STEP_SIZE
+
+  const xTickValues = [...Array(steps).keys()].map(
+    (v) => v * LINE_PLOT_X_STEP_SIZE + minVoteIdLower10,
+  )
+
+  return [minVoteEventId, maxVoteEventId, xTickValues]
+  // , maxVoteEventId, xTickValues
+}
+
+async function renderLineChart(
+  svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
+  data: VisualizationData,
+  lookups: LookupData,
+  rootId: number,
+) {
+  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === rootId)
+
+  let [minVoteEventId, maxVoteEventId, xTickValues] = getXAxis(rootId, lookups)
 
   let scaleProbability = d3
     .scaleLinear()
@@ -72,16 +137,6 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .range([0, LINEPLOT_WIDTH])
 
   let lineGroup = svg.append("g").attr("transform", "translate(30, 10)")
-
-  let maxVoteIdLower10 = Math.floor(maxVoteEventId / 10) * 10
-  let minVoteIdLower10 = Math.floor(minVoteEventId / 10) * 10
-  let steps =
-    (maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE - minVoteIdLower10) /
-    LINE_PLOT_X_STEP_SIZE
-  let xTickValues = [...Array(steps).keys()].map(
-    (v) => v * LINE_PLOT_X_STEP_SIZE + minVoteIdLower10,
-  )
-
   // Add axes
   let xAxis = d3.axisBottom(scaleVoteId).tickValues(xTickValues).tickSize(3)
   let yAxis = d3
@@ -98,6 +153,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     // TODO: rename "o" back to "overallProb"
     return [scaleVoteId(e.vote_event_id), scaleProbability(e.o)]
   })
+
   let pathOverallProb = lineGenerator(pathDataOverallProb)
   lineGroup
     .append("path")
@@ -119,7 +175,13 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     .attr("stroke-width", 2)
     .attr("opacity", 0.5)
     .attr("fill", "none")
+}
 
+async function renderTreeChart(
+  svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
+  data: VisualizationData,
+  lookups: LookupData,
+) {
   // -----------------------------------
   // --- EDGES -------------------------
   // -----------------------------------
@@ -337,4 +399,106 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     (d: PostWithScore) =>
       lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
   )
+}
+
+async function renderGoogleLineChart(
+  data: VisualizationData,
+  lookups: LookupData,
+  rootId: number,
+  setPeriodHandler: (arg0: number) => void,
+) {
+  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === rootId)
+
+  let [_minVoteEventId, _maxVoteEventId, xTickValues] = getXAxis(
+    rootId,
+    lookups,
+  )
+
+  let dataPoints: Array<[number, number, number, string | undefined]> =
+    rootPostScore.map((e, _) => {
+      return [e.vote_event_id, e.o, e.p, undefined]
+    })
+
+  var voteEventTime = 0
+  let p = 0
+  for (var i = 0; i < rootPostScore.length; i++) {
+    // for (var e of rootPostScore) {
+    const e = rootPostScore[i]
+    const t = e.vote_event_time
+    if (t !== voteEventTime) {
+      p += 1
+      dataPoints[i][3] = "Period " + p
+      voteEventTime = t
+    }
+  }
+
+  var plotDiv = document.getElementById("line-chart")!
+
+  var plotData = new google.visualization.DataTable()
+  plotData.addColumn("number", "Time")
+  plotData.addColumn("number", "overall")
+  plotData.addColumn("number", "informed")
+  plotData.addColumn({ type: "string", role: "annotation" })
+  // plotData.addColumn({type: 'string', role: 'annotationText'});
+
+  plotData.addRows(dataPoints)
+
+  var options = {
+    backgroundColor: { fill: "transparent" },
+    dataOpacity: 0.85,
+    hAxis: {
+      title: "Time",
+      logScale: false,
+      ticks: xTickValues,
+    },
+    vAxis: {
+      title: "Probability",
+      logScale: false,
+      ticks: [0.0, 0.25, 0.5, 0.75, 1.0],
+    },
+    lineWidth: 2,
+    colors: ["darkblue", "lightblue", "#AF7FDF", "#6FAEAE", "green", "pink"],
+    chartArea: { left: 40, top: 10, bottom: 40, right: 40, width: "95%" },
+    height: 160,
+    legend: { position: "bottom" as google.visualization.ChartLegendPosition },
+    crosshair: { trigger: "both" },
+    displayAnnotations: true,
+    annotations: {
+      boxStyle: {},
+      stem: {
+        color: "black",
+        length: 30,
+      },
+
+      textStyle: {
+        color: "brown",
+        fontSize: 11,
+        bold: true,
+      },
+      alwaysOutside: true,
+    },
+    // theme: 'material',
+    // title: "Estimated Upvote Probability",
+  }
+
+  var chart = new google.visualization.LineChart(plotDiv)
+
+  function onmouseoverHandler(properties: { row: number; column: number }) {
+    setPeriodHandler(properties.row)
+  }
+
+  function selectHandler(e: MouseEvent) {
+    var n = chart.getSelection()[0].row!
+    setPeriodHandler(n)
+  }
+
+
+  google.visualization.events.addListener(chart, "select", selectHandler)
+  google.visualization.events.addListener(
+    chart,
+    "onmouseover",
+    onmouseoverHandler,
+  )
+
+  chart.draw(plotData, options)
 }
