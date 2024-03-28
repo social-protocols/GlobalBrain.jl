@@ -5,7 +5,11 @@ import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
 import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 import { render } from "./render.ts"
-import { addSimulationSelectInput, getSimulationFilterFromControlForm, setPeriodsSelectInput } from "./control-form.ts"
+import {
+  addSimulationSelectInput,
+  getSimulationFilterFromControlForm,
+  setPeriodsSelectInput,
+} from "./control-form.ts"
 // Architecture:
 // - Unidirectional data flow from mutable state to view
 // - central mutable state, which represents the form
@@ -20,7 +24,6 @@ async function main() {
   const dataPromise = fetch(simDbUrl).then((res) => res.arrayBuffer())
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
-
 
   const simulationsQueryResult = db.exec("select tag from tag")
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
@@ -57,15 +60,12 @@ async function main() {
       updateSimulationFilter()
     })
 
-  document
-    .getElementById("period")!
-    .addEventListener("change", function () {
-      updateSimulationFilter()
-    })
+  document.getElementById("period")!.addEventListener("change", function () {
+    updateSimulationFilter()
+  })
 
   render(db, simulationFilter)
 }
-
 
 google.charts.load("current", { packages: ["corechart", "line"] })
 google.charts.setOnLoadCallback(main)

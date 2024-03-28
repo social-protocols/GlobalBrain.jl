@@ -101,7 +101,8 @@ function getXAxis(
 
   let steps = Math.floor(
     (maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE - minVoteIdLower10) /
-    LINE_PLOT_X_STEP_SIZE)
+      LINE_PLOT_X_STEP_SIZE,
+  )
 
   const xTickValues = [...Array(steps).keys()].map(
     (v) => v * LINE_PLOT_X_STEP_SIZE + minVoteIdLower10,
