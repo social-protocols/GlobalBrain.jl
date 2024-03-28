@@ -98,9 +98,10 @@ function getXAxis(
 
   let maxVoteIdLower10 = Math.floor(maxVoteEventId / 10) * 10
   let minVoteIdLower10 = Math.floor(minVoteEventId / 10) * 10
-  let steps =
+
+  let steps = Math.floor(
     (maxVoteIdLower10 + LINE_PLOT_X_STEP_SIZE - minVoteIdLower10) /
-    LINE_PLOT_X_STEP_SIZE
+    LINE_PLOT_X_STEP_SIZE)
 
   const xTickValues = [...Array(steps).keys()].map(
     (v) => v * LINE_PLOT_X_STEP_SIZE + minVoteIdLower10,
@@ -481,8 +482,10 @@ async function renderGoogleLineChart(
   }
 
   function selectHandler(e: MouseEvent) {
-    var n = chart.getSelection()[0].row!
-    setPeriodHandler(n)
+    var s = chart.getSelection()[0]
+    if (s !== undefined) {
+      setPeriodHandler(s.row!)
+    }
   }
 
   google.visualization.events.addListener(chart, "select", selectHandler)
