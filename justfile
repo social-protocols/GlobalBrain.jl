@@ -42,6 +42,9 @@ visualize:
 typecheck: 
     cd app && npx tsc
 
+ci-test:
+    earthly +ci-test
+
 ############ TESTS ##############
 
 test:
