@@ -54,7 +54,7 @@ function simulation_step!(
         create_simulation_post!(db, p, step)
     end
 
-    for v in votes
+    for v in shuffle(votes)
         vote_event = VoteEvent(
             vote_event_id = vote_event_id,
             vote_event_time = step,

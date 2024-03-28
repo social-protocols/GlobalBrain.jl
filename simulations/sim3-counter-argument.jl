@@ -29,6 +29,9 @@ function counter_argument(step_func::Function)
         for key in keys(beliefs)
     )
 
+    # @info "Means: $means"
+    # Means: Dict("A|B,C" => 0.275, "A" => 0.5, "A|B" => 0.675)
+
     # --------------------------------------------------------------------------
     # --- STEP 1 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
@@ -124,8 +127,7 @@ function counter_argument(step_func::Function)
         for (i, draw) in draws_step_3
     ]
 
-
-    scores_step_3 = step_func(3, SimulationPost[], votes_A_step_3,)
+    scores_step_3 = step_func(3, SimulationPost[], votes_A_step_3)
     @testset "Step 3: After counter argument" begin
         @test scores_step_3[A.post_id].p ≈ means["A|B,C"] atol = 0.2
         @test scores_step_3[A.post_id].score < scores_step_2[A.post_id].score

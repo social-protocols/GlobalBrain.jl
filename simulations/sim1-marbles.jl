@@ -19,6 +19,6 @@ function marbles(step_func::Function)
     ]
     scores = step_func(1, posts, votes)
     @testset "Marbles Step 1" begin
-        @test scores[A.post_id].p ≈ 0.37 atol = 0.1
+        @test scores[A.post_id].p ≈ 0.42 atol = 0.1
     end
 end

@@ -51,7 +51,7 @@ function two_children(step_func::Function)
     begin
         voteGivenBeliefs(step_func, 2, B, repeat([posterior_b], n_subset1))
         # Then Change vote on A
-        scores = voteGivenBeliefs(step_func, 2, A, repeat([posterior_a], n_subset1))
+        scores = voteGivenBeliefs(step_func, 3, A, repeat([posterior_a], n_subset1))
 
         p = scores[A.post_id].p
 
@@ -67,10 +67,10 @@ function two_children(step_func::Function)
     n_subset2 = 50
     begin
         p_C = 1
-        voteGivenBeliefs(step_func, 3, C, repeat([p_C], n_subset2); skip_users=n_subset1)
+        voteGivenBeliefs(step_func, 4, C, repeat([p_C], n_subset2); skip_users=n_subset1)
 
         # And change vote on A. But C didn't change minds
-        scores = voteGivenBeliefs(step_func, 3, A, repeat([p_a], n_subset2); skip_users=n_subset1)
+        scores = voteGivenBeliefs(step_func, 5, A, repeat([p_a], n_subset2); skip_users=n_subset1)
 
         p = scores[A.post_id].p
 
