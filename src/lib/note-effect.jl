@@ -59,14 +59,14 @@ function upvote_probabilities_bayesian_average(
         (x -> update(x, tally.uninformed)) |>
         (x -> x.mean)
 
-    @debug "Uninformed probability for $post_id=>$note_id is $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
+    @debug "\tUninformed probability: $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
 
     r =
         prior |>
         (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
         (x -> update(x, tally.informed))
 
-    @debug "Partially Informed probability for $post_id=>$note_id is $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
+    @debug "\tPartially Informed probability: $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
 
     return (q, r)
 end
