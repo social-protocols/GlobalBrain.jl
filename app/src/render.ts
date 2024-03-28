@@ -12,6 +12,8 @@ import {
   SimulationFilter,
   VoteEvent,
 } from "./types"
+import { getSimulationFilterFromControlForm } from "./control-form.ts"
+
 import * as d3 from "d3"
 
 export const CHILD_NODE_SPREAD = 400
@@ -73,15 +75,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     const e = document.getElementById("period")! as HTMLSelectElement
     if (e.value != voteEventTime) {
       e.value = voteEventTime
-      const formData = new FormData(
-        document.getElementById("controlForm") as HTMLFormElement,
-      )
-      const simulationFilter = {
-        simulationId: formData.get("simulationId")
-          ? (formData.get("simulationId") as string)
-          : null,
-        period: voteEventTime,
-      }
+      const simulationFilter = getSimulationFilterFromControlForm()
       render(db, simulationFilter)
     }
   }

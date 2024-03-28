@@ -5,6 +5,7 @@ import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
 import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 import { render } from "./render.ts"
+import { addSimulationSelectInput, getSimulationFilterFromControlForm, setPeriodsSelectInput } from "./control-form.ts"
 // Architecture:
 // - Unidirectional data flow from mutable state to view
 // - central mutable state, which represents the form
@@ -20,16 +21,6 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-  function addSimulationSelectInput(simulationIds: string[]) {
-    const simulationSelect = document.getElementById("simulationId")
-    simulationIds.forEach((id, i) => {
-      const option = document.createElement("option")
-      option.value = id
-      option.text = id
-      if (i === 0) option.selected = true
-      simulationSelect?.appendChild(option)
-    })
-  }
 
   const simulationsQueryResult = db.exec("select tag from tag")
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
@@ -37,26 +28,6 @@ async function main() {
   )
 
   addSimulationSelectInput(simulationIds)
-
-  function setPeriodsSelectInput(db: any, simulationId: string) {
-    const periodIdsQueryResult = db.exec(
-      "select distinct vote_event_time from VoteEvent join Tag on (Tag.id = tag_id) where tag = :simulationId",
-      { ":simulationId": simulationId },
-    )
-    const periods = unpackDBResult(periodIdsQueryResult[0]).map(
-      (x: any) => x.vote_event_time,
-    )
-    const periodSelect = document.getElementById("period")!
-    periodSelect.innerHTML = ""
-
-    periods.forEach((id, i) => {
-      const option = document.createElement("option")
-      option.value = id.toString()
-      option.text = id.toString()
-      if (i === periods.length - 1) option.selected = true
-      periodSelect?.appendChild(option)
-    })
-  }
 
   const simulationSelectInput = document.getElementById("simulationId")!
   setPeriodsSelectInput(db, (simulationSelectInput as HTMLInputElement).value)
@@ -66,27 +37,15 @@ async function main() {
   })
 
   // TODO: set default more robustly
-  let simulationFilter: SimulationFilter = {
-    simulationId: "marbles",
-    period: 1,
-  }
+  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
+  let simulationFilter = getSimulationFilterFromControlForm()
 
   function handleControlFormSubmit(e: SubmitEvent) {
     e.preventDefault()
   }
 
-  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
-
   function updateSimulationFilter() {
-    const formData = new FormData(controlForm as HTMLFormElement)
-    simulationFilter = {
-      simulationId: formData.get("simulationId")
-        ? (formData.get("simulationId") as string)
-        : null,
-      period: formData.get("period")
-        ? parseInt(formData.get("period") as string)
-        : null,
-    }
+    simulationFilter = getSimulationFilterFromControlForm()
     render(db, simulationFilter)
   }
 
@@ -97,12 +56,16 @@ async function main() {
     .addEventListener("change", function () {
       updateSimulationFilter()
     })
-  document.getElementById("period")!.addEventListener("change", function () {
-    updateSimulationFilter()
-  })
+
+  document
+    .getElementById("period")!
+    .addEventListener("change", function () {
+      updateSimulationFilter()
+    })
 
   render(db, simulationFilter)
 }
+
 
 google.charts.load("current", { packages: ["corechart", "line"] })
 google.charts.setOnLoadCallback(main)
