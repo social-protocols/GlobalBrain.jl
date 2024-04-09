@@ -9,7 +9,7 @@ import {
   setPeriodsSelectInput,
   initializeSimulationSelectInput,
   getSimulationFilter,
-  getSelectedSimulationId
+  getSelectedSimulationId,
 } from "./control-form.ts"
 // Architecture:
 // - Unidirectional data flow from mutable state to view
@@ -40,11 +40,13 @@ async function main() {
     render(db, getSimulationFilter())
   })
 
-  document.getElementById("simulationId")!.addEventListener("change", function () {
-    const simulationId = getSelectedSimulationId()
-    setPeriodsSelectInput(db, simulationId)
-    render(db, getSimulationFilter())
-  })
+  document
+    .getElementById("simulationId")!
+    .addEventListener("change", function () {
+      const simulationId = getSelectedSimulationId()
+      setPeriodsSelectInput(db, simulationId)
+      render(db, getSimulationFilter())
+    })
 
   render(db, getSimulationFilter())
 }
