@@ -57,6 +57,7 @@
                 rEnv
                 nodejs
                 earthly
+                jq
               ];
             };
 
