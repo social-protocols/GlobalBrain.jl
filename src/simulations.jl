@@ -27,18 +27,9 @@ end
 
 function run_simulation!(sim::Function, db::SQLite.DB; tag_id)
 
-    s = Simulation(
-        db,
-        tag_id,
-        0,
-    )
+    s = Simulation(db, tag_id, 0)
 
     sim(SimulationAPI(s))
-
-
-    # sim() do i, posts, votes
-    #     simulation_votes!(db, i, posts, votes; tag_id = tag_id)
-    # end
 end
 
 struct SimulationAPI
@@ -54,25 +45,27 @@ end
 
 function SimulationAPI(sim::Simulation)
     return SimulationAPI(
-        # function() "foo" end,
-        function(parent_id::Union{Number, Nothing}, content::String)
+        function (parent_id::Union{Number,Nothing}, content::String)
             create_simulation_post!(sim.db, parent_id, content)
         end,
-        function(step::Int, votes::Array{SimulationVote})
-            if sim.step == step 
-                # throw: error already processed this step
+        function (step::Int, votes::Array{SimulationVote})
+            if sim.step == step
                 throw("Already processed step $(step)")
             end
             scores = simulation_votes!(sim.db, step, votes, sim.tag_id)
             sim.step = step
             scores
-        end
+        end,
     )
 
 end
 
 
-function create_simulation_post!(db::SQLite.DB, parent_id::Union{Int,Nothing}, content::String)::SimulationPost
+function create_simulation_post!(
+    db::SQLite.DB,
+    parent_id::Union{Int,Nothing},
+    content::String,
+)::SimulationPost
     result = DBInterface.execute(
         db,
         "insert into post (parent_id, content) values (?, ?) on conflict do nothing returning id",
@@ -80,17 +73,17 @@ function create_simulation_post!(db::SQLite.DB, parent_id::Union{Int,Nothing}, c
     )
     r = iterate(result)
 
-    return SimulationPost(
-        parent_id,
-        r[1].id,
-        content,
-    )
+    return SimulationPost(parent_id, r[1].id, content)
 end
 
 using Memoize
 
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
-    r = DBInterface.execute(db, "select parent_id as parent_id from post where id = ?", [post_id])
+    r = DBInterface.execute(
+        db,
+        "select parent_id as parent_id from post where id = ?",
+        [post_id],
+    )
     r = iterate(r)
     id = r[1][:parent_id]
     return ismissing(id) ? nothing : id
