@@ -455,7 +455,7 @@ async function renderGoogleLineChart(
       ticks: [0.0, 0.25, 0.5, 0.75, 1.0],
     },
     lineWidth: 2,
-    colors: ["darkblue", "lightblue", "#AF7FDF", "#6FAEAE", "green", "pink"],
+    colors: ["black", "lightblue", "#AF7FDF", "#6FAEAE", "green", "pink"],
     chartArea: { left: 40, top: 10, bottom: 40, right: 40, width: "95%" },
     height: 160,
     legend: { position: "bottom" as google.visualization.ChartLegendPosition },
