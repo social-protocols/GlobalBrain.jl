@@ -1,7 +1,67 @@
 import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 
-export function addSimulationSelectInput(simulationIds: string[]) {
+
+function setSimulationIdInURL(simulationId: string): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set('simulationId', simulationId);
+  window.history.replaceState({}, '', url.toString());
+}
+
+function getSimulationIdFromURL(): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('simulationId');
+}
+
+export function getSimulationFilter(): SimulationFilter {
+  const urlParams = new URLSearchParams(window.location.search);
+  const simulationId = urlParams.get('simulationId');
+
+
+  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
+  const formData = new FormData(controlForm as HTMLFormElement)
+
+  const period = formData.get("period")
+      ? parseInt(formData.get("period") as string)
+      : 1;
+
+  return {simulationId, period}
+}
+
+export function getSelectedSimulationId(): string {
+  const selectElement = document.getElementById('simulationId') as HTMLSelectElement;
+
+  // Get the current simulation ID from the URL or fallback to the select element's default value
+  return getSimulationIdFromURL() || selectElement.value!;
+
+}
+
+export function initializeSimulationSelectInput(simulationIds: string[]): string {
+
+  addSimulationSelectInput(simulationIds)
+
+  const selectElement = document.getElementById('simulationId') as HTMLSelectElement;
+
+  // Get the current simulation ID from the URL or fallback to the select element's default value
+  const simulationId: string = getSelectedSimulationId()
+
+  // Set the select element's value
+  selectElement.value = simulationId;
+
+  // Update the URL without reloading
+  setSimulationIdInURL(simulationId);
+
+  // Add event listener to select element
+  selectElement.addEventListener('change', (event) => {
+    const selectedSimulationId = (event.target as HTMLSelectElement).value;
+    setSimulationIdInURL(selectedSimulationId)
+  });
+
+  return simulationId
+
+}
+
+function addSimulationSelectInput(simulationIds: string[]) {
   const simulationSelect = document.getElementById("simulationId")
   simulationIds.forEach((id, i) => {
     const option = document.createElement("option")
@@ -30,17 +90,4 @@ export function setPeriodsSelectInput(db: any, simulationId: string) {
     if (i === periods.length - 1) option.selected = true
     periodSelect?.appendChild(option)
   })
-}
-
-export function getSimulationFilterFromControlForm(): SimulationFilter {
-  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
-  const formData = new FormData(controlForm as HTMLFormElement)
-  return {
-    simulationId: formData.get("simulationId")
-      ? (formData.get("simulationId") as string)
-      : null,
-    period: formData.get("period")
-      ? parseInt(formData.get("period") as string)
-      : null,
-  }
 }

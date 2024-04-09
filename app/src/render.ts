@@ -12,7 +12,7 @@ import {
   SimulationFilter,
   VoteEvent,
 } from "./types"
-import { getSimulationFilterFromControlForm } from "./control-form.ts"
+import { getSimulationFilter } from "./control-form.ts"
 
 import * as d3 from "d3"
 
@@ -73,13 +73,12 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
     if (voteEvent === undefined) {
       return
     }
-    const voteEventTime = voteEvent.vote_event_time
+    const period = voteEvent.vote_event_time
 
     const e = document.getElementById("period")! as HTMLSelectElement
-    if (e.value != voteEventTime) {
-      e.value = voteEventTime
-      const simulationFilter = getSimulationFilterFromControlForm()
-      render(db, simulationFilter)
+    if (e.value != period) {
+      e.value = period
+      e.dispatchEvent(new Event("change"))
     }
   }
 

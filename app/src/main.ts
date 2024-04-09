@@ -6,14 +6,16 @@ import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 import { render } from "./render.ts"
 import {
-  addSimulationSelectInput,
-  getSimulationFilterFromControlForm,
   setPeriodsSelectInput,
+  initializeSimulationSelectInput,
+  getSimulationFilter,
+  getSelectedSimulationId
 } from "./control-form.ts"
 // Architecture:
 // - Unidirectional data flow from mutable state to view
-// - central mutable state, which represents the form
-// - Once form is submitted:
+// - central mutable state, which is represented by the control form
+// - the ?simulationId URL parameter value is synced with the simulationID select input in the form
+// - Whenever an item on the form is changed:
 //   - the state is updated
 //   - state is used to fetch data from the database
 //   - data is used for derived lookups, created by pure functions in another file
@@ -25,46 +27,26 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-  const simulationsQueryResult = db.exec("select tag from tag")
+  const simulationsQueryResult = db.exec("select distinct(tag) from tag")
   const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
     (x: any) => x.tag,
   )
 
-  addSimulationSelectInput(simulationIds)
+  const simulationId = initializeSimulationSelectInput(simulationIds)
 
-  const simulationSelectInput = document.getElementById("simulationId")!
-  setPeriodsSelectInput(db, (simulationSelectInput as HTMLInputElement).value)
-
-  simulationSelectInput.addEventListener("change", (e) => {
-    setPeriodsSelectInput(db, (e.target as HTMLInputElement).value)
-  })
-
-  // TODO: set default more robustly
-  const controlForm = document.getElementById("controlForm")! as HTMLFormElement
-  let simulationFilter = getSimulationFilterFromControlForm()
-
-  function handleControlFormSubmit(e: SubmitEvent) {
-    e.preventDefault()
-  }
-
-  function updateSimulationFilter() {
-    simulationFilter = getSimulationFilterFromControlForm()
-    render(db, simulationFilter)
-  }
-
-  controlForm.addEventListener("submit", handleControlFormSubmit)
-
-  document
-    .getElementById("simulationId")!
-    .addEventListener("change", function () {
-      updateSimulationFilter()
-    })
+  setPeriodsSelectInput(db, simulationId)
 
   document.getElementById("period")!.addEventListener("change", function () {
-    updateSimulationFilter()
+    render(db, getSimulationFilter())
   })
 
-  render(db, simulationFilter)
+  document.getElementById("simulationId")!.addEventListener("change", function () {
+    const simulationId = getSelectedSimulationId()
+    setPeriodsSelectInput(db, simulationId)
+    render(db, getSimulationFilter())
+  })
+
+  render(db, getSimulationFilter())
 }
 
 google.charts.load("current", { packages: ["corechart", "line"] })
