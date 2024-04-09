@@ -57,7 +57,7 @@ function SimulationAPI(sim::Simulation)
         # function() "foo" end,
         function(parent_id::Union{Number, Nothing}, content::String)
             # "foo"
-            create_simulation_post!(sim.db, parent_id, content, sim.step)
+            create_simulation_post!(sim.db, parent_id, content, sim.step+1)
         end,
         function(step::Int, votes::Array{SimulationVote})
             if sim.step == step 

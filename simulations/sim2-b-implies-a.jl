@@ -18,8 +18,6 @@
 function b_implies_a(sim::SimulationAPI)
     A = sim.post!(nothing, "Is A true?")
     root_post_id = A.post_id
-    B = sim.post!(root_post_id, "A is true")
-    note_id = B.post_id
 
     # common priors
     p_a_given_b = 0.9
@@ -58,6 +56,8 @@ function b_implies_a(sim::SimulationAPI)
 
     n_subset = 20
     begin
+        B = sim.post!(root_post_id, "A is true")
+        note_id = B.post_id
         posts_1 = [B]
         votes_1 = [
             posterior_b > 0.5 ?
