@@ -70,10 +70,15 @@ export async function getTagId(db: any, tag: string) {
 
 async function getDiscussionTree(db: any, postId: number, period: number) {
   const stmt = db.prepare(`
-    WITH currentPosts AS(
-      SELECT *
+    WITH postsWithActivity AS(
+      select distinct(post_id) as id
+      from voteEvent
+      where vote_event_time <= :period
+    ),
+    currentPosts AS(
+      SELECT post.*
       FROM post
-      WHERE created_at <= :period
+      JOIN postsWithActivity using (id)
     )
     , currentScoreWithMax AS(
       SELECT MAX(vote_event_id), *

@@ -59,7 +59,6 @@ create table if not exists Post(
       parent_id  integer
     , id         integer not null
     , content    text default ''
-    , created_at integer default 0
     , primary key(id)
 ) strict;
 

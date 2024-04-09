@@ -8,7 +8,6 @@ export type PostWithScore = {
   id: number
   top_note_id: number | null
   content: string
-  created_at: number
   vote_event_id: number
   vote_event_time: number
   o: number

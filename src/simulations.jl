@@ -56,8 +56,7 @@ function SimulationAPI(sim::Simulation)
     return SimulationAPI(
         # function() "foo" end,
         function(parent_id::Union{Number, Nothing}, content::String)
-            # "foo"
-            create_simulation_post!(sim.db, parent_id, content, sim.step+1)
+            create_simulation_post!(sim.db, parent_id, content)
         end,
         function(step::Int, votes::Array{SimulationVote})
             if sim.step == step 
@@ -73,11 +72,11 @@ function SimulationAPI(sim::Simulation)
 end
 
 
-function create_simulation_post!(db::SQLite.DB, parent_id::Union{Int,Nothing}, content::String, created_at::Int)::SimulationPost
+function create_simulation_post!(db::SQLite.DB, parent_id::Union{Int,Nothing}, content::String)::SimulationPost
     result = DBInterface.execute(
         db,
-        "insert into post (parent_id, content, created_at) values (?, ?, ?) on conflict do nothing returning id",
-        [parent_id, content, created_at],
+        "insert into post (parent_id, content) values (?, ?) on conflict do nothing returning id",
+        [parent_id, content],
     )
     r = iterate(result)
 
