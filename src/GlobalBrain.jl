@@ -84,6 +84,7 @@ export information_gain
 export get_sim_db
 export SimulationPost
 export SimulationVote
+export SimulationAPI
 export create_simulation_post!
 export run_simulation!
 

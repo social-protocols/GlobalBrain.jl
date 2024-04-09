@@ -98,7 +98,7 @@ Let's say there are 100 people in each group. Suppose they all vote after each p
 # draws_0_supporters = rand(Bernoulli(supportersBeliefs[1]), n)
 # draws_0_detractors = rand(Bernoulli(detractorsBeliefs[1]), n)
 
-function oj_simpson(step_func::Function)
+function oj_simpson(sim::SimulationAPI)
 
 end
 

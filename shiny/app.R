@@ -6,7 +6,7 @@ library(tidyr)
 library(r2d3)
 
 source("utilities.R")
-source("simulation-demo.R")
+# source("simulation-demo.R")
 source("prototype-demo.R")
 
 PROTOTYPE_DATABASE_PATH <- Sys.getenv("PROTOTYPE_DATABASE_PATH")

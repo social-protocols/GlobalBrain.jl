@@ -15,11 +15,11 @@
 # ------------------------------------------------------------------------------
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
-function b_implies_a(step_func::Function)
-    root_post_id = 2
-    note_id = 3
-    A = SimulationPost(nothing, root_post_id, "Is A true?")
-    B = SimulationPost(root_post_id, note_id, "A is true")
+function b_implies_a(sim::SimulationAPI)
+    A = sim.post!(nothing, "Is A true?")
+    root_post_id = A.post_id
+    B = sim.post!(root_post_id, "A is true")
+    note_id = B.post_id
 
     # common priors
     p_a_given_b = 0.9
@@ -38,50 +38,50 @@ function b_implies_a(step_func::Function)
     # --- STEP 1 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
 
-    posts_0 = [A]
-    votes_0 = [
-        p_a > 0.5 ?
-            SimulationVote(nothing, A.post_id, 1, i) :
-            SimulationVote(nothing, A.post_id, -1, i)
-        for i in 1:n_users
-    ]
-    scores = step_func(1, posts_0, votes_0)
-    @testset "B implies A: Step 1" begin
-        @test scores[A.post_id].p ≈ 0.0 atol = 0.1
+    begin
+        posts_0 = [A]
+        votes_0 = [
+            p_a > 0.5 ?
+                SimulationVote(root_post_id, 1, i) :
+                SimulationVote(root_post_id, -1, i)
+            for i in 1:n_users
+        ]
+        scores = sim.step!(1, votes_0)
+        @testset "B implies A: Step 1" begin
+            @test scores[root_post_id].p ≈ 0.0 atol = 0.1
+        end
     end
 
     # --------------------------------------------------------------------------
     # --- STEP 2 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
 
-    n_subset = 10
-    posts_1 = [B]
-    votes_1 = [
-        posterior_b > 0.5 ?
-            SimulationVote(root_post_id, note_id, 1, i) :
-            SimulationVote(root_post_id, note_id, -1, i)
-        for i in 1:n_subset
-    ]
-    scores = step_func(2, posts_1, votes_1)
-    @testset "B implies A: Step 2" begin
-        @test scores[B.post_id].p ≈ 1.0 atol = 0.1
-    end
+    n_subset = 20
+    begin
+        posts_1 = [B]
+        votes_1 = [
+            posterior_b > 0.5 ?
+                SimulationVote(note_id, 1, i) :
+                SimulationVote(note_id, -1, i)
+            for i in 1:n_subset
+        ]
 
-    # --------------------------------------------------------------------------
-    # --- STEP 3 ---------------------------------------------------------------
-    # --------------------------------------------------------------------------
+        votes_2 = [
+            posterior_a > 0.5 ?
+                SimulationVote(root_post_id, 1, i) :
+                SimulationVote(root_post_id, -1, i)
+            for i in 1:n_subset
+        ]
+        scores = sim.step!(2, [votes_1; votes_2])
 
-    votes_2 = [
-        posterior_a > 0.5 ?
-            SimulationVote(nothing, root_post_id, 1, i) :
-            SimulationVote(nothing, root_post_id, -1, i)
-        for i in 1:n_subset
-    ]
-    scores = step_func(3, SimulationPost[], votes_2)
-    p = scores[A.post_id].p
-    @testset "B implies A: Step 3" begin
-        @test scores[A.post_id].p ≈ 0.9 atol = 0.1
-        @test scores[B.post_id].score > 5 # very high score because it changed lots of minds
-        @test (scores[A.post_id].score ≈ p * (1 + log2(p))) atol = 0.01
+        @testset "B implies A: Step 2" begin
+            @test scores[note_id].p ≈ 1.0 atol = 0.1
+
+            p = scores[root_post_id].p
+            @test scores[root_post_id].p ≈ 0.9 atol = 0.1
+
+            @test scores[note_id].score > 3 # very high score because it changed lots of minds
+            @test (scores[root_post_id].score ≈ p * (1 + log2(p))) atol = 0.01
+        end
     end
 end

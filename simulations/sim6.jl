@@ -1,4 +1,4 @@
-function sim6(step_func::Function)
+function sim6(sim::SimulationAPI)
 
 	# Scenario 1
 

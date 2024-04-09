@@ -1,24 +1,21 @@
-function voteGivenBeliefs(step_func, step, post, beliefs; skip_users=0)
+function votesGivenBeliefs(post_id, beliefs; skip_users=0)
 
     n = length(beliefs)
     users = collect(skip_users+1:skip_users+n)
 
     draws = [belief > 0.5 for belief in beliefs]
 
-    votes = [
-        SimulationVote(post.parent_id, post.post_id, draw == 1 ? 1 : -1, i)
+    return [
+        SimulationVote(post_id, draw == 1 ? 1 : -1, i)
         for (i, draw) in zip(users, draws)
     ]
 
-    step_func(step, [post], votes)
 end
 
 
-function two_children(step_func::Function)
+function two_children(sim::SimulationAPI)
 
-    A = SimulationPost(nothing, 7, "A")
-    B = SimulationPost(A.post_id, 8, "B")
-    C = SimulationPost(A.post_id, 9, "C")
+    A = sim.post!(nothing, "A")
 
     # common priors
     p_a_given_b = .9
@@ -35,7 +32,8 @@ function two_children(step_func::Function)
 
     # Step 1: All users vote on A
     begin
-        scores = voteGivenBeliefs(step_func, 1, A, repeat([p_a], n_users))
+        votes = votesGivenBeliefs(A.post_id, repeat([p_a], n_users))
+        scores = sim.step!(1, votes)
 
         p = scores[A.post_id].p
 
@@ -46,18 +44,21 @@ function two_children(step_func::Function)
 
 
     # Step 2
-    # First 10 users vote on B
-    n_subset1 = 10
+    # First n_subset1 users vote on B
+    n_subset1 = 30
     begin
-        voteGivenBeliefs(step_func, 2, B, repeat([posterior_b], n_subset1))
+        B = sim.post!(A.post_id, "B")
+        votes_b = votesGivenBeliefs(B.post_id, repeat([posterior_b], n_subset1))
         # Then Change vote on A
-        scores = voteGivenBeliefs(step_func, 3, A, repeat([posterior_a], n_subset1))
+        votes_a = votesGivenBeliefs(A.post_id, repeat([posterior_a], n_subset1))
+
+        scores = sim.step!(2, [votes_a; votes_b])
 
         p = scores[A.post_id].p
 
         @testset "Step 2: B changes mind  ($p ≈ high)" begin
             # should approach 1 but given small sample size still be a bit below 
-            @test p ≈ .83 atol = 0.1
+            @test p ≈ .95 atol = 0.1
         end
     end
 
@@ -67,16 +68,19 @@ function two_children(step_func::Function)
     n_subset2 = 50
     begin
         p_C = 1
-        voteGivenBeliefs(step_func, 4, C, repeat([p_C], n_subset2); skip_users=n_subset1)
+        C = sim.post!(A.post_id, "C")
+        votes_c = votesGivenBeliefs(C.post_id, repeat([p_C], n_subset2); skip_users=n_subset1)
 
         # And change vote on A. But C didn't change minds
-        scores = voteGivenBeliefs(step_func, 5, A, repeat([p_a], n_subset2); skip_users=n_subset1)
+        votes_a = votesGivenBeliefs(A.post_id, repeat([p_a], n_subset2); skip_users=n_subset1)
+
+        scores = sim.step!(3, [votes_a; votes_c])
 
         p = scores[A.post_id].p
 
         @testset "Step 2: C doesn't change minds ($p ≈ high)" begin
             # should approach 1 but given small sample size still be a bit below 
-            @test p ≈ .83 atol = 0.1
+            @test p ≈ .95 atol = 0.1
         end
     end
 
