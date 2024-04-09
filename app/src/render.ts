@@ -16,10 +16,13 @@ import { getSimulationFilterFromControlForm } from "./control-form.ts"
 
 import * as d3 from "d3"
 
+const CHART_WIDTH = 1600
+const CHART_HEIGHT = 1600
+
 export const CHILD_NODE_SPREAD = 400
 export const CHILD_PARENT_OFFSET = 150
 
-export const ROOT_POST_RECT_X = 450
+export const ROOT_POST_RECT_X = 100
 export const ROOT_POST_RECT_Y = 30
 
 export const POST_RECT_WIDTH = 250
@@ -50,8 +53,8 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   const svg = d3
     .select("div#tree-chart")
     .append("svg")
-    .attr("width", 1600)
-    .attr("height", 1600)
+    .attr("width", CHART_WIDTH)
+    .attr("height", CHART_HEIGHT)
 
   svg.html("")
 
@@ -59,7 +62,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
   // --- LINE PLOTS --------------------
   // -----------------------------------
 
-  await renderLineChart(svg, data, lookups, root.id)
+  // await renderLineChart(svg, data, lookups, root.id)
 
   await renderTreeChart(svg, data, lookups)
 
