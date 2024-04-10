@@ -143,6 +143,8 @@ create TABLE Tag (
     , tag text NOT NULL
 ) STRICT;
 
+create table Period(tag_id INTEGER not null, step INTEGER not null, description TEXT);
+
 create index if not exists post_parent on Post(parent_id);
 create index if not exists Vote_tag_user_post on Vote(tag_id, user_id, post_id);
 create index if not exists ConditionalVote_tag_user_post

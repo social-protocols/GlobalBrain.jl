@@ -75,20 +75,47 @@ function addSimulationSelectInput(simulationIds: string[]) {
 
 export function setPeriodsSelectInput(db: any, simulationId: string) {
   const periodIdsQueryResult = db.exec(
-    "select distinct vote_event_time from VoteEvent join Tag on (Tag.id = tag_id) where tag = :simulationId",
+    "select step, description from Period join Tag on (Tag.id = tag_id) where tag = :simulationId",
     { ":simulationId": simulationId },
   )
-  const periods = unpackDBResult(periodIdsQueryResult[0]).map(
-    (x: any) => x.vote_event_time,
-  )
-  const periodSelect = document.getElementById("period")!
+  console.log("Getting periods for tag", simulationId)
+  const periods = unpackDBResult(periodIdsQueryResult[0])
+
+  console.log("Periods", periods)
+  const periodSelect = document.getElementById("period")! as HTMLSelectElement
   periodSelect.innerHTML = ""
 
-  periods.forEach((id, i) => {
+  periods.forEach((period, i) => {
+    const id = period.step
     const option = document.createElement("option")
     option.value = id.toString()
     option.text = id.toString()
     if (i === periods.length - 1) option.selected = true
     periodSelect?.appendChild(option)
+  })
+
+  const periodList = document.getElementById("periods")!
+  periodList.innerHTML = ""
+
+  periods.forEach((period, i) => {
+    if (period.description !== null) {
+      const li = document.createElement("li")
+      li.innerHTML =
+        "<strong>Period " + (i + 1) + "</strong>: " + period.description
+      li.dataset.step = period.step
+      li.className = "period"
+      periodList?.appendChild(li)
+
+      li.addEventListener("mouseenter", (_) => {
+        if (periodSelect.value != period.step) {
+          periodSelect.value = period.step
+          periodSelect.dispatchEvent(new Event("change"))
+        }
+      })
+      li.addEventListener("mouseleave", (_) => {
+        periodSelect.selectedIndex = periodSelect.options.length - 1
+        periodSelect.dispatchEvent(new Event("change"))
+      })
+    }
   })
 }

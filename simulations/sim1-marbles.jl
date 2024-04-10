@@ -16,7 +16,7 @@ function marbles(sim::SimulationAPI)
         SimulationVote(A.post_id, d ? 1 : -1, i)
         for (i, d) in enumerate(draws)
     ]
-    scores = sim.step!(1, votes)
+    scores = sim.step!(1, votes; description="True probability of a blue marble is $p. All users answer honestly.")
     @testset "Marbles Step 1" begin
         @test scores[A.post_id].p ≈ 0.42 atol = 0.1
     end

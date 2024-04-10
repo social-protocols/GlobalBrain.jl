@@ -48,7 +48,7 @@ function counter_argument(sim::SimulationAPI)
             [supporters_draws_A_step_1; detractors_draws_A_step_1]
         )
     ]
-    scores_step_1 = sim.step!(1, votes_A_step_1)
+    scores_step_1 = sim.step!(1, votes_A_step_1; description="There are $n_users . Initially $(means["A"]*100)% agree with A")
 
     @testset "Step 1: Initial beliefs" begin
         @test scores_step_1[A.post_id].p ≈ means["A"] atol = 0.2
@@ -95,7 +95,7 @@ function counter_argument(sim::SimulationAPI)
             for (i, draw) in draws_step_3
         ]
 
-        scores_step_2 = sim.step!(2, [votes_A_step_2; votes_B_step_2])
+        scores_step_2 = sim.step!(2, [votes_A_step_2; votes_B_step_2]; description="Among the $m users that consider B, $(means["A|B"]*100)% agree with A.")
         @testset "Step 2: After first argument (p=$scores_step_2[A.post_id].p ≈ $(means["A|B"])" begin
             @test scores_step_2[A.post_id].p ≈ means["A|B"] atol = 0.1
             @test scores_step_2[A.post_id].score > scores_step_1[A.post_id].score # Score increased because probability increased
@@ -146,7 +146,7 @@ function counter_argument(sim::SimulationAPI)
             for (i, draw) in draws_step_3
         ]
 
-        scores_step_3 = sim.step!(3, [votes_A_step_3; votes_C_step_3])
+    scores_step_3 = sim.step!(3, [votes_A_step_3; votes_C_step_3]; description="Among the $m users that also consider counter-argument C, agreement with A falls to $(round(means["A|B,C"]*100,digits=2))%.")
         @testset "Step 3: After counter argument" begin
             @test scores_step_3[A.post_id].p ≈ means["A|B,C"] atol = 0.2
             @test scores_step_3[A.post_id].score < scores_step_2[A.post_id].score

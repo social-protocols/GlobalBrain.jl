@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Global Brain</title>
+    <style type="text/css">
+      #periods {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        text-align: left;
+        margin-top: 20px;
+      }
+      .period {
+        width: 100%;
+        border: dotted 1px lightgray;
+        margin: 0px;
+        padding: 2px;
+        font-size: 12px;
+      }
+      .period:hover {
+        background-color: lightgray;
+      }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -16,8 +35,13 @@
         </form>
       </div>
       <div style="width: 100%; display: flex">
-        <div id="line-chart"></div>
-        <div id="tree-chart"></div>
+        <div>
+          <div id="line-chart" style="width: 400px"></div>
+          <div style="width: 370px">
+            <ul id="periods"></ul>
+          </div>
+        </div>
+        <div id="tree-chart" id="line-chart"></div>
       </div>
     </div>
     <script

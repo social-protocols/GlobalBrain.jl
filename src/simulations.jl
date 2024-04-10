@@ -48,11 +48,21 @@ function SimulationAPI(sim::Simulation)
         function (parent_id::Union{Number,Nothing}, content::String)
             create_simulation_post!(sim.db, parent_id, content)
         end,
-        function (step::Int, votes::Array{SimulationVote})
+        function (
+            step::Int,
+            votes::Array{SimulationVote};
+            description::Union{String,Nothing} = nothing,
+        )
             if sim.step == step
                 throw("Already processed step $(step)")
             end
-            scores = simulation_votes!(sim.db, step, votes, sim.tag_id)
+            scores = simulation_step!(
+                sim.db,
+                step,
+                votes,
+                sim.tag_id;
+                description = description,
+            )
             sim.step = step
             scores
         end,
@@ -91,13 +101,20 @@ end
 
 
 
-function simulation_votes!(
+function simulation_step!(
     db::SQLite.DB,
     step::Int,
     votes::Array{SimulationVote},
-    tag_id::Int,
+    tag_id::Int;
+    description::Union{String,Nothing} = nothing,
 )::Dict
     vote_event_id = get_last_processed_vote_event_id(db) + 1
+
+    DBInterface.execute(
+        db,
+        "insert into period (tag_id, step, description) values (?, ?, ?)",
+        [tag_id, step, description],
+    )
 
     # for p in posts
     #     create_simulation_post!(db, p, step)
