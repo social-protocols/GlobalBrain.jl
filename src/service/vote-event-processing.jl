@@ -3,6 +3,9 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
     @info "Last processed vote event: $last_processed_vote_event_id"
 
     for line in eachline(input_stream)
+        if line == ""
+            continue
+        end
         vote_event = as_vote_event_or_throw(IOBuffer(line))
         @info (
             "Got vote event $(vote_event.vote_event_id) on post:" *
