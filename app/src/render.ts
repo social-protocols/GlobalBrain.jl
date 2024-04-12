@@ -278,7 +278,7 @@ async function renderTreeChart(
     .classed("post-content", true)
     .html((d) => d.content)
 
-  function numberToText(num:number) {
+  function numberToText(num: number) {
     let decPlaces = 10
     let abbrev = ["k", "m", "b", "t"]
     let numStringified = num.toString()
@@ -363,20 +363,21 @@ async function renderTreeChart(
 
   voteGroup
     .append("text")
-    .text((d) => d.o_size - d.o_count > 0 ? numberToText(d.o_size - d.o_count) : "")
+    .text((d) =>
+      d.o_size - d.o_count > 0 ? numberToText(d.o_size - d.o_count) : "",
+    )
     .attr("width", 10)
     .attr("x", -15)
     .attr("y", POST_RECT_HEIGHT / 2 + 30)
     .attr("font-size", "12px")
     .attr("text-anchor", "middle")
 
-
-
   addUpvoteProbabilityBar(
     voteGroup,
     -55,
     "black",
-    (d: PostWithScore) => d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
+    (d: PostWithScore) =>
+      d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
     (d: PostWithScore) => 1 - 1 / (1 + 0.3 * d.o_size),
     () => "inline",
   )
@@ -401,7 +402,7 @@ async function renderTreeChart(
       return 1
     },
     (d: PostWithScore) => "inline",
-      // lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
+    // lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
   )
 }
 
