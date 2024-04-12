@@ -14,6 +14,7 @@ export type PostWithScore = {
   o_count: number
   o_size: number
   p: number
+  r: number
   score: number
 }
 

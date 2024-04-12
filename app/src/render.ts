@@ -64,7 +64,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
 
   // await renderLineChart(svg, data, lookups, root.id)
 
-  await renderTreeChart(svg, data, lookups)
+  await renderTreeChart(svg, data, lookups, root.id)
 
   let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root.id)
 
@@ -178,6 +178,7 @@ async function renderTreeChart(
   svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
   data: VisualizationData,
   lookups: LookupData,
+  rootId: number,
 ) {
   // -----------------------------------
   // --- EDGES -------------------------
@@ -273,15 +274,14 @@ async function renderTreeChart(
     .style("overflow", "auto")
     .style("box-sizing", "border-box")
     .style("padding", "5px")
+    .style("font-size", "12px")
     .classed("post-content", true)
     .html((d) => d.content)
 
-  // TODO: fix (doesn't work since porting to TypeScript)
-  // https://stackoverflow.com/questions/2685911/is-there-a-way-to-round-numbers-into-a-reader-friendly-format-e-g-1-1k
-  function numberToText(num: number) {
+  function numberToText(num:number) {
     let decPlaces = 10
     let abbrev = ["k", "m", "b", "t"]
-    let numStringified = ""
+    let numStringified = num.toString()
     for (let i = abbrev.length - 1; i >= 0; i--) {
       let size = Math.pow(10, (i + 1) * 3)
       if (size <= num) {
@@ -356,23 +356,27 @@ async function renderTreeChart(
     .attr("width", 10)
     .attr("x", -15)
     .attr("y", POST_RECT_HEIGHT / 2 - 20)
+    .attr("font-size", "12px")
     .attr("text-anchor", "middle")
 
   // Downvote count
+
   voteGroup
     .append("text")
-    .text((d) => numberToText(d.o_size - d.o_count))
+    .text((d) => d.o_size - d.o_count > 0 ? numberToText(d.o_size - d.o_count) : "")
     .attr("width", 10)
     .attr("x", -15)
     .attr("y", POST_RECT_HEIGHT / 2 + 30)
+    .attr("font-size", "12px")
     .attr("text-anchor", "middle")
+
+
 
   addUpvoteProbabilityBar(
     voteGroup,
     -55,
     "black",
-    (d: PostWithScore) =>
-      d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
+    (d: PostWithScore) => d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
     (d: PostWithScore) => 1 - 1 / (1 + 0.3 * d.o_size),
     () => "inline",
   )
@@ -382,19 +386,22 @@ async function renderTreeChart(
     -85,
     "steelblue",
     (d: PostWithScore) => {
-      let edges = lookups.childEffectsByPostId[d.id] || []
-      let topNoteEdge = edges[0]
-      return topNoteEdge && topNoteEdge.p_count !== 0
-        ? topNoteEdge.p_count / topNoteEdge.p_size
-        : 0.05
+      // let edges = lookups.childEffectsByPostId[d.id] || []
+      // let topNoteEdge = edges[0]
+      // return topNoteEdge && topNoteEdge.p_count !== 0
+      //   ? topNoteEdge.p_count / topNoteEdge.p_size
+      //   : 0.05
+      return d.p
     },
     (d: PostWithScore) => {
-      let edges = lookups.childEffectsByPostId[d.id] || []
-      let topNoteEdge = edges[0]
-      return topNoteEdge && 1 - 1 / (1 + 0.3 * topNoteEdge.p_size)
+      // return d.p_sizxe
+      // let edges = lookups.childEffectsByPostId[d.id] || []
+      // let topNoteEdge = edges[0]
+      // return topNoteEdge && 1 - 1 / (1 + 0.3 * topNoteEdge.p_size)
+      return 1
     },
-    (d: PostWithScore) =>
-      lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
+    (d: PostWithScore) => "inline",
+      // lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
   )
 }
 
