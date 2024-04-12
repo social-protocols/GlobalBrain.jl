@@ -48,7 +48,7 @@ function counter_argument(sim::SimulationAPI)
             [supporters_draws_A_step_1; detractors_draws_A_step_1]
         )
     ]
-    scores_step_1 = sim.step!(1, votes_A_step_1; description="There are $n_users . Initially $(means["A"]*100)% agree with A")
+    scores_step_1 = sim.step!(1, votes_A_step_1; description="There are $n_users users. Initially $(means["A"]*100)% agree with A")
 
     @testset "Step 1: Initial beliefs" begin
         @test scores_step_1[A.post_id].p ≈ means["A"] atol = 0.2

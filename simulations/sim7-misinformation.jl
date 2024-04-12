@@ -29,7 +29,7 @@ function misinformation(sim::SimulationAPI)
 
     begin
         n_subset = 30
-        B = sim.post!(root_post_id, "actual this is video from 10 years ago in another country. Here's the original source [link]")
+        B = sim.post!(root_post_id, "Actually this is video from 10 years ago in another country. Here's the original source [link]")
         votes_B = [
             SimulationVote(B.post_id, 1, i)
             for i in 1:n_subset
