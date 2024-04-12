@@ -1,5 +1,6 @@
 #!/bin/sh
 
+set -Eeuo pipefail
 
 test_vote_events_json_file='test-data/vote-events.jsonl'
 expected_score_events_file='test-data/expected-score-events.jsonl'
