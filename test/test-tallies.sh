@@ -1,7 +1,8 @@
 #!/bin/sh
 
-expected_tallies_file='test-data/expected-tallies.txt'
+set -Eeuo pipefail
 
+expected_tallies_file='test-data/expected-tallies.txt'
 
 TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     echo "Testing tallies";
