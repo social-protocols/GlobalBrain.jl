@@ -24,6 +24,7 @@ reset-db:
     sqlite3 $DATABASE_PATH < sql/tables.sql
     sqlite3 $DATABASE_PATH < sql/views.sql
     sqlite3 $DATABASE_PATH < sql/triggers.sql
+    rm ~/social-protocols-data/score-events.jsonl
 
 
 sim name="":
