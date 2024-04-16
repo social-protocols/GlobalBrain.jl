@@ -24,9 +24,10 @@ function global_brain_service(
 
     db = get_score_db(database_path)
     input_stream = vote_events_path == "-" ? stdin : open(vote_events_path, "r")
-    open(output_path, "a") do output_stream
-        process_vote_events_stream(db, input_stream, output_stream)
-    end
+
+    output_stream = output_path == "-" ? stdout : open(output_path, "a")
+
+    process_vote_events_stream(db, input_stream, output_stream)
 
     return 0
 end
