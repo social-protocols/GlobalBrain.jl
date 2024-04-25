@@ -24,6 +24,7 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         if !successfully_processed
             @info "Already processed vote event $(vote_event.vote_event_id)"
         else
+            @info "Successfully processed vote event $(vote_event.vote_event_id)"
             flush(output_stream)
         end
     end
