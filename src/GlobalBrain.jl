@@ -26,6 +26,7 @@ include("simulations.jl")
 export julia_main
 export global_brain_service
 export process_vote_events_stream
+export process_vote_event
 
 # --- Algorithm
 export ConditionalTally
