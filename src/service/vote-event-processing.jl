@@ -53,3 +53,43 @@ function process_vote_event(
 
     return true
 end
+
+
+struct GlobalBrainResult
+    scoreEvents::String
+end
+
+global dbs = Dict{String, SQLite.DB}()
+
+function process_vote_event_json(database_path::String, voteEvent::String)
+    # SQLite instance needs to be initiated lazily when calling from Javascript
+    if (!haskey(dbs, database_path))
+        @info "getting score db"
+        dbs[database_path] = get_score_db(database_path)
+    end
+    db = dbs[database_path]
+    @info "got score db"
+
+    vote_event = as_vote_event_or_throw(IOBuffer(voteEvent))
+    @info (
+        "Got vote event $(vote_event.vote_event_id) on post:" *
+        " $(vote_event.post_id) ($(vote_event.vote)) at $(Dates.format(now(), "HH:MM:SS"))"
+    )
+
+    results = IOBuffer()
+
+    # The anonymous function provided here is used by the score_tree function to output
+    # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
+    # ScoreEvent or an EffectEvent.
+    successfully_processed = process_vote_event(db::SQLite.DB, vote_event) do object
+        e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
+        insert_event(db, e)
+        json_data = JSON.json(e)
+        write(results, json_data * "\n")
+    end
+
+    return GlobalBrainResult(
+        String(take!(results)),
+    )
+end
+

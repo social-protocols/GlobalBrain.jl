@@ -44,3 +44,5 @@ function as_vote_event_or_throw(line::IOBuffer)::VoteEvent
         error(e)
     end
 end
+
+

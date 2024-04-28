@@ -16,8 +16,8 @@ include("lib/algorithm.jl")
 include("lib/score.jl")
 include("lib/note-effect.jl")
 include("service/events.jl")
-include("service/input-stream-api.jl")
 include("service/vote-event-processing.jl")
+include("service/json-events.jl")
 include("service/main.jl")
 include("db.jl")
 include("simulations.jl")
@@ -27,6 +27,7 @@ export julia_main
 export global_brain_service
 export process_vote_events_stream
 export process_vote_event
+export process_vote_event_json
 
 # --- Algorithm
 export ConditionalTally
