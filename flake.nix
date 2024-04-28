@@ -58,6 +58,14 @@
                 nodejs
                 earthly
                 jq
+                clang
+                llvmPackages.libcxxStdenv
+                llvmPackages.libcxx
+                llvmPackages.libcxxabi
+                llvmPackages.clang
+                libcxxStdenv
+                libcxx
+                libcxxabi
               ];
             };
 

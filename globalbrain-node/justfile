@@ -1,0 +1,10 @@
+clean:
+	rm -rf dist*
+	rm -rf build*
+build:
+	julia --project -e 'using Pkg; Pkg.instantiate()'
+	julia --project -e 'using Pkg; Pkg.resolve()'
+	npm install
+
+test:
+	node test.js ./test-globalbrain-node.db
