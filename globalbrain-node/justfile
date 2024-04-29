@@ -1,7 +1,15 @@
 clean:
-	rm -rf dist*
-	rm -rf build*
-build:
+	rm -rf dist/*
+	rm -rf build/*
+	rm -rf node_modules/*
+
+rebuild:
+	just clean
+	julia --project -e 'using Pkg; Pkg.instantiate()'
+	julia --project -e 'using Pkg; Pkg.resolve()'
+	npm run rebuild
+
+install:
 	julia --project -e 'using Pkg; Pkg.instantiate()'
 	julia --project -e 'using Pkg; Pkg.resolve()'
 	npm install
