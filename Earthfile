@@ -55,7 +55,7 @@ vis-format-check:
 sim-test-unit:
   FROM +sim-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  COPY --dir src/ test/ ./
+  COPY --dir sql/ src/ test/ ./
   RUN julia --project --eval "using Pkg; Pkg.test()"
 
 sim-test:
