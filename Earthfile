@@ -58,8 +58,8 @@ sim-test-unit:
   RUN julia --project --eval "using Pkg; Pkg.test()"
 
 sim-test:
-  ENV SOCIAL_PROTOCOLS_DATADIR=.
   FROM +sim-setup
+  ENV SOCIAL_PROTOCOLS_DATADIR=.
   COPY --dir src/ test/ test-data/ sql/ scripts/ ./
   COPY test.sh ./
   RUN ./test.sh
