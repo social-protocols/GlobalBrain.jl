@@ -2,6 +2,7 @@
 
 
 function two_children(sim::SimulationAPI)
+    Random.seed!(3); 
 
     A = sim.post!(nothing, "A")
 

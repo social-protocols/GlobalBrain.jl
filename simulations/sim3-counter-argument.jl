@@ -1,5 +1,5 @@
 function counter_argument(sim::SimulationAPI)
-    Random.seed!(3); 
+    Random.seed!(3);
 
     n_users = 200
     n_supporters = trunc(Int, n_users/2)
