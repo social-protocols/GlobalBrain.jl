@@ -3,6 +3,9 @@ uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"
 authors = ["Johannes Nakayama", "Jonathan Warden"]
 version = "1.0.0-DEV"
 
+[compat]
+julia = "=1.9.4"
+
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
