@@ -16,25 +16,7 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [];
-          config = {
-            allowUnfree = false;
-            packageOverrides = super: let
-              self = super.pkgs;
-            in {
-              rEnv = super.rWrapper.override {
-                packages = with self.rPackages; [
-                  shiny
-                  shinydashboard
-                  DBI
-                  RSQLite
-                  dplyr
-                  tidyr
-                  r2d3
-                  languageserver
-                ];
-              };
-            };
-          };
+          config.allowUnfree = false;
         };
       in {
         devShells = {
@@ -56,7 +38,6 @@
                 fzf
                 cloc
                 entr
-                rEnv
                 nodejs_21
                 earthly
                 jq
