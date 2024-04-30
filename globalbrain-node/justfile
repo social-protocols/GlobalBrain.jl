@@ -7,7 +7,7 @@ rebuild:
 	just clean
 	julia --project -e 'using Pkg; Pkg.instantiate()'
 	julia --project -e 'using Pkg; Pkg.resolve()'
-	npm run rebuild
+	npm install
 
 install:
 	julia --project -e 'using Pkg; Pkg.instantiate()'
