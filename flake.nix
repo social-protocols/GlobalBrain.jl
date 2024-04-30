@@ -57,7 +57,7 @@
                 cloc
                 entr
                 rEnv
-                nodejs
+                nodejs_21
                 earthly
                 jq
                 gcc
