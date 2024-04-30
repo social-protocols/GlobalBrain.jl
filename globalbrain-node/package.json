@@ -1,10 +1,11 @@
 {
   "name": "@socialprotocols/globalbrain-node",
+  "engine": "21",
   "version": "0.0.1",
   "description": "Node.js interface to Julia GlobalBrain package",
   "main": "index.js",
   "scripts": {
-    "rebuild": "node-pre-gyp rebuild",
+    "rebuild": "node-pre-gyp rebuild --verbose",
     "install": "node-pre-gyp install --fallback-to-build"
   },
   "author": "Jonathan Warden <jwarden@deliberati.io>, Felix Dietze <felix.dietze@rwth-aachen.de>",
