@@ -16,6 +16,8 @@
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
 function b_implies_a(sim::SimulationAPI)
+    Random.seed!(3);
+
     A = sim.post!(nothing, "Is A true?")
     root_post_id = A.post_id
 
