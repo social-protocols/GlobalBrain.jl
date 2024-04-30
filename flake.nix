@@ -44,7 +44,7 @@
                 just
                 git
                 openssh # Necessary to run git on macs
-                julia-bin
+                julia_19-bin
                 # libgcc
                 sqlite-interactive
                 litecli
@@ -58,6 +58,7 @@
                 nodejs
                 earthly
                 jq
+                gcc
                 clang
                 llvmPackages.libcxxStdenv
                 llvmPackages.libcxx
