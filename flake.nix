@@ -43,6 +43,8 @@
               buildInputs = [
                 just
                 git
+                diffutils
+                jq
                 openssh # Necessary to run git on macs
                 julia_19-bin
                 # libgcc
@@ -78,6 +80,8 @@
                 julia-bin
                 nodejs
                 sqlite
+                diffutils
+                jq
             ];
           };
         };
