@@ -25,6 +25,7 @@
               buildInputs = [
                 just
                 git
+                gh
                 diffutils
                 jq
                 openssh # Necessary to run git on macs

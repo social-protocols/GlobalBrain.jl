@@ -141,9 +141,6 @@ begin
 
 
     -- When there is a new post, we need to record an uninformed vote for every user who has voted on an ancestor of the post
-    -- The triggers above don't take care of this, because they only insert/update ConditionalVote records for the
-    -- current user, not *all* users who have voted on the parent.
-
     insert into ConditionalVote
     select
           user_id
@@ -157,7 +154,7 @@ begin
         , case when informed then informed_vote else uninformed_vote end
         , 0
     from CurrentConditionalVote
-    where 
+    where
          CurrentConditionalVote.post_id = new.ancestor_id
          and CurrentConditionalVote.note_id = new.descendant_id
      ;
@@ -192,34 +189,44 @@ begin
         , vote_event_time = new.vote_event_time
     ;
 
+    -- Insert a record for the post the first time we see this post id.
     insert into Post(parent_id, id)
     values(new.parent_id, new.post_id) on conflict do nothing;
 
 
-    -- Record conditional vote for all descendants of the post that was voted on, setting the informed_vote or uninformed_vote
-    -- field depending on whether the user has voted on the descendant
+    -- Record conditional vote record for all ancestors or descendants of the post that was voted on,
+    -- setting the informed_vote field depending on whether the user has voted on the descendant
     insert into ConditionalVote
-    select * from CurrentConditionalVote 
-    where 
+    select
+          user_id
+        , tag_id
+        , post_id
+        , note_id
+        , event_type
+        , informed_vote
+        , 0
+        , 1
+    from CurrentConditionalVote
+    where
          ( new.post_id = CurrentConditionalVote.post_id or new.post_id = CurrentConditionalVote.note_id )
          and new.user_id = CurrentConditionalVote.user_id
          and new.tag_id = CurrentConditionalVote.tag_id
+         and informed
     on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
         -- Uninformed vote "sticks". When the user becomes uninformed we keep the value of the vote as it was before
         -- the user was informed. Informed vote does not stick, because a user clearing their vote on the note doesn't
         -- imply they become uninformed (which can't really happen), but rather made a mistake about their vote and hand't
         -- really considered the note.
-        uninformed_vote = case when not excluded.is_informed then excluded.uninformed_vote else uninformed_vote end
+        uninformed_vote = uninformed_vote
         , informed_vote = excluded.informed_vote
         , is_informed = excluded.is_informed
     ;
 
 
-    -- when the vote on the note is cleared, clear the informed_vote, and set the uninformed_vote to the previous value of the informed_vote
+    -- when the vote on the note is cleared, clear the informed_vote
     update ConditionalVote 
     set 
-          uninformed_vote = informed_vote
-        , informed_vote = 0
+        informed_vote = 0
         , is_informed = 0
     where new.vote = 0
     and user_id = new.user_id
@@ -231,7 +238,6 @@ begin
     insert into lastVoteEvent(type, imported_vote_event_id)
     values(1, new.vote_event_id) 
     on conflict do update set imported_vote_event_id = new.vote_event_id;
-
 end;
 
 
