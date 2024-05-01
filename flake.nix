@@ -40,6 +40,7 @@
                 cloc
                 entr
                 nodejs_21
+                python3
                 earthly
                 jq
                 gcc

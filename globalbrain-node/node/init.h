@@ -2,6 +2,7 @@
 #define NODE_INIT_H_
 
 #include <julia.h>
+#include <linux/limits.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -71,4 +72,4 @@ void init_julia() {
 
 void exit_julia() { jl_atexit_hook(0); }
 
-#endif  // NODE_INIT_H_
+#endif // NODE_INIT_H_
