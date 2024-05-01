@@ -93,6 +93,7 @@ ci-test:
   BUILD +sim-test
   BUILD +vis-build
   BUILD +vis-format-check
+  BUILD +node-ext
 
 ci-deploy:
   BUILD +ci-test
