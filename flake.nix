@@ -44,6 +44,8 @@
                 earthly
                 jq
                 gcc
+                gnumake
+                gnused
                 clang
                 llvmPackages.libcxxStdenv
                 llvmPackages.libcxx
@@ -60,8 +62,12 @@
           ci = pkgs.buildEnv {
             name = "ci-build-env";
             paths = with pkgs; [
-                julia-bin
-                nodejs
+                julia_19-bin
+                python3
+                gnumake
+                gnused
+                gcc
+                nodejs_21
                 sqlite
                 diffutils
                 jq

@@ -12,6 +12,20 @@ flake:
   # install packages from the packages section in flake.nix
   RUN nix profile install --impure -L '.#ci'
 
+
+node-ext:
+  FROM +flake
+  WORKDIR /ext
+  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js globalbrain-node/
+  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ globalbrain-node/
+  COPY Project.toml Manifest.toml ./
+  COPY --dir src/ sql/ ./
+  WORKDIR /ext/globalbrain-node
+  RUN julia --project --eval 'using Pkg; Pkg.instantiate()'
+  RUN npm install
+
+
+
 sim-setup:
   FROM +flake
   # FROM julia:1.10.1-bookworm
