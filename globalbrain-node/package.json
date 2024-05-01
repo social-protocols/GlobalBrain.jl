@@ -17,9 +17,6 @@
     "node-gyp": "^7.0.0",
     "node-pre-gyp": "github:mapbox/node-pre-gyp"
   },
-  "devDependencies": {
-    "aws-sdk": "^2.709.0"
-  },
   "binary": {
     "module_name": "binding",
     "module_path": "./dist/{platform}-{arch}-napi-v{napi_build_version}/",
