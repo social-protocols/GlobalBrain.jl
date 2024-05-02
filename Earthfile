@@ -29,7 +29,7 @@ nix-dev-shell:
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
   RUN npm config set update-notifier false # disable npm update checks
-  CACHE --persist --sharing shared /root/.julia
+  CACHE --persist --sharing shared --id julia-cache /root/.julia
 
 
 root-julia-setup:
