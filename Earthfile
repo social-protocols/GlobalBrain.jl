@@ -15,7 +15,7 @@ flake:
 
 
 node-ext:
-  FROM +flake
+  FROM +flake # TODO: reuse +sim-setup (rename to root-julia-setup?)
   WORKDIR /ext
   COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js globalbrain-node/
   COPY --dir globalbrain-node/julia/ globalbrain-node/node/ globalbrain-node/
