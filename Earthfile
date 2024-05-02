@@ -33,10 +33,13 @@ root-julia-setup:
   # julia
   COPY Manifest.toml Project.toml ./
   RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  COPY --dir sql/ src/ ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
+  RUN julia --project -e 'using Pkg; Pkg.add("Distributions")'
   COPY --dir src/ scripts/ sql/ simulations/ ./
   RUN julia --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/

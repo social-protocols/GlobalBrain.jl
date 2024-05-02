@@ -40,7 +40,7 @@
                 cloc
                 entr
                 nodejs_21
-                python3
+                python3 # for node-gyp
                 earthly
                 jq
                 gcc
