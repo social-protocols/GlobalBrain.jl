@@ -23,6 +23,8 @@ node-ext:
   WORKDIR /ext/globalbrain-node
   RUN julia --project --eval 'using Pkg; Pkg.instantiate()'
   RUN npm install
+  COPY globalbrain-node/test.js ./
+  RUN node test.js ./test-globalbrain-node.db
 
 
 
