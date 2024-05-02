@@ -86,7 +86,6 @@ function create_simulation_post!(
     return SimulationPost(parent_id, r[1].id, content)
 end
 
-using Memoize
 
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
     r = DBInterface.execute(
@@ -115,11 +114,6 @@ function simulation_step!(
         "insert into period (tag_id, step, description) values (?, ?, ?)",
         [tag_id, step, description],
     )
-
-    # for p in posts
-    #     create_simulation_post!(db, p, step)
-    # end
-
 
     for v in shuffle(votes)
         parent_id = get_parent_id(db, v.post_id)

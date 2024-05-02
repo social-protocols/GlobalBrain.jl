@@ -37,35 +37,33 @@ function get_tallies_data(
     tag_id::Int,
     parent_id::Union{Int,Nothing},
 )::Vector{TalliesData}
-    tallies = begin
-        sql_query = """
-            select
-                Tally.*
-                , NeedsRecalculation.post_id is not null as needs_recalculation
-            from Tally
-            left join NeedsRecalculation using (post_id, tag_id)
-       where
-            tally.tag_id = :tag_id
-            and
-                (:parent_id = parent_id)
-                or
-                (:parent_id is null and parent_id is null)
-        """
+    sql_query = """
+        select
+            Tally.*
+            , NeedsRecalculation.post_id is not null as needs_recalculation
+        from Tally
+        left join NeedsRecalculation using (post_id, tag_id)
+    where
+        tally.tag_id = :tag_id
+        and
+            (:parent_id = parent_id)
+            or
+            (:parent_id is null and parent_id is null)
+    """
 
-        results = DBInterface.execute(db, sql_query, [tag_id, parent_id])
+    results = DBInterface.execute(db, sql_query, [tag_id, parent_id])
 
-        [
-            TalliesData(
-                SQLTalliesData(
-                    tally = BernoulliTally(row[:count], row[:total]),
-                    tag_id = tag_id,
-                    post_id = row[:post_id],
-                    needs_recalculation = row[:needs_recalculation],
-                    db = db,
-                ),
-            ) for row in results
-        ]
-    end
+    return [
+        TalliesData(
+            SQLTalliesData(
+                tally = BernoulliTally(row[:count], row[:total]),
+                tag_id = tag_id,
+                post_id = row[:post_id],
+                needs_recalculation = row[:needs_recalculation],
+                db = db,
+            ),
+        ) for row in results
+    ]
 end
 
 function get_conditional_tally(
@@ -133,10 +131,10 @@ end
 """
     insert_score_event(
         db::SQLite.DB,
-        score::Score,
+        score_event::ScoreEvent,
     )::Nothing
 
-Insert a `Score` instance into the score database.
+Insert a `ScoreEvent` instance into the score database.
 """
 function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
     sql = """

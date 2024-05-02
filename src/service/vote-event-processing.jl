@@ -59,7 +59,7 @@ struct GlobalBrainResult
     scoreEvents::String
 end
 
-global dbs = Dict{String, SQLite.DB}()
+global dbs = Dict{String,SQLite.DB}()
 
 function process_vote_event_json(database_path::String, voteEvent::String)
     # SQLite instance needs to be initiated lazily when calling from Javascript
@@ -89,7 +89,5 @@ function process_vote_event_json(database_path::String, voteEvent::String)
     end
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
-    return GlobalBrainResult(
-        String(take!(results)),
-    )
+    return GlobalBrainResult(String(take!(results)))
 end
