@@ -15,12 +15,12 @@ alpine-with-nix:
   RUN rm /bin/sh
   # copy in our own `sh`, which wraps `bash`, and which sources `/root/sh_env`
   COPY ci_sh.sh /bin/sh
-  # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
-  CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
 
 nix-dev-shell:
   ARG DEVSHELL=build
   FROM +alpine-with-nix
+  # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
+  CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
   WORKDIR /app
   COPY flake.nix flake.lock .
   # build our dev-shell, creating a gcroot, so it won't be garbage collected by nix.
@@ -29,11 +29,11 @@ nix-dev-shell:
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
   RUN npm config set update-notifier false # disable npm update checks
-  CACHE --persist --sharing shared --id julia-cache /root/.julia
 
 
 root-julia-setup:
   FROM +nix-dev-shell
+  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app
   COPY Manifest.toml Project.toml ./
   RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate()'
@@ -43,6 +43,7 @@ root-julia-setup:
 
 node-ext:
   FROM +root-julia-setup
+  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app/globalbrain-node
   COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
   COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
@@ -57,6 +58,7 @@ node-ext:
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
+  CACHE --sharing shared --id julia-cache /root/.julia
   RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")'
   COPY --dir src/ scripts/ sql/ simulations/ ./
   RUN julia -t auto --project scripts/sim.jl
@@ -90,12 +92,14 @@ vis-format-check:
 sim-test-unit:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
+  CACHE --sharing shared --id julia-cache /root/.julia
   COPY --dir sql/ src/ test/ ./
   RUN julia --project --eval "using Pkg; Pkg.test()"
 
 sim-test:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
+  CACHE --persist --sharing shared --id julia-cache /root/.julia
   COPY --dir src/ test/ test-data/ sql/ scripts/ ./
   COPY test.sh ./
   RUN ./test.sh
