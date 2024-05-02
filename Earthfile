@@ -20,6 +20,7 @@ node-ext:
   COPY --dir globalbrain-node/julia/ globalbrain-node/node/ globalbrain-node/
   COPY Project.toml Manifest.toml ./
   COPY --dir src/ sql/ ./
+  RUN julia --project --eval 'using Pkg; Pkg.precompile()'
   WORKDIR /ext/globalbrain-node
   RUN julia --project --eval 'using Pkg; Pkg.instantiate()'
   RUN npm install
