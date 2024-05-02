@@ -9,7 +9,7 @@
   outputs = {
     self,
     nixpkgs,
-    flake-utils,
+    flake-utils
   }:
     flake-utils.lib.eachDefaultSystem (
       system: let
@@ -18,60 +18,48 @@
           overlays = [];
           config.allowUnfree = false;
         };
+        build_packages = with pkgs; [
+          git
+          diffutils
+          jq
+          sqlite-interactive
+          julia_19-bin
+          nodejs_21
+          python3 # for node-gyp
+          gcc
+          gnumake
+          gnused
+          clang
+          llvmPackages.libcxxStdenv
+          llvmPackages.libcxx
+          llvmPackages.libcxxabi
+          llvmPackages.clang
+          libcxxStdenv
+          libcxx
+          libcxxabi
+        ];
       in {
         devShells = {
           default = with pkgs;
             pkgs.mkShellNoCC {
-              buildInputs = [
-                just
-                git
-                gh
-                diffutils
-                jq
-                openssh # Necessary to run git on macs
-                julia_19-bin
-                # libgcc
-                sqlite-interactive
-                litecli
-                vim
-                neovim
-                less
-                fzf
-                cloc
-                entr
-                nodejs_21
-                python3 # for node-gyp
-                earthly
-                jq
-                gcc
-                gnumake
-                gnused
-                clang
-                llvmPackages.libcxxStdenv
-                llvmPackages.libcxx
-                llvmPackages.libcxxabi
-                llvmPackages.clang
-                libcxxStdenv
-                libcxx
-                libcxxabi
-              ];
+              buildInputs =
+                build_packages
+                ++ [
+                  just
+                  gh
+                  openssh # Necessary to run git on macs
+                  litecli
+                  vim
+                  neovim
+                  less
+                  fzf
+                  cloc
+                  entr
+                  earthly
+                ];
             };
-
-        };
-        packages = {
-          ci = pkgs.buildEnv {
-            name = "ci-build-env";
-            paths = with pkgs; [
-                julia_19-bin
-                python3
-                gnumake
-                gnused
-                gcc
-                nodejs_21
-                sqlite
-                diffutils
-                jq
-            ];
+          build = pkgs.mkShellNoCC {
+            buildInputs = build_packages;
           };
         };
       }
