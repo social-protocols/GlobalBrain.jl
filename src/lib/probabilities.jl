@@ -75,32 +75,6 @@ function reset_weight(dist::Distribution, new_weight::Float64)
 end
 
 
-"""
-    sample(dist::BetaDistribution)::Float64
-
-Draw a random sample from a `BetaDistribution`.
-
-See also [`BetaDistribution`](@ref).
-"""
-function sample(dist::BetaDistribution)::Float64
-    formal_dist = Distributions.Beta(alpha(dist), beta(dist))
-    return Random.rand(formal_dist)
-end
-
-
-"""
-    sample(dist::GammaDistribution)::Float64
-
-Draw a random sample from a `GammaDistribution`.
-
-See also [`GammaDistribution`](@ref).
-"""
-function sample(dist::GammaDistribution)::Float64
-    formal_dist = Distributions.Gamma(alpha(dist), 1 / beta(dist))
-    return Random.rand(formal_dist)
-end
-
-
 function Base.:+(a::Tally, b::Tally)
     T = typeof(a)
     @assert(T == typeof(b), "Tallies must be of the same type")
