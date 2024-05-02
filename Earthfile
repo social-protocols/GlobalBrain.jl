@@ -15,32 +15,27 @@ flake:
 
 
 node-ext:
-  FROM +flake # TODO: reuse +sim-setup (rename to root-julia-setup?)
-  WORKDIR /ext
+  FROM +root-julia-setup
   COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js globalbrain-node/
   COPY --dir globalbrain-node/julia/ globalbrain-node/node/ globalbrain-node/
-  COPY Project.toml Manifest.toml ./
-  COPY --dir src/ sql/ ./
-  RUN julia --project --eval 'using Pkg; Pkg.instantiate()'
-  RUN julia --project --eval 'using Pkg; Pkg.precompile()'
-  WORKDIR /ext/globalbrain-node
-  RUN julia --project --eval 'using Pkg; Pkg.instantiate()'
+  WORKDIR /app/globalbrain-node
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
   RUN npm install
   COPY globalbrain-node/test.js ./
   RUN node test.js ./test-globalbrain-node.db
 
 
 
-sim-setup:
+root-julia-setup:
   FROM +flake
   # FROM julia:1.10.1-bookworm
   WORKDIR /app
   # julia
   COPY Manifest.toml Project.toml ./
-  RUN julia --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 sim-run:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
   COPY --dir src/ scripts/ sql/ simulations/ ./
   RUN julia --project scripts/sim.jl
@@ -72,13 +67,13 @@ vis-format-check:
 #   RUN --interactive npm run dev 
 
 sim-test-unit:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
   COPY --dir sql/ src/ test/ ./
   RUN julia --project --eval "using Pkg; Pkg.test()"
 
 sim-test:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
   COPY --dir src/ test/ test-data/ sql/ scripts/ ./
   COPY test.sh ./
@@ -96,6 +91,7 @@ sim-test:
 ci-test:
   BUILD +sim-test-unit
   BUILD +sim-test
+  BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
   BUILD +node-ext
