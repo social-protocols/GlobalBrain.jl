@@ -15,7 +15,7 @@ mkpath(builddir)
 # From PackageCompiler.jl `create_app(...)`
 ctx = create_pkg_context(project)
 bundle_artifacts(ctx, builddir, include_lazy_artifacts=false)
-bundle_julia_libraries(builddir)
+# bundle_julia_libraries(builddir)
 
 cp(joinpath(project, "Project.toml"), joinpath(builddir, "lib", "Project.toml"))
 
