@@ -11,6 +11,7 @@ flake:
   COPY flake.nix flake.lock ./
   # install packages from the packages section in flake.nix
   RUN nix profile install --impure -L '.#ci'
+  RUN npm config set update-notifier false # disable npm update checks
 
 
 node-ext:
