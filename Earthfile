@@ -51,6 +51,7 @@ node-ext:
   RUN npm install
   COPY globalbrain-node/test.js ./
   RUN node test.js ./test-globalbrain-node.db
+  SAVE ARTIFACT dist
 
 
 
