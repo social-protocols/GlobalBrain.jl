@@ -10,7 +10,7 @@ alpine-with-nix:
   RUN mkdir -p /etc/nix && echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
   # replace /bin/sh with a script that sources `/root/sh_env` for every RUN command.
   # we use this to execute all `RUN`-commands in our nix dev shell.
-  # need to explicitly delete `/bin/sh` first, because it's a symlink to `/bin/busybox`,
+  # we need to explicitly delete `/bin/sh` first, because it's a symlink to `/bin/busybox`,
   # and `COPY` would actually follow the symlink and replace `/bin/busybox` instead.
   RUN rm /bin/sh
   # copy in our own `sh`, which wraps `bash`, and which sources `/root/sh_env`
@@ -59,7 +59,7 @@ sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
   CACHE --sharing shared --id julia-cache /root/.julia
-  RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")'
+  RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
   COPY --dir src/ scripts/ sql/ simulations/ ./
   RUN julia -t auto --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
