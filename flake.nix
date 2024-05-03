@@ -24,7 +24,7 @@
           jq
           sqlite-interactive
           julia_19-bin
-          nodejs_21
+          nodejs_22
           python3 # for node-gyp
           gcc
           gnumake
@@ -32,11 +32,9 @@
           clang
           llvmPackages.libcxxStdenv
           llvmPackages.libcxx
-          llvmPackages.libcxxabi
           llvmPackages.clang
           libcxxStdenv
           libcxx
-          libcxxabi
         ];
       in {
         devShells = {
