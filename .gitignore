@@ -1,3 +1,4 @@
 .direnv/
 .env
 .ccls-cache/
+.tmp-earthly-out/

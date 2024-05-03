@@ -34,7 +34,7 @@
                         ['OS == "win"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dll"]},],
                         ['OS == "mac"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dylib"]},],
                     ],
-                    "action": ["julia", "--project", "julia/build.jl", "<(PRODUCT_DIR)"],
+                    "action": ["julia", "-t", "auto", "--project", "julia/build.jl", "<(PRODUCT_DIR)"],
                 }
             ],
             "msvs_settings": {"VCCLCompilerTool": {"ExceptionHandling": 1},},

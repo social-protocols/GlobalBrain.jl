@@ -7,6 +7,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-22.04 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    timeout-minutes: 35 # earthly satellites time out after 30min
     env:
       EARTHLY_TOKEN: ${{ secrets.EARTHLY_TOKEN }}
       EARTHLY_SATELLITE: ${{ secrets.EARTHLY_SATELLITE }}

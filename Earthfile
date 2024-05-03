@@ -2,33 +2,70 @@
 
 VERSION 0.8
 
+alpine-with-nix:
+  FROM alpine:20240329
+  # need the 'testing'-repo to install `nix`
+  RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+  RUN apk add --no-cache nix bash
+  RUN mkdir -p /etc/nix && echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+  # replace /bin/sh with a script that sources `/root/sh_env` for every RUN command.
+  # we use this to execute all `RUN`-commands in our nix dev shell.
+  # we need to explicitly delete `/bin/sh` first, because it's a symlink to `/bin/busybox`,
+  # and `COPY` would actually follow the symlink and replace `/bin/busybox` instead.
+  RUN rm /bin/sh
+  # copy in our own `sh`, which wraps `bash`, and which sources `/root/sh_env`
+  COPY ci_sh.sh /bin/sh
 
-flake:
-  FROM nixos/nix:2.20.4
+nix-dev-shell:
+  ARG DEVSHELL=build
+  FROM +alpine-with-nix
+  # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
+  CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
   WORKDIR /app
-  # Enable flakes
-  RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-  COPY flake.nix flake.lock ./
-  # install packages from the packages section in flake.nix
-  RUN nix profile install --impure -L '.#ci'
+  COPY flake.nix flake.lock .
+  # build our dev-shell, creating a gcroot, so it won't be garbage collected by nix.
+  # TODO: `x86_64-linux` is hardcoded here, but it would be nice to determine it dynamically.
+  RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.x86_64-linux.$DEVSHELL"
+  # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
+  RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
+  RUN npm config set update-notifier false # disable npm update checks
 
-sim-setup:
-  FROM +flake
-  # FROM julia:1.10.1-bookworm
+
+root-julia-setup:
+  FROM +nix-dev-shell
+  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app
-  # julia
   COPY Manifest.toml Project.toml ./
-  RUN julia --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate()'
+  COPY --dir sql/ src/ ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
+
+
+node-ext:
+  FROM +root-julia-setup
+  CACHE --sharing shared --id julia-cache /root/.julia
+  WORKDIR /app/globalbrain-node
+  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
+  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN npm install
+  COPY globalbrain-node/test.js ./
+  RUN node test.js ./test-globalbrain-node.db
+
+
+
 
 sim-run:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
+  CACHE --sharing shared --id julia-cache /root/.julia
+  RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
   COPY --dir src/ scripts/ sql/ simulations/ ./
-  RUN julia --project scripts/sim.jl
+  RUN julia -t auto --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
 vis-setup:
-  FROM +flake
+  FROM +nix-dev-shell
   WORKDIR /app/app
   COPY app/package.json app/package-lock.json ./
   RUN npm install
@@ -53,14 +90,16 @@ vis-format-check:
 #   RUN --interactive npm run dev 
 
 sim-test-unit:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
+  CACHE --sharing shared --id julia-cache /root/.julia
   COPY --dir sql/ src/ test/ ./
   RUN julia --project --eval "using Pkg; Pkg.test()"
 
 sim-test:
-  FROM +sim-setup
+  FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
+  CACHE --persist --sharing shared --id julia-cache /root/.julia
   COPY --dir src/ test/ test-data/ sql/ scripts/ ./
   COPY test.sh ./
   RUN ./test.sh
@@ -77,8 +116,10 @@ sim-test:
 ci-test:
   BUILD +sim-test-unit
   BUILD +sim-test
+  BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
+  BUILD +node-ext
 
 ci-deploy:
   BUILD +ci-test

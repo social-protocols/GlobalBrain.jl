@@ -4,7 +4,6 @@ using JSON
 using SQLite
 using Dates
 using Random
-using Distributions
 using Memoize
 
 include("lib/models/probability-models.jl")

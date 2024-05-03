@@ -13,12 +13,14 @@ mkpath(builddir)
 @info "Building Julia system image..." builddir=builddir project=project sysimage_path=sysimage_path
 
 # From PackageCompiler.jl `create_app(...)`
+@info "  bundle_artifacts"
 ctx = create_pkg_context(project)
 bundle_artifacts(ctx, builddir, include_lazy_artifacts=false)
 bundle_julia_libraries(builddir)
 
 cp(joinpath(project, "Project.toml"), joinpath(builddir, "lib", "Project.toml"))
 
+@info "  create_sysimage"
 create_sysimage(
     :GlobalBrain,
     sysimage_path = sysimage_path,

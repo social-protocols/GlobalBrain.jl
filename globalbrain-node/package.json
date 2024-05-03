@@ -5,7 +5,7 @@
   "description": "Node.js interface to Julia GlobalBrain package",
   "main": "index.js",
   "scripts": {
-    "rebuild": "node-pre-gyp rebuild --verbose",
+    "rebuild": "node-pre-gyp rebuild",
     "install": "node-pre-gyp install --fallback-to-build"
   },
   "author": "Jonathan Warden <jwarden@deliberati.io>, Felix Dietze <felix.dietze@rwth-aachen.de>",
