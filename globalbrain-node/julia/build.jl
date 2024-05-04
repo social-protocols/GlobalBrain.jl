@@ -17,6 +17,8 @@ mkpath(builddir)
 ctx = create_pkg_context(project)
 bundle_artifacts(ctx, builddir, include_lazy_artifacts=true)
 
+lib_dir = joinpath(builddir, "lib")
+mkpath(lib_dir)  # Ensure the directory exists
 cp(joinpath(project, "Project.toml"), joinpath(builddir, "lib", "Project.toml"))
 
 @info "  create_sysimage"

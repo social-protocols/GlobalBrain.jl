@@ -1,0 +1,63 @@
+# Dependency directories
+node_modules/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Development tools configurations
+*.log
+*.tlog
+*.log.*
+.DS_Store
+Thumbs.db
+
+# Compiled binary outputs / temporary build files
+# Note: If prebuildify stores binaries elsewhere or you have a custom structure, adjust accordingly.
+build/
+Release/
+Debug/
+*.o
+*.obj
+*.pdb
+*.ilk
+*.suo
+*.user
+*.userprefs
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.sdf
+*.idb
+*.ipch/
+*.tlog/
+*.dSYM/
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System-specific ignore (OS, Editors, etc.)
+*.sublime-workspace
+
+# Test files
+test.js
+*.test.js
+*.spec.js
+
+# Development specific files
+.julia_history
+.julia_startup.jl
+justfile
+
+
+node/
+binding.gyp
+julia/
+Manifest.toml
+Project.toml
+

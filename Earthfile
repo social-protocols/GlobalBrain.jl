@@ -45,12 +45,32 @@ node-ext:
   FROM +root-julia-setup
   CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app/globalbrain-node
-  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
-  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
-  RUN npm install
-  COPY globalbrain-node/test.js ./
-  RUN node test.js ./test-globalbrain-node.db
+  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate()'
+  COPY --dir globalbrain-node/julia/ ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
+
+  # todo: add build at the end?
+  RUN julia -t auto --project julia/build.jl
+
+  # install dependencies
+  COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
+  RUN npm install --ignore-scripts
+
+  # install dependencies
+  COPY globalbrain-node/binding.gyp globalbrain-node/index.js ./
+  COPY --dir globalbrain-node/node/ ./
+  RUN npx prebuildify --napi --strip
+
+  COPY globalbrain-node/.npmignore ./
+  RUN npm pack .
+  RUN tar tvf *.tgz
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz
+  # TODO: Test package in fresh node project.
+
+  #COPY globalbrain-node/test.js ./
+  #RUN node test.js ./test-globalbrain-node.db
+  #SAVE ARTIFACT prebuilds package.json index.js # used by https://github.com/social-protocols/jabble/blob/main/Earthfile
 
 
 
