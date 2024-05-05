@@ -1,5 +1,5 @@
-const binary = require('node-pre-gyp');
-const path = require('path');
+// Will load a compiled build if present or a prebuild.
+// If no build if found it will throw an exception
+var binding = require('node-gyp-build')(__dirname)
 
-const bindingPath = binary.find(path.resolve(path.join(__dirname, './package.json')));
-module.exports = require(bindingPath);
+module.exports = binding

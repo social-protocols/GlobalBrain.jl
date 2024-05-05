@@ -5,13 +5,15 @@
   "description": "Node.js interface to Julia GlobalBrain package",
   "main": "index.js",
   "scripts": {
-    "prebuild": "prebuildify --napi --strip"
+    "prebuild": "prebuildify --napi --strip",
+    "install": "node-gyp-build"
   },
   "author": "Jonathan Warden <jwarden@deliberati.io>, Felix Dietze <felix.dietze@rwth-aachen.de>",
   "license": "MIT",
   "gypfile": true,
   "homepage": "https://github.com/socialprotocols/GlobalBrain.jl#readme",
   "dependencies": {
+    "node-gyp-build": "^4.8.1",
     "node-pre-gyp": "^0.17.0"
   },
   "devDependencies": {

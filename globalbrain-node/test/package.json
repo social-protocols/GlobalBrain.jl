@@ -1,0 +1,12 @@
+{
+  "name": "my-test-project",
+  "version": "1.0.0",
+  "description": "Test project for my Node.js extension",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@socialprotocols/globalbrain-node": "../globalbrain-node"
+  }
+}

@@ -1,4 +1,4 @@
-const global_brain = require('.');
+const global_brain = require('@socialprotocols/globalbrain-node');
 
 const test_db_path = process.argv[2]
 
