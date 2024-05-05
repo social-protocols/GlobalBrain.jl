@@ -67,13 +67,26 @@ node-ext:
   RUN npm pack .
   RUN tar tvf *.tgz
   SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz AS LOCAL ./socialprotocols-globalbrain-node-0.0.1.tgz
   # TODO: Test package in fresh node project.
 
-  #COPY globalbrain-node/test.js ./
-  #RUN node test.js ./test-globalbrain-node.db
-  #SAVE ARTIFACT prebuilds package.json index.js # used by https://github.com/social-protocols/jabble/blob/main/Earthfile
+# Test the Node.js extension
+test-node-ext:
+  FROM +node-ext
+  WORKDIR /app/test-node-ext
 
+  # Copy the package.json and test.js into the test directory
+  COPY globalbrain-node/test/package.json globalbrain-node/test/test.js ./
 
+  # Copy the built extension .tgz file into the test directory
+  COPY +node-ext/socialprotocols-globalbrain-node-0.0.1.tgz ./
+
+  # Install the Node.js extension
+  RUN npm install --ignore-scripts ./socialprotocols-globalbrain-node-0.0.1.tgz
+
+  RUN node test.js
+
+  # Run the test script
 
 
 sim-run:
