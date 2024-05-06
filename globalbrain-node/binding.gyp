@@ -25,18 +25,19 @@
                 "-Wl,-rpath,'@loader_path/lib'",
                 "-Wl,-rpath,'@loader_path/lib/julia'",
             ],
-            "actions": [
-                {
-                    "action_name": "Build Julia system image",
-                    "inputs": ["julia/build.jl"],
-                    "conditions": [
-                        ['OS == "linux"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.so"]},],
-                        ['OS == "win"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dll"]},],
-                        ['OS == "mac"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dylib"]},],
-                    ],
-                    "action": ["julia", "-t", "auto", "--project", "julia/build.jl", "<(PRODUCT_DIR)"],
-                }
-            ],
+            # "actions": [
+            #     {
+            #         "action_name": "Build Julia system image",
+            #         "inputs": ["julia/build.jl"],
+            #         "conditions": [
+            #             ['OS == "linux"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.so"]},],
+            #             ['OS == "win"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dll"]},],
+            #             ['OS == "mac"', {"outputs": ["<(PRODUCT_DIR)/lib/sysimage.dylib"]},],
+            #         ],
+            #         # "action": ["julia", "-t", "auto", "--project", "julia/build.jl", "<(PRODUCT_DIR)"],
+            #         "action": ["bash", "-c", "env > gpyenv"],
+            #     }
+            # ],
             "msvs_settings": {"VCCLCompilerTool": {"ExceptionHandling": 1},},
             "xcode_settings": {
                 "CLANG_CXX_LIBRARY": "libc++",

@@ -41,6 +41,45 @@ root-julia-setup:
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
   COPY --dir src sql ./
 
+
+
+node-ext:
+  FROM +root-julia-setup
+  CACHE --sharing shared --id julia-cache /root/.julia
+  WORKDIR /app/globalbrain-node
+  COPY --dir globalbrain-node/julia/ ./
+  WORKDIR  /app/globalbrain-node/julia
+  # https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
+  RUN julia --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+  WORKDIR /app/globalbrain-node
+  COPY ./globalbrain-node/my_application.c ./
+
+  ENV MYLIB_INCLUDES=MyLibCompiled/include/julia_init.h MyLibCompiled/include/mylib.h
+  ENV MYLIB_PATH=MyLibCompiled/lib/libmylib.so
+  RUN gcc my_application.c -o my_application.out -IMyLibCompiled/include -LMyLibCompiled/lib -ljulia -lmylib
+  ENV LD_LIBRARY_PATH=MyLibCompiled/lib:$LD_LIBRARY_PATH
+  RUN ldd my_application.out
+  RUN ./my_application.out
+  
+
+
+  RUN false
+
+  RUN julia -t auto --project julia/build.jl /app/globalbrain-node/build/Release
+
+  # install dependencies
+  COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
+  COPY globalbrain-node/binding.gyp globalbrain-node/index.js ./
+  COPY --dir globalbrain-node/node/ ./
+  RUN npm install
+
+  # test
+  COPY globalbrain-node/test.js ./
+  RUN node test.js ./test-globalbrain-node.db
+
+
+
+>>>>>>> f00764b (call increment function from c file)
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
