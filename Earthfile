@@ -58,7 +58,7 @@ node-ext:
   ENV MYLIB_PATH=MyLibCompiled/lib/libmylib.so
   RUN gcc my_application.c -o my_application.out -IMyLibCompiled/include -LMyLibCompiled/lib -ljulia -lmylib
   ENV LD_LIBRARY_PATH=MyLibCompiled/lib:$LD_LIBRARY_PATH
-  RUN ldd my_application.out
+  # RUN ldd my_application.out
   RUN ./my_application.out
   
 
