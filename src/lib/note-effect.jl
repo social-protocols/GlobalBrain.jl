@@ -10,7 +10,7 @@ effect of `Nothing` is 0.0 by definition.
     * `effect::Union{Effect, Nothing}`: The effect to calculate the
     magnitude of.
 """
-function magnitude(effect::Union{Effect,Nothing})::Float64
+function magnitude(effect::Union{Effect, Nothing})::Float64
     return abs(effect.q - effect.p)
 end
 

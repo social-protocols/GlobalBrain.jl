@@ -37,6 +37,7 @@ export type Effect = {
   tag_id: number
   post_id: number
   note_id: number
+  top_subthread_id: number | null
   p: number
   p_count: number
   p_size: number
@@ -53,6 +54,7 @@ export type EffectEvent = {
   tag_id: number
   post_id: number
   note_id: number
+  top_subthread_id: number | null
   p: number
   p_count: number
   p_size: number

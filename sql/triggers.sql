@@ -53,6 +53,7 @@ create trigger afterInsertEffectEvent after insert on EffectEvent begin
         , new.tag_id
         , new.post_id
         , new.note_id
+        , new.top_subthread_id
         , new.p
         , new.p_count
         , new.p_size
@@ -73,6 +74,7 @@ create trigger afterInsertScoreEvent after insert on ScoreEvent begin
         , new.tag_id
         , new.post_id
         , new.top_note_id
+        , new.critical_thread_id
         , new.o
         , new.o_count
         , new.o_size
