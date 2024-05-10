@@ -39,7 +39,7 @@ root-julia-setup:
   # Pass --code-coverage=none and --check-bounds=yes so that we don't have to compile again when testing.
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.instantiate()'
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
-  COPY --dir sql src simulations ./
+  COPY --dir src sql ./
 
 sim-run:
   FROM +root-julia-setup
@@ -83,7 +83,7 @@ sim-test-unit:
 sim-test:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  COPY --dir test test-data sql scripts ./
+  COPY --dir test test-data scripts ./
   COPY test.sh ./
   RUN ./test.sh
 
