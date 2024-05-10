@@ -56,6 +56,7 @@
                   cloc
                   entr
                   earthly
+                  docker
                 ];
             };
           build = pkgs.mkShellNoCC {
