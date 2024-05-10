@@ -64,7 +64,7 @@ node-ext:
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
-  RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
   COPY --dir scripts simulations ./
   RUN julia -t auto --code-coverage=none --check-bounds=yes --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
