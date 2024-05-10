@@ -49,18 +49,17 @@ node-ext:
   WORKDIR /app/globalbrain-node
   COPY --dir globalbrain-node/julia/ ./
   WORKDIR  /app/globalbrain-node/julia
-  # https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
-  RUN julia --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+  # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
+  RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
   WORKDIR /app/globalbrain-node
-  COPY ./globalbrain-node/my_application.c ./
 
-  ENV MYLIB_INCLUDES=MyLibCompiled/include/julia_init.h MyLibCompiled/include/mylib.h
-  ENV MYLIB_PATH=MyLibCompiled/lib/libmylib.so
-  RUN gcc my_application.c -o my_application.out -IMyLibCompiled/include -LMyLibCompiled/lib -ljulia -lmylib
-  ENV LD_LIBRARY_PATH=MyLibCompiled/lib:$LD_LIBRARY_PATH
-  # RUN ldd my_application.out
-  RUN ./my_application.out
-  
+  ENV GLOBALBRAIN_INCLUDES=globalbrain-compiled/include/julia_init.h globalbrain-compiled/include/globalbrain.h
+  ENV GLOBALBRAIN_PATH=globalbrain-compiled/lib/libglobalbrain.so
+  ENV LD_LIBRARY_PATH=globalbrain-compiled/lib:$LD_LIBRARY_PATH
+  COPY globalbrain-node/test.c ./
+  RUN gcc test.c -o test.out -Iglobalbrain-compiled/include -Lglobalbrain-compiled/lib -ljulia -lglobalbrain
+  RUN ./test.out
+
 
 
   RUN false
