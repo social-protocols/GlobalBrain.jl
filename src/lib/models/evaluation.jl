@@ -26,6 +26,7 @@ Base.@kwdef struct Effect
     tag_id::Int64
     post_id::Int64
     note_id::Union{Int64,Nothing}
+    top_subthread_id::Union{Int64,Nothing}
     p::Float64
     p_count::Int64
     p_size::Int64
@@ -46,6 +47,7 @@ Base.@kwdef struct Score
     tag_id::Int64
     post_id::Int64
     top_note_id::Union{Int64,Nothing}
+    critical_thread_id::Union{Int64,Nothing}
     o::Float64
     o_count::Int64
     o_size::Int64

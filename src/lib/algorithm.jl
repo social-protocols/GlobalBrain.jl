@@ -21,8 +21,8 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    top_note_effect = find_top_thread(post_id, post, o, effects)
-    p = !isnothing(top_note_effect) ? top_note_effect.p : o.mean
+    top_thread = find_top_thread(post_id, post, o, effects)
+    p = !isnothing(top_thread) ? top_thread.p : o.mean
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
 
@@ -37,7 +37,8 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
     score = Score(
         tag_id = post.tag_id,
         post_id = post_id,
-        top_note_id = !isnothing(top_note_effect) ? top_note_effect.note_id : nothing,
+        top_note_id = !isnothing(top_thread) ? top_thread.note_id : nothing,
+        critical_thread_id = !isnothing(top_thread) ? coalesce(top_thread.note_id, top_thread.top_subthread_id) : nothing,
         o = o.mean,
         o_count = this_tally.count,
         o_size = this_tally.size,
@@ -54,7 +55,7 @@ function find_top_thread(
     note::TalliesData,
     r::BetaDistribution,
     effects::Dict{Int,Vector{Effect}},
-)::Union{Effect,Nothing}
+)::Union{Effect, Nothing}
 
     note_id = note.post_id
 
@@ -65,25 +66,41 @@ function find_top_thread(
     n = length(children)
     @debug "Got $n children for $note_id"
 
-    if length(children) == 0
-        return nothing
-    end
 
     @debug "Getting effects of children of $note_id on $post_id"
 
     child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
 
-    @debug "Got child effects $child_effects"
 
     for effect in child_effects
         add!(effects, effect)
     end
 
-    return reduce((a, b) -> begin
+    child_effects = filter(x -> thread_score(x) > 0, child_effects)
+
+    if length(child_effects) == 0
+        return nothing
+    end
+
+    if post_id == 1 && note_id == 2 
+        for x in child_effects
+            @debug "child_effect=$(thread_score(x))"
+        end
+    end
+
+
+    result = reduce((a, b) -> begin
         ma = isnothing(a) ? 0 : thread_score(a)
         mb = isnothing(b) ? 0 : thread_score(b)
         ma > mb ? a : b
     end, child_effects)
+
+    if post_id == 1 && note_id == 2 
+        @debug "Result here: $result"
+    end
+
+    return result
+
 end
 
 
@@ -92,7 +109,7 @@ function calc_thread_effect(
     note::TalliesData,
     prior::BetaDistribution,
     effects,
-)
+)::Effect
 
     note_id = note.post_id
 
@@ -104,14 +121,14 @@ function calc_thread_effect(
 
     (q, r) = upvote_probabilities(prior, tally)
 
-    top_child_effect = find_top_thread(post_id, note, r, effects)
+    top_thread = find_top_thread(post_id, note, r, effects)
 
-    @debug "top_child_effect=$top_child_effect for $post_id=>$note_id"
+    @debug "top_thread=$top_thread for $post_id=>$note_id"
 
-    p = if !isnothing(top_child_effect)
-        top_child_effect.p
+    (p, top_subthread_id) = if !isnothing(top_thread)
+        (top_thread.p, coalesce(top_thread.top_subthread_id, top_thread.note_id))
     else
-        r.mean
+        (r.mean, nothing)
     end
 
     @debug "p=$p for $post_id=>$note_id"
@@ -120,6 +137,7 @@ function calc_thread_effect(
         tag_id = note.tag_id,
         post_id = post_id,
         note_id = note_id,
+        top_subthread_id = top_subthread_id,
         p = p,
         p_count = tally.informed.count,
         p_size = tally.informed.size,

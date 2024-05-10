@@ -75,6 +75,7 @@ create table if not exists EffectEvent(
     , tag_id          integer not null
     , post_id         integer not null 
     , note_id         integer not null
+    , top_subthread_id         integer
     , p               real    not null
     , p_count         integer not null
     , p_size          integer not null
@@ -91,6 +92,7 @@ create table if not exists Effect(
     , tag_id          integer not null
     , post_id         integer not null 
     , note_id         integer not null
+    , top_subthread_id         integer
     , p               real    not null
     , p_count         integer not null
     , p_size          integer not null
@@ -107,6 +109,7 @@ create table if not exists ScoreEvent(
     , tag_id            integer not null
     , post_id           integer not null
     , top_note_id       integer
+    , critical_thread_id       integer
     , o                 real    not null
     , o_count           integer not null
     , o_size            integer not null
@@ -121,6 +124,7 @@ create table if not exists Score(
     , tag_id            integer not null
     , post_id           integer not null
     , top_note_id       integer
+    , critical_thread_id       integer
     , o                 real    not null
     , o_count           integer not null
     , o_size            integer not null
