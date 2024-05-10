@@ -46,13 +46,13 @@ root-julia-setup:
 node-ext:
   FROM +root-julia-setup
   CACHE --sharing shared --id julia-cache /root/.julia
-  WORKDIR /app/globalbrain-node
-  COPY --dir globalbrain-node/julia/ ./
+
+  COPY --dir globalbrain-node/julia globalbrain-node/julia
   WORKDIR  /app/globalbrain-node/julia
   # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
   RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
-  WORKDIR /app/globalbrain-node
 
+  WORKDIR /app/globalbrain-node
   ENV GLOBALBRAIN_INCLUDES=globalbrain-compiled/include/julia_init.h globalbrain-compiled/include/globalbrain.h
   ENV GLOBALBRAIN_PATH=globalbrain-compiled/lib/libglobalbrain.so
   ENV LD_LIBRARY_PATH=globalbrain-compiled/lib:$LD_LIBRARY_PATH
@@ -61,24 +61,6 @@ node-ext:
   RUN ./test.out
 
 
-
-  RUN false
-
-  RUN julia -t auto --project julia/build.jl /app/globalbrain-node/build/Release
-
-  # install dependencies
-  COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
-  COPY globalbrain-node/binding.gyp globalbrain-node/index.js ./
-  COPY --dir globalbrain-node/node/ ./
-  RUN npm install
-
-  # test
-  COPY globalbrain-node/test.js ./
-  RUN node test.js ./test-globalbrain-node.db
-
-
-
->>>>>>> f00764b (call increment function from c file)
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
