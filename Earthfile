@@ -31,23 +31,21 @@ nix-dev-shell:
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
   RUN npm config set update-notifier false # disable npm update checks
 
-
 root-julia-setup:
   FROM +nix-dev-shell
-  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app
   COPY Manifest.toml Project.toml ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate()'
-  COPY --dir sql/ src/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
-
+  # https://discourse.julialang.org/t/precompiling-module-each-time-without-any-change/99711
+  # Pass --code-coverage=none and --check-bounds=yes so that we don't have to compile again when testing.
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.instantiate()'
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
+  COPY --dir sql src simulations ./
 
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
-  CACHE --sharing shared --id julia-cache /root/.julia
   RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
-  COPY --dir src/ scripts/ sql/ simulations/ ./
+  COPY --dir scripts simulations ./
   RUN julia -t auto --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
@@ -79,15 +77,13 @@ vis-format-check:
 sim-test-unit:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  CACHE --sharing shared --id julia-cache /root/.julia
-  COPY --dir sql/ src/ test/ ./
-  RUN julia --project --eval "using Pkg; Pkg.test()"
+  COPY --dir test ./
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval "using Pkg; Pkg.test()"
 
 sim-test:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  CACHE --persist --sharing shared --id julia-cache /root/.julia
-  COPY --dir src/ test/ test-data/ sql/ scripts/ ./
+  COPY --dir test test-data sql scripts ./
   COPY test.sh ./
   RUN ./test.sh
 
