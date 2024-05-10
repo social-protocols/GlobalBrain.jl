@@ -50,7 +50,7 @@ node-ext:
   COPY --dir globalbrain-node/julia globalbrain-node/julia
   WORKDIR  /app/globalbrain-node/julia
   # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
-  RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+  RUN julia -t auto --startup-file=no --project --code-coverage=none --check-bounds=yes -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
 
   WORKDIR /app/globalbrain-node
   ENV GLOBALBRAIN_INCLUDES=globalbrain-compiled/include/julia_init.h globalbrain-compiled/include/globalbrain.h
