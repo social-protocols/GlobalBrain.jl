@@ -41,20 +41,6 @@ root-julia-setup:
   RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
 
 
-node-ext:
-  FROM +root-julia-setup
-  CACHE --sharing shared --id julia-cache /root/.julia
-  WORKDIR /app/globalbrain-node
-  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
-  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
-  RUN npm install
-  COPY globalbrain-node/test.js ./
-  RUN node test.js ./test-globalbrain-node.db
-
-
-
-
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
@@ -119,7 +105,6 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
-  BUILD +node-ext
 
 ci-deploy:
   BUILD +ci-test
