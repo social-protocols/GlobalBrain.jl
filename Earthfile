@@ -75,6 +75,7 @@ test-node-ext-tgz:
   WORKDIR /app/globalbrain-node/globalbrain-node-test
   COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./
   RUN tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
+  RUN npm install --save './globalbrain-node'
   RUN npm test
 
 sim-run:
