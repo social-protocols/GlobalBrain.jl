@@ -1,0 +1,10 @@
+{
+  "name": "globalbrain-node-test",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "node test.js ./test-globalbrain-node.db"
+  },
+  "author": "",
+  "license": "MIT"
+}

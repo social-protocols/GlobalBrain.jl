@@ -28,6 +28,7 @@ create_sysimage(
     # Optionally, to minimize the image size.
     incremental = false,
     filter_stdlibs = true,
+    sysimage_build_args = `--code-coverage=none --check-bounds=yes`
     # Optionally, to target a specific CPU.
     # Use `julia -C help` to list CPU targets.
     # cpu_target = skylake

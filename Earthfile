@@ -41,6 +41,42 @@ root-julia-setup:
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
   COPY --dir src sql ./
 
+
+node-ext:
+  FROM +root-julia-setup
+  WORKDIR /app/globalbrain-node
+  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
+  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
+  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN npm install
+  COPY globalbrain-node/test.js ./
+  RUN node test.js ./test-globalbrain-node.db
+
+node-ext-tgz:
+  FROM +node-ext
+  WORKDIR /app
+  RUN tar -cvzf socialprotocols-globalbrain-node-0.0.1.tgz globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/index.js globalbrain-node/dist
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz AS LOCAL ./socialprotocols-globalbrain-node-0.0.1.tgz
+
+test-node-ext:
+  FROM +node-ext
+  WORKDIR /app/globalbrain-node
+  COPY --dir globalbrain-node/globalbrain-node-test ./
+  WORKDIR /app/globalbrain-node/globalbrain-node-test
+  RUN npm install --ignore-scripts --save ..
+  RUN npm test
+  RUN fail
+
+test-node-ext-tgz:
+  FROM +node-ext-tgz
+  WORKDIR /app/globalbrain-node
+  COPY --dir globalbrain-node/globalbrain-node-test ./
+  WORKDIR /app/globalbrain-node/globalbrain-node-test
+  COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./
+  RUN tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
+  RUN npm test
+
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
@@ -89,12 +125,11 @@ sim-test:
 
 # TODO:
 # sim-lint:
-# 	FROM +setup-julia
-# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
-# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
-# 	RUN ls -l global-brain-service/bin
-# 	RUN ./global-brain-service/bin/GlobalBrainService
-
+#      FROM +setup-julia
+#      # RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
+#      RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ g  obal-brain-service
+#      RUN ls -l global-brain-service/bin
+#      RUN ./global-brain-service/bin/GlobalBrainService
 
 ci-test:
   BUILD +sim-test-unit
