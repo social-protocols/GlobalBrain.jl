@@ -137,6 +137,7 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
+  BUILD +test-node-ext-tgz
 
 ci-deploy:
   BUILD +ci-test
