@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/ba733f8000925e837e30765f273fec153426403d";
 
     # for `flake-utils.lib.eachSystem`
     flake-utils.url = "github:numtide/flake-utils";
@@ -32,11 +32,9 @@
           clang
           llvmPackages.libcxxStdenv
           llvmPackages.libcxx
-          llvmPackages.libcxxabi
           llvmPackages.clang
           libcxxStdenv
           libcxx
-          libcxxabi
         ];
       in {
         devShells = {
