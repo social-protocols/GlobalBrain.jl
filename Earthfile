@@ -66,16 +66,18 @@ test-node-ext:
   WORKDIR /app/globalbrain-node/globalbrain-node-test
   RUN npm install --ignore-scripts --save ..
   RUN npm test
-  RUN fail
 
 test-node-ext-tgz:
-  FROM +node-ext-tgz
+  FROM +nix-dev-shell
+  WORKDIR /app
+  COPY --dir src sql ./
   WORKDIR /app/globalbrain-node
   COPY --dir globalbrain-node/globalbrain-node-test ./
   WORKDIR /app/globalbrain-node/globalbrain-node-test
-  COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./
-  RUN tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
-  RUN npm install --save './globalbrain-node'
+  RUN mkdir tmp
+  COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./tmp
+  RUN cd tmp/ && tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
+  RUN npm install --ignore-scripts --save './tmp/globalbrain-node'
   RUN npm test
 
 sim-run:
