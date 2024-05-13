@@ -41,16 +41,35 @@ root-julia-setup:
   RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
 
 
+
 node-ext:
   FROM +root-julia-setup
   CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app/globalbrain-node
-  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
-  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
-  RUN npm install
+  COPY --dir globalbrain-node/julia/ ./
+  WORKDIR  /app/globalbrain-node/julia
+  # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
+  RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+  WORKDIR /app/globalbrain-node
+
+  ENV GLOBALBRAIN_INCLUDES=globalbrain-compiled/include/julia_init.h globalbrain-compiled/include/globalbrain.h
+  ENV GLOBALBRAIN_PATH=globalbrain-compiled/lib/libglobalbrain.so
+  ENV LD_LIBRARY_PATH=globalbrain-compiled/lib:$LD_LIBRARY_PATH
+  COPY globalbrain-node/test.c ./
+  RUN gcc test.c -o test.out -Iglobalbrain-compiled/include -Lglobalbrain-compiled/lib -ljulia -lglobalbrain
+  RUN ./test.out
+
+  COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
+  RUN npm install --ignore-scripts
+  COPY globalbrain-node/binding.gyp ./
+  RUN npx node-gyp configure
+  COPY globalbrain-node/binding.cc ./
+  RUN find . | grep -v node_modules
+  RUN npx node-gyp build
+  COPY globalbrain-node/index.js ./
   COPY globalbrain-node/test.js ./
-  RUN node test.js ./test-globalbrain-node.db
+  RUN node test.js
+  RUN fail
 
 
 
