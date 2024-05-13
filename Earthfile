@@ -19,13 +19,13 @@ alpine-with-nix:
 nix-dev-shell:
   ARG DEVSHELL=build
   FROM +alpine-with-nix
+  ARG ARCH=$(uname -m)
   # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
   CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
   WORKDIR /app
   COPY flake.nix flake.lock .
   # build our dev-shell, creating a gcroot, so it won't be garbage collected by nix.
-  # TODO: `x86_64-linux` is hardcoded here, but it would be nice to determine it dynamically.
-  RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.x86_64-linux.$DEVSHELL"
+  RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.$ARCH-linux.$DEVSHELL"
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
   RUN npm config set update-notifier false # disable npm update checks
