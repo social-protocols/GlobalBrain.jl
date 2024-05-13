@@ -3,7 +3,7 @@
 #include <cstring>
 #include <node_api.h>
 
-void Cleanup(napi_env env, void *finalize_data, void *finalize_hint);
+void Cleanup(void *data);
 
 napi_value ProcessVoteEventJsonCWrapper(napi_env env, napi_callback_info info) {
   size_t argc = 3;
@@ -62,7 +62,7 @@ napi_value Init(napi_env env, napi_value exports) {
   return exports;
 }
 
-void Cleanup(napi_env env, void *finalize_data, void *finalize_hint) {
+void Cleanup(void *data) {
   // Shutdown Julia
   shutdown_julia(0);
 }
