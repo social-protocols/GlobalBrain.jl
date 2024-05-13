@@ -1,0 +1,36 @@
+// vim: set ft=jsonc:
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.6/.schema/devbox.schema.json",
+  "packages": [
+    "git@latest",
+    "diffutils@latest",
+    "jq@latest",
+    "sqlite-interactive@3.45.1",
+    "julia-bin@1.9.4",
+    "nodejs@21.7.3",
+    "python3@latest",
+    "gcc@latest",
+    "gnumake@latest",
+    "gnused@latest",
+    "clang@latest",
+    "llvmPackages.libcxxStdenv@latest",
+    "llvmPackages.libcxx@latest",
+    "llvmPackages.libcxxabi@latest",
+    "llvmPackages.clang@latest",
+    "libcxxStdenv@latest",
+    "libcxx@latest",
+    "libcxxabi@latest",
+    "just@latest",
+    "gh@latest",
+    "openssh@latest",
+    "litecli@latest",
+    "vim@latest",
+    "neovim@latest",
+    "less@latest",
+    "fzf@latest",
+    "cloc@latest",
+    "entr@latest",
+    "earthly@0.8.9",
+    "docker@latest"
+  ]
+}
