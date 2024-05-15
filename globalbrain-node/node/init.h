@@ -2,7 +2,10 @@
 #define NODE_INIT_H_
 
 #include <julia.h>
+
+#ifdef __linux__
 #include <linux/limits.h>
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
