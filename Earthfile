@@ -44,20 +44,21 @@ root-julia-setup:
 
 node-ext:
   FROM +root-julia-setup
+
   WORKDIR /app/globalbrain-node
-  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
-  COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
-  RUN julia -t auto --project --code-coverage=none --check-bounds=yes --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml ./
+
+  WORKDIR  /app/globalbrain-node/julia
+  COPY --dir globalbrain-node/julia/build.jl ./
+  # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
+  RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+
+  WORKDIR /app/globalbrain-node
+  COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
+  COPY --dir globalbrain-node/node globalbrain-node/binding.gyp globalbrain-node/index.js ./
   RUN npm install
   COPY globalbrain-node/test.js ./
-  RUN node test.js ./test-globalbrain-node.db
-
-node-ext-tgz:
-  FROM +node-ext
-  WORKDIR /app
-  RUN tar -cvzf socialprotocols-globalbrain-node-0.0.1.tgz globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/index.js globalbrain-node/dist
-  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz
-  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz AS LOCAL ./socialprotocols-globalbrain-node-0.0.1.tgz
+  RUN npm test
 
 test-node-ext:
   FROM +node-ext
@@ -65,18 +66,8 @@ test-node-ext:
   COPY --dir globalbrain-node/globalbrain-node-test ./
   WORKDIR /app/globalbrain-node/globalbrain-node-test
   RUN npm install --ignore-scripts --save ..
-  RUN npm test
-  RUN fail
+  RUN npm test 
 
-test-node-ext-tgz:
-  FROM +node-ext-tgz
-  WORKDIR /app/globalbrain-node
-  COPY --dir globalbrain-node/globalbrain-node-test ./
-  WORKDIR /app/globalbrain-node/globalbrain-node-test
-  COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./
-  RUN tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
-  RUN npm install --save './globalbrain-node'
-  RUN npm test
 
 sim-run:
   FROM +root-julia-setup
@@ -138,7 +129,7 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
-  BUILD +test-node-ext-tgz
+  BUILD +test-node-ext
 
 ci-deploy:
   BUILD +ci-test
