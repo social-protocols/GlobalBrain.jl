@@ -29,7 +29,6 @@ nix-dev-shell:
   RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.$ARCH-linux.$DEVSHELL"
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
-  RUN npm config set update-notifier false # disable npm update checks
 
 root-julia-setup:
   FROM +nix-dev-shell
