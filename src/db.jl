@@ -10,11 +10,11 @@ function init_score_db(database_path::String)
         return
     end
 
-    sql_path = joinpath(dirname(@__FILE__), "..", "sql")
-
-    Base.run(pipeline(`cat $(sql_path)/tables.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat $(sql_path)/views.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat $(sql_path)/triggers.sql`, `sqlite3 $database_path`))
+    db = SQLite.DB(database_path)
+    create_tables(db)
+    create_views(db)
+    create_triggers(db)
+    @info "Score database successfully initialized at $database_path"
 end
 
 
@@ -109,7 +109,8 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
 
     sql = """
         select
-            *
+            *,
+            ifnull(top_subthread_id, 0) as top_subthread_id
         from effect
         where 
             tag_id = :tag_id
@@ -145,6 +146,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             -- , parent_id
             , post_id
             , top_note_id
+            , critical_thread_id
             -- , p
             -- , q
             , o
@@ -153,7 +155,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             , p
             , score
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
     """
 
@@ -168,6 +170,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             # score.parent_id,
             score.post_id,
             score.top_note_id,
+            score.critical_thread_id,
             score.o,
             score.o_count,
             score.o_size,
@@ -186,6 +189,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , tag_id
             , post_id
             , note_id
+            , top_subthread_id
             , p
             , p_count
             , p_size
@@ -194,7 +198,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , q_size
             , r
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
 
     """
@@ -209,6 +213,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect.tag_id,
             effect.post_id,
             effect.note_id,
+            effect.top_subthread_id,
             effect.p,
             effect.p_count,
             effect.p_size,
@@ -286,6 +291,7 @@ function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
             tag_id = row[:tag_id],
             post_id = row[:post_id],
             note_id = row[:note_id],
+            top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing : row[:top_subthread_id],
             p = row[:p],
             p_count = row[:p_count],
             q = row[:q],
@@ -303,6 +309,7 @@ function sql_row_to_score(row::SQLite.Row)::Score
         tag_id = row[:tag_id],
         post_id = row[:post_id],
         top_note_id = sql_missing_to_nothing(row[:top_note_id]),
+        critical_thread_id = sql_missing_to_nothing(row[:critical_thread_id]),
         o = row[:o],
         o_count = row[:o_count],
         o_size = row[:o_size],

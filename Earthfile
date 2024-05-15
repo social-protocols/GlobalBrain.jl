@@ -19,49 +19,71 @@ alpine-with-nix:
 nix-dev-shell:
   ARG DEVSHELL=build
   FROM +alpine-with-nix
+  ARG ARCH=$(uname -m)
   # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
   CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
   WORKDIR /app
   COPY flake.nix flake.lock .
   # build our dev-shell, creating a gcroot, so it won't be garbage collected by nix.
   # TODO: `x86_64-linux` is hardcoded here, but it would be nice to determine it dynamically.
-  RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.x86_64-linux.$DEVSHELL"
+  RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.$ARCH-linux.$DEVSHELL"
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
   RUN npm config set update-notifier false # disable npm update checks
 
-
 root-julia-setup:
   FROM +nix-dev-shell
-  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app
   COPY Manifest.toml Project.toml ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate()'
-  COPY --dir sql/ src/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.precompile()'
+  # https://discourse.julialang.org/t/precompiling-module-each-time-without-any-change/99711
+  # Pass --code-coverage=none and --check-bounds=yes so that we don't have to compile again when testing.
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.instantiate()'
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
+	COPY --dir src ./
 
 
 node-ext:
   FROM +root-julia-setup
-  CACHE --sharing shared --id julia-cache /root/.julia
   WORKDIR /app/globalbrain-node
   COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/binding.gyp globalbrain-node/index.js ./
   COPY --dir globalbrain-node/julia/ globalbrain-node/node/ ./
-  RUN julia -t auto --project --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN julia -t auto --project --code-coverage=none --check-bounds=yes --eval 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
   RUN npm install
   COPY globalbrain-node/test.js ./
   RUN node test.js ./test-globalbrain-node.db
 
+node-ext-tgz:
+  FROM +node-ext
+  WORKDIR /app
+  RUN tar -cvzf socialprotocols-globalbrain-node-0.0.1.tgz globalbrain-node/package.json globalbrain-node/package-lock.json globalbrain-node/index.js globalbrain-node/dist
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz
+  SAVE ARTIFACT socialprotocols-globalbrain-node-0.0.1.tgz AS LOCAL ./socialprotocols-globalbrain-node-0.0.1.tgz
 
+test-node-ext:
+  FROM +node-ext
+  WORKDIR /app/globalbrain-node
+  COPY --dir globalbrain-node/globalbrain-node-test ./
+  WORKDIR /app/globalbrain-node/globalbrain-node-test
+  RUN npm install --ignore-scripts --save ..
+  RUN npm test
+  RUN fail
 
+test-node-ext-tgz:
+  FROM +node-ext-tgz
+  WORKDIR /app/globalbrain-node
+  COPY --dir globalbrain-node/globalbrain-node-test ./
+  WORKDIR /app/globalbrain-node/globalbrain-node-test
+  COPY +node-ext-tgz/socialprotocols-globalbrain-node-0.0.1.tgz ./
+  RUN tar -xzvf socialprotocols-globalbrain-node-0.0.1.tgz
+  RUN npm install --save './globalbrain-node'
+  RUN npm test
 
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
-  CACHE --sharing shared --id julia-cache /root/.julia
-  RUN julia -t auto --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
-  COPY --dir src/ scripts/ sql/ simulations/ ./
-  RUN julia -t auto --project scripts/sim.jl
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
+  COPY --dir scripts simulations ./
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project scripts/sim.jl
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
 vis-setup:
@@ -92,26 +114,23 @@ vis-format-check:
 sim-test-unit:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  CACHE --sharing shared --id julia-cache /root/.julia
-  COPY --dir sql/ src/ test/ ./
-  RUN julia --project --eval "using Pkg; Pkg.test()"
+  COPY --dir test ./
+  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval "using Pkg; Pkg.test()"
 
 sim-test:
   FROM +root-julia-setup
   ENV SOCIAL_PROTOCOLS_DATADIR=.
-  CACHE --persist --sharing shared --id julia-cache /root/.julia
-  COPY --dir src/ test/ test-data/ sql/ scripts/ ./
+  COPY --dir test test-data scripts ./
   COPY test.sh ./
   RUN ./test.sh
 
 # TODO:
 # sim-lint:
-# 	FROM +setup-julia
-# 	# RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
-# 	RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ global-brain-service
-# 	RUN ls -l global-brain-service/bin
-# 	RUN ./global-brain-service/bin/GlobalBrainService
-
+#      FROM +setup-julia
+#      # RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="StaticLint", version="8.2.0"))'
+#      RUN julia -e 'using Pkg; Pkg.add(PackageSpec(name="JET", version="0.8.2duompile/global-brain-service/ g  obal-brain-service
+#      RUN ls -l global-brain-service/bin
+#      RUN ./global-brain-service/bin/GlobalBrainService
 
 ci-test:
   BUILD +sim-test-unit
@@ -119,7 +138,7 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
-  BUILD +node-ext
+  BUILD +test-node-ext-tgz
 
 ci-deploy:
   BUILD +ci-test
