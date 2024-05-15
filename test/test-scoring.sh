@@ -12,7 +12,6 @@ rm -f $TEST_DB_FILENAME
 TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     set -e
     echo "Testing scoring algorithm";
-    touch $TEST_DB_FILENAME;
 		julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $TEST_DB_FILENAME
     julia --project -- scripts/run.jl $TEST_DB_FILENAME $test_vote_events_json_file $TMPDIR/score-events.jsonl;
     echo "Comparing $TMPDIR/score-events.jsonl to $expected_score_events_file";
