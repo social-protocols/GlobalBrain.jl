@@ -407,6 +407,9 @@ function create_triggers(db::SQLite.DB)
         -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
         -- that is, if the vote_event_id is greater than lastVoteEvent.vote_event_id
         drop trigger if exists afterInsertOnInsertVoteEventImport;
+        """,
+
+        """
         create trigger afterInsertOnInsertVoteEventImport instead of insert on VoteEventImport
         begin
             insert into VoteEvent(
