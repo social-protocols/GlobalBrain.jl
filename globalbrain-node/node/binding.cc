@@ -16,7 +16,8 @@ void rethrow_julia_exception(Env env) {
     jl_function_t *showerror = jl_get_function(jl_base_module, "showerror");
     jl_function_t *sprint = jl_get_function(jl_base_module, "sprint");
     jl_value_t *err = jl_call2(sprint, showerror, jl_exception_occurred());
-    throw Error::New(env, jl_string_data(err));
+    Napi::Error::New(env, jl_string_data(err));
+
   }
 }
 
@@ -24,7 +25,7 @@ Value process_vote_event_json(const CallbackInfo &info) {
   Env env = info.Env();
 
   if (info.Length() != 2) {
-    throw TypeError::New(env, "process_vote_event_json(database_path: String, vote_event: String)");
+    Napi::TypeError::New(env, "process_vote_event_json(database_path: String, vote_event: String)");
   }
 
   // (1) Extract JS arguments
@@ -86,3 +87,8 @@ Object Init(Env env, Object exports) {
  * namespaced.
  */
 NODE_API_MODULE(NODE_GYP_MODULE_NAME, Init)
+
+
+
+
+

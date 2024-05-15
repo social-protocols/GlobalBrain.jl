@@ -1,5 +1,2 @@
-const binary = require('node-gyp');
-const path = require('path');
-
-const bindingPath = binary.find(path.resolve(path.join(__dirname, './package.json')));
+const bindingPath = require.resolve(`./build/Release/binding`);
 module.exports = require(bindingPath);
