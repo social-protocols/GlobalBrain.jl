@@ -39,7 +39,7 @@ root-julia-setup:
   # Pass --code-coverage=none and --check-bounds=yes so that we don't have to compile again when testing.
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.instantiate()'
   RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
-  COPY --dir src sql ./
+  COPY --dir src ./
 
 
 node-ext:
