@@ -10,11 +10,11 @@ function init_score_db(database_path::String)
         return
     end
 
-    sql_path = joinpath(dirname(@__FILE__), "..", "sql")
-
-    Base.run(pipeline(`cat $(sql_path)/tables.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat $(sql_path)/views.sql`, `sqlite3 $database_path`))
-    Base.run(pipeline(`cat $(sql_path)/triggers.sql`, `sqlite3 $database_path`))
+    db = SQLite.DB(database_path)
+    create_tables(db)
+    create_views(db)
+    create_triggers(db)
+    @info "Score database successfully initialized at $database_path"
 end
 
 
