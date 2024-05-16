@@ -57,6 +57,7 @@
                   entr
                   earthly
                   docker
+                  xcbuild
                 ];
             };
           build = pkgs.mkShellNoCC {
