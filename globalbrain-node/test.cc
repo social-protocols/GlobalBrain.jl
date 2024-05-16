@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
             resultBuffer, targetResult);
     return 1;
   } else {
-    printf("Calling julia function from C successful!");
+    printf("Calling julia function from C++ successful!");
   }
 
   return 0;

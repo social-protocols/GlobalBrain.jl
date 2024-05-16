@@ -36,7 +36,6 @@ root-julia-setup:
   COPY --dir src sql ./
 
 
-
 node-ext:
   FROM +root-julia-setup
   CACHE --sharing shared --id julia-cache /root/.julia
@@ -50,9 +49,16 @@ node-ext:
   ENV GLOBALBRAIN_INCLUDES=globalbrain-compiled/include/julia_init.h globalbrain-compiled/include/globalbrain.h
   ENV GLOBALBRAIN_PATH=globalbrain-compiled/lib/libglobalbrain.so
   ENV LD_LIBRARY_PATH=globalbrain-compiled/lib:$LD_LIBRARY_PATH
+
   COPY globalbrain-node/test.c ./
-  RUN gcc test.c -o test.out -Iglobalbrain-compiled/include -Lglobalbrain-compiled/lib -ljulia -lglobalbrain
-  RUN ./test.out
+  RUN gcc test.c -o test-c.out -Iglobalbrain-compiled/include -Lglobalbrain-compiled/lib -ljulia -lglobalbrain
+  RUN ldd ./test-c.out
+  RUN rm -f test.db && ./test-c.out
+
+  COPY globalbrain-node/test.cc ./
+  RUN g++ test.cc -o test-cpp.out -Iglobalbrain-compiled/include -Lglobalbrain-compiled/lib -ljulia -lglobalbrain
+  RUN ldd ./test-cpp.out
+  RUN rm -f test.db && ./test-cpp.out
 
 
 sim-run:
