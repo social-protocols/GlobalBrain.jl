@@ -22,9 +22,7 @@ db:
 
 reset-db:
     rm -f $DATABASE_PATH
-    sqlite3 $DATABASE_PATH < sql/tables.sql
-    sqlite3 $DATABASE_PATH < sql/views.sql
-    sqlite3 $DATABASE_PATH < sql/triggers.sql
+    julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $DATABASE_PATH
     rm ~/social-protocols-data/score-events.jsonl
 
 
