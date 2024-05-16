@@ -9,6 +9,7 @@ project = joinpath(@__DIR__, globalbrainSourceDir)
 sysimage_path = joinpath(builddir, "lib", "sysimage.$(Libdl.dlext)")
 
 mkpath(builddir)
+mkpath(joinpath(builddir, "lib"))
 
 @info "Building Julia system image..." builddir=builddir project=project sysimage_path=sysimage_path
 
