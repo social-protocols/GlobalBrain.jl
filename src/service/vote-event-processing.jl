@@ -55,13 +55,31 @@ function process_vote_event(
 end
 
 
-struct GlobalBrainResult
-    scoreEvents::String
-end
-
 global dbs = Dict{String,SQLite.DB}()
 
-function process_vote_event_json(database_path::String, voteEvent::String)
+
+# C-compatible wrapper
+Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, voteEvent_c::Cstring, resultBuffer::Ptr{UInt8}, bufferSize::Csize_t)::Nothing
+  try
+    # Convert C strings to Julia strings
+    database_path = unsafe_string(database_path_c)
+    voteEvent = unsafe_string(voteEvent_c)
+
+    # Call the original Julia function
+    result = process_vote_event_json(database_path, voteEvent)
+
+    # Copy the result to the provided buffer, ensuring not to overflow
+    # Note: This is a simplistic approach; consider edge cases and buffer management
+    copyto!(unsafe_wrap(Array, resultBuffer, bufferSize), result)
+
+    return
+  catch e
+    @error "An error occurred" exception=e
+    return
+  end
+end
+
+function process_vote_event_json(database_path::String, voteEvent::String)::String
     # SQLite instance needs to be initiated lazily when calling from Javascript
     if (!haskey(dbs, database_path))
         dbs[database_path] = get_score_db(database_path)
@@ -89,5 +107,5 @@ function process_vote_event_json(database_path::String, voteEvent::String)
     end
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
-    return GlobalBrainResult(String(take!(results)))
+    return String(take!(results))
 end

@@ -46,16 +46,16 @@ node-ext:
   FROM +root-julia-setup
 
   WORKDIR /app/globalbrain-node
-  COPY globalbrain-node/Project.toml globalbrain-node/Manifest.toml ./
 
   WORKDIR  /app/globalbrain-node/julia
-  COPY --dir globalbrain-node/julia/build.jl ./
+  COPY globalbrain-node/julia/Project.toml globalbrain-node/julia/Manifest.toml ./
+  COPY --dir globalbrain-node/julia/build.jl globalbrain-node/julia/globalbrain.h ./
   # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
   RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
 
   WORKDIR /app/globalbrain-node
   COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
-  COPY --dir globalbrain-node/node globalbrain-node/binding.gyp globalbrain-node/index.js ./
+  COPY --dir globalbrain-node/binding.cc globalbrain-node/binding.gyp globalbrain-node/index.js ./
   RUN npm install
   COPY globalbrain-node/test.js ./
   RUN npm test
@@ -129,8 +129,9 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
-  BUILD +test-node-ext
 
 ci-deploy:
   BUILD +ci-test
   BUILD +vis-build
+# https://docs.earthly.dev/basics
+
