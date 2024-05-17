@@ -65,7 +65,7 @@ test-node-ext:
   WORKDIR /app/globalbrain-node
   COPY --dir globalbrain-node/globalbrain-node-test ./
   WORKDIR /app/globalbrain-node/globalbrain-node-test
-  RUN npm install --ignore-scripts --save ..
+  RUN npm install --ignore-scripts --save .. # add dependency to package.json
   RUN npm test 
 
 
@@ -133,5 +133,3 @@ ci-test:
 ci-deploy:
   BUILD +ci-test
   BUILD +vis-build
-# https://docs.earthly.dev/basics
-
