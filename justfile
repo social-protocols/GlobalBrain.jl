@@ -45,7 +45,7 @@ typecheck:
 ci-test:
     earthly +ci-test
 
-build-julia-sysimage:
+build-shared-library:
     rm -rf globalbrain-node/julia/build
     cd globalbrain-node/julia && julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
 
