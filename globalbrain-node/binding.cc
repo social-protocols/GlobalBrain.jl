@@ -1,60 +1,65 @@
 #include "./julia/build/include/globalbrain.h"
 
 #include <cstring>
-#include <node_api.h>
+#include <node.h>
 #include <cstdlib> // Include this for `free`
+#include <v8.h>
 
 void Cleanup(void *data);
 
-napi_value ProcessVoteEventJsonCWrapper(napi_env env, napi_callback_info info) {
-  size_t argc = 3;
-  napi_value args[3];
-  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-  size_t str_len;
-  char *database_path = nullptr, *voteEvent = nullptr, *resultBuffer = nullptr;
-  size_t bufferSize = 2048;
-  napi_value result;
+using namespace v8;
 
-  napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_len);
-  database_path = new char[str_len + 1];
-  napi_get_value_string_utf8(env, args[0], database_path, str_len + 1, &str_len);
 
-  napi_get_value_string_utf8(env, args[1], nullptr, 0, &str_len);
-  voteEvent = new char[str_len + 1];
-  napi_get_value_string_utf8(env, args[1], voteEvent, str_len + 1, &str_len);
+void ProcessVoteEventJsonCWrapper(const FunctionCallbackInfo<Value>& args) {
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
 
-  resultBuffer = new char[bufferSize];
-  memset(resultBuffer, 0, bufferSize);
+    // Check the number of arguments passed
+    if (args.Length() < 2) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments").ToLocalChecked()));
+        return;
+    }
 
-  process_vote_event_json_c(database_path, voteEvent, resultBuffer, bufferSize);
+    // Check the argument types
+    if (!args[0]->IsString() || !args[1]->IsString()) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong arguments").ToLocalChecked()));
+        return;
+    }
 
-  napi_create_string_utf8(env, resultBuffer, NAPI_AUTO_LENGTH, &result);
+    // Convert the arguments to C strings
+    String::Utf8Value database_path(isolate, args[0]);
+    String::Utf8Value voteEvent(isolate, args[1]);
 
-  delete[] database_path;
-  delete[] voteEvent;
-  delete[] resultBuffer;
+    // Call the dummy process_vote_event_json_c function
+    char* resultString = process_vote_event_json_c(*database_path, *voteEvent);
 
-  return result;
-}
+    // Convert resultString into a V8 string and return it. The v8 string is now owned by the
+    // Javascript code and should be deallocated when it is no longer needed.
+    Local<String> result = String::NewFromUtf8(isolate, resultString).ToLocalChecked();
 
-napi_value Init(napi_env env, napi_value exports) {
-  int argc = 1;
-  char *argv[] = {strdup("julia_init"), NULL};
-  init_julia(argc, argv);
-  free(argv[0]);
+    // We are responsible for deallocating this string, which was malloc'd in process_vote_event_json_c
+    delete[] resultString;
 
-  napi_value fn;
-  napi_create_function(env, nullptr, 0, ProcessVoteEventJsonCWrapper, nullptr, &fn);
-  napi_set_named_property(env, exports, "processVoteEventJsonC", fn);
-
-  napi_add_env_cleanup_hook(env, Cleanup, nullptr);
-
-  return exports;
+    args.GetReturnValue().Set(result);
 }
 
 void Cleanup(void *data) {
   shutdown_julia(0);
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, Init)
+void Init(Local<Object> exports, Local<Value> module, void* priv) {
+    Isolate* isolate = exports->GetIsolate();
+    NODE_SET_METHOD(exports, "processVoteEventJsonC", ProcessVoteEventJsonCWrapper);
+
+    int argc = 1;
+    char *argv[] = {strdup("julia_init"), NULL};
+    init_julia(argc, argv);
+    free(argv[0]);
+
+    // Register cleanup hook
+    node::AddEnvironmentCleanupHook(isolate, Cleanup, nullptr);
+}
+
+NODE_MODULE(NODE_GYP_MODULE_NAME, Init)
+
