@@ -24,7 +24,7 @@
           jq
           sqlite-interactive
           julia_19-bin
-          nodejs_21
+          nodejs_20
           python3 # for node-gyp
           gcc
           gnumake
@@ -57,6 +57,7 @@
                   entr
                   earthly
                   docker
+                  xcbuild
                 ];
             };
           build = pkgs.mkShellNoCC {

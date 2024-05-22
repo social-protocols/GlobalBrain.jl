@@ -1,5 +1,13 @@
-const binary = require('node-pre-gyp');
-const path = require('path');
+const bindingPath = require.resolve(`./build/Release/binding`);
+const addon = require(bindingPath);
 
-const bindingPath = binary.find(path.resolve(path.join(__dirname, './package.json')));
-module.exports = require(bindingPath);
+
+function process_vote_event_json(databasePath, voteEvent) {
+  // Directly call and return the result from the native function.
+  // No try-catch block is necessary unless you want to handle exceptions from the native code in a specific way.
+  return addon.processVoteEventJsonC(databasePath, voteEvent);
+}
+
+module.exports = {
+  process_vote_event_json,
+};

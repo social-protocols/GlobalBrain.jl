@@ -55,13 +55,44 @@ function process_vote_event(
 end
 
 
-struct GlobalBrainResult
-    scoreEvents::String
-end
-
 global dbs = Dict{String,SQLite.DB}()
 
-function process_vote_event_json(database_path::String, voteEvent::String)
+
+# C-compatible wrapper. This should only be called by the node binding in binding.cc
+Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, voteEvent_c::Cstring)::Cstring
+  try
+    # Convert C strings to Julia strings
+    database_path = unsafe_string(database_path_c)
+    voteEvent = unsafe_string(voteEvent_c)
+
+    # Call the original Julia function
+    result = process_vote_event_json(database_path, voteEvent)
+
+    # Malloc a new buffer for the results. This buffer should be freed by the
+    # caller, which is the node binding.
+    byte_len = sizeof(result)
+
+    # Allocate memory, adding 1 byte for the null terminator
+    buffer = Libc.malloc(byte_len + 1)
+
+    if buffer == C_NULL
+        error("Failed to allocate memory")
+    end
+
+    # copy results to this new buffer.
+    unsafe_copyto!(Ptr{UInt8}(buffer), pointer(result, 1), byte_len)
+
+    # add null terminator
+    unsafe_store!(Ptr{UInt8}(buffer) + byte_len, 0)
+
+    return buffer
+  catch e
+    @error "Error in process_vote_event_json_c" exception=e
+    return
+  end
+end
+
+function process_vote_event_json(database_path::String, voteEvent::String)::String
     # SQLite instance needs to be initiated lazily when calling from Javascript
     if (!haskey(dbs, database_path))
         dbs[database_path] = get_score_db(database_path)
@@ -89,5 +120,5 @@ function process_vote_event_json(database_path::String, voteEvent::String)
     end
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
-    return GlobalBrainResult(String(take!(results)))
+    return String(take!(results))
 end
