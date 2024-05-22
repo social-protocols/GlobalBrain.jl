@@ -58,8 +58,8 @@ end
 global dbs = Dict{String,SQLite.DB}()
 
 
-# C-compatible wrapper
-Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, voteEvent_c::Cstring, resultBuffer::Ptr{UInt8}, bufferSize::Csize_t)::Nothing
+# C-compatible wrapper. This should only be called by the node binding in binding.cc
+Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, voteEvent_c::Cstring)::Cstring
   try
     # Convert C strings to Julia strings
     database_path = unsafe_string(database_path_c)
@@ -68,13 +68,26 @@ Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, vot
     # Call the original Julia function
     result = process_vote_event_json(database_path, voteEvent)
 
-    # Copy the result to the provided buffer, ensuring not to overflow
-    # Note: This is a simplistic approach; consider edge cases and buffer management
-    copyto!(unsafe_wrap(Array, resultBuffer, bufferSize), result)
+    # Malloc a new buffer for the results. This buffer should be freed by the
+    # caller, which is the node binding.
+    byte_len = sizeof(result)
 
-    return
+    # Allocate memory, adding 1 byte for the null terminator
+    buffer = Libc.malloc(byte_len + 1)
+
+    if buffer == C_NULL
+        error("Failed to allocate memory")
+    end
+
+    # copy results to this new buffer.
+    unsafe_copyto!(Ptr{UInt8}(buffer), pointer(result, 1), byte_len)
+
+    # add null terminator
+    unsafe_store!(Ptr{UInt8}(buffer) + byte_len, 0)
+
+    return buffer
   catch e
-    @error "An error occurred" exception=e
+    @error "Error in process_vote_event_json_c" exception=e
     return
   end
 end
