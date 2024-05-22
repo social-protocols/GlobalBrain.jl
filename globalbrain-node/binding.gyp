@@ -3,12 +3,12 @@
     {
       "target_name": "binding",
       "sources": [ "binding.cc" ],
-      "include_dirs": [ 
-        "<!@(node -p \"require('node-addon-api').include\")",
+      "include_dirs": [
+        "<!(node -e \"console.log(require('path').dirname(require('child_process').execSync('node -p process.argv[0]', {encoding: 'utf8'}).trim()) + '/include/node')\")",
         "julia/build/include"
       ],
-      "libraries": [ 
-        "-L<(module_root_dir)/julia/build/lib", 
+      "libraries": [
+        "-L<(module_root_dir)/julia/build/lib",
         "-lglobalbrain",
         "-ljulia",
         # Linux
@@ -20,7 +20,9 @@
         "-Wl,-rpath,@loader_path/../../julia/build/lib/globalbrain",
         "-Wl,-rpath,@loader_path/../../julia/build/lib/julia"
       ],
-      "defines": ["NAPI_VERSION=<(napi_build_version)", "NAPI_DISABLE_CPP_EXCEPTIONS"],
+      "defines": [],
+      "cflags": ["-std=c++17"],
+      "cflags_cc": ["-std=c++17"],
       "ldflags": [
         "-Wl,-rpath,@loader_path/../../julia/build/lib",
         "-Wl,-rpath,@loader_path/../../julia/build/lib/globalbrain",
