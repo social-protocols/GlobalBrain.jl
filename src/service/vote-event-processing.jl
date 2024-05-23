@@ -15,17 +15,11 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
         # The anonymous function provided here is used by the score_tree function to output
         # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
         # ScoreEvent or an EffectEvent.
-        successfully_processed = process_vote_event(db::SQLite.DB, vote_event) do object
+        process_vote_event(db::SQLite.DB, vote_event) do object
             e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
             insert_event(db, e)
             json_data = JSON.json(e)
             write(output_stream, json_data * "\n")
-        end
-        if !successfully_processed
-            @info "Already processed vote event $(vote_event.vote_event_id)"
-        else
-            @info "Successfully processed vote event $(vote_event.vote_event_id)"
-            flush(output_stream)
         end
     end
 
@@ -37,10 +31,11 @@ function process_vote_event(
     output_event::Function,
     db::SQLite.DB,
     vote_event::VoteEvent,
-)::Bool
+)
     last_processed_vote_event_id = get_last_processed_vote_event_id(db)
     if vote_event.vote_event_id <= last_processed_vote_event_id
-        return false
+        @error "Already processed vote event $(vote_event.vote_event_id)"
+        throw("Failed to process vote event")
     end
 
     insert_vote_event(db, vote_event)
@@ -51,7 +46,7 @@ function process_vote_event(
 
     set_last_processed_vote_event_id(db, vote_event.vote_event_id)
 
-    return true
+    return
 end
 
 
@@ -76,7 +71,8 @@ Base.@ccallable function process_vote_event_json_c(database_path_c::Cstring, vot
     buffer = Libc.malloc(byte_len + 1)
 
     if buffer == C_NULL
-        error("Failed to allocate memory")
+        @error "Failed to allocate memory in process_vote_event_json_c"
+        return
     end
 
     # copy results to this new buffer.
