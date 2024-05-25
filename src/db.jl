@@ -1,3 +1,5 @@
+using DataFrames
+
 """
     init_score_db(database_path::String)
 
@@ -35,7 +37,7 @@ exist, it will be created.
 """
 function get_score_db(database_path::String)::SQLite.DB
     if !isfile(database_path)
-        init_score_db(database_path)
+        return init_score_db(database_path)
     end
     return SQLite.DB(database_path)
 end
@@ -91,11 +93,9 @@ function get_conditional_tally(
             and tag_id = :tag_id
         """
 
-    results = DBInterface.execute(db, sql_query, [post_id, note_id, tag_id])
+    results = DBInterface.execute(db, sql_query, [post_id, note_id, tag_id]) |> DataFrame
 
-    r = iterate(results)
-
-    if isnothing(r)
+    if nrow(results) == 0
         return ConditionalTally(
             tag_id = tag_id,
             post_id = post_id,
@@ -105,12 +105,14 @@ function get_conditional_tally(
         )
     end
 
+    r = first(results)
+
     return ConditionalTally(
-        tag_id = r[1][:tag_id],
-        post_id = r[1][:post_id],
-        note_id = r[1][:note_id],
-        informed = BernoulliTally(r[1][:informed_count], r[1][:informed_total]),
-        uninformed = BernoulliTally(r[1][:uninformed_count], r[1][:uninformed_total]),
+        tag_id = r[:tag_id],
+        post_id = r[:post_id],
+        note_id = r[:note_id],
+        informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+        uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
     )
 end
 
@@ -127,15 +129,15 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
             and note_id = :note_id
     """
 
-    results = DBInterface.execute(db, sql, [tag_id, post_id, note_id])
+    results = DBInterface.execute(db, sql, [tag_id, post_id, note_id]) |> DataFrame
 
-    r = iterate(results)
-
-    if isnothing(r)
+    if nrow(results) == 0
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
-    return sql_row_to_effect_event(r[1]).effect
+    r = first(results)
+
+    return sql_row_to_effect_event(r).effect
 end
 
 """
@@ -255,9 +257,8 @@ end
 
 
 function get_last_processed_vote_event_id(db::SQLite.DB)
-    results = DBInterface.execute(db, "select processed_vote_event_id from lastVoteEvent")
-    r = iterate(results)
-    return r[1][:processed_vote_event_id]
+    results = DBInterface.execute(db, "select processed_vote_event_id from lastVoteEvent") |> DataFrame
+    return first(results)[:processed_vote_event_id]
 end
 
 
@@ -291,8 +292,8 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     )
 end
 
-
-function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
+using DataFrames
+function sql_row_to_effect_event(row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})::EffectEvent
     return EffectEvent(
         vote_event_id = row[:vote_event_id],
         vote_event_time = row[:vote_event_time],
@@ -332,19 +333,20 @@ function sql_missing_to_nothing(val::Any)
     return ismissing(val) ? nothing : val
 end
 
+
 function get_or_insert_tag_id(db::SQLite.DB, tag::String)
 
     results = DBInterface.execute(
         db,
         "insert into tag(tag) values (?) on conflict do nothing returning id",
         [tag],
-    )
+    ) |> DataFrame
 
-    r = iterate(results)
-
-    if length(r) == 0
+    if nrow(results) == 0
         error("Failed to get/insert tag $tag")
     end
 
-    return r[1][:id]
+    result = first(results)
+
+    return result[:id]
 end
