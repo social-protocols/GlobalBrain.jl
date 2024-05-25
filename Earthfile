@@ -69,16 +69,23 @@ node-ext:
    && cp test.js /artifact/
   SAVE ARTIFACT /artifact
 
+INSTALL_NPM_PACKAGE:
+  FUNCTION
+  ARG --required destination
+  # commit hashes must be the same as in the nix flake
+  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#julia_19-bin"
+  COPY +node-ext/artifact $destination
+  
+
 test-node-ext:
   FROM nixos/nix:2.20.4
   # enable flakes
   RUN echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#julia_19-bin"
-  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#nodejs_20"
   COPY globalbrain-node/globalbrain-node-test /app
   WORKDIR /app/globalbrain-node-test
-  COPY +node-ext/artifact ./globalbrain-node
-  RUN npm install --ignore-scripts --save ./globalbrain-node
+  DO +INSTALL_NPM_PACKAGE --destination=/globalbrain-node-package
+  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#nodejs_20"
+  RUN npm install --ignore-scripts --save /globalbrain-node-package
   RUN npm test 
 
 
