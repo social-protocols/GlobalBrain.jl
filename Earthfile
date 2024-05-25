@@ -37,15 +37,12 @@ root-julia-setup:
   COPY Manifest.toml Project.toml ./
   # https://discourse.julialang.org/t/precompiling-module-each-time-without-any-change/99711
   # Pass --code-coverage=none and --check-bounds=yes so that we don't have to compile again when testing.
-  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.instantiate()'
-  RUN julia -t auto --project --code-coverage=none  --check-bounds=yes --eval 'using Pkg; Pkg.precompile()'
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 	COPY --dir src ./
 
 
 node-ext:
   FROM +root-julia-setup
-
-  WORKDIR /app/globalbrain-node
 
   WORKDIR  /app/globalbrain-node/julia
   COPY globalbrain-node/julia/Project.toml globalbrain-node/julia/Manifest.toml ./
@@ -60,12 +57,35 @@ node-ext:
   COPY globalbrain-node/test.js ./
   RUN npm test
 
+  # Create artifact
+  RUN mkdir -p /artifact/julia/build \
+   && cp -r julia/build /artifact/julia/ \
+   && cp -r build /artifact/ \
+   && cp package.json /artifact/ \
+   && cp package-lock.json /artifact/ \
+   && cp binding.gyp /artifact/ \
+   && cp binding.cc /artifact/ \
+   && cp index.js /artifact/ \
+   && cp test.js /artifact/
+  SAVE ARTIFACT /artifact
+
+INSTALL_NPM_PACKAGE:
+  FUNCTION
+  ARG --required destination
+  # commit hashes must be the same as in the nix flake
+  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#julia_19-bin"
+  COPY +node-ext/artifact $destination
+  
+
 test-node-ext:
-  FROM +node-ext
-  WORKDIR /app/globalbrain-node
-  COPY --dir globalbrain-node/globalbrain-node-test ./
-  WORKDIR /app/globalbrain-node/globalbrain-node-test
-  RUN npm install --ignore-scripts --save .. # add dependency to package.json
+  FROM nixos/nix:2.20.4
+  # enable flakes
+  RUN echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+  COPY globalbrain-node/globalbrain-node-test /app
+  WORKDIR /app/globalbrain-node-test
+  DO +INSTALL_NPM_PACKAGE --destination=/globalbrain-node-package
+  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#nodejs_20"
+  RUN npm install --ignore-scripts --save /globalbrain-node-package
   RUN npm test 
 
 
