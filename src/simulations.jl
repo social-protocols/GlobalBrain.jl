@@ -76,25 +76,34 @@ function create_simulation_post!(
     parent_id::Union{Int,Nothing},
     content::String,
 )::SimulationPost
-    result = DBInterface.execute(
+    results = DBInterface.execute(
         db,
         "insert into post (parent_id, content) values (?, ?) on conflict do nothing returning id",
         [parent_id, content],
-    )
-    r = iterate(result)
+    ) |> DataFrame
 
-    return SimulationPost(parent_id, r[1].id, content)
+    if nrow(results) == 0
+        error("Failed to insert post")
+    end
+
+    r = first(results)
+
+    return SimulationPost(parent_id, r[:id], content)
 end
 
 
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
-    r = DBInterface.execute(
+    results = DBInterface.execute(
         db,
         "select parent_id as parent_id from post where id = ?",
         [post_id],
-    )
-    r = iterate(r)
-    id = r[1][:parent_id]
+    ) |> DataFrame
+
+    if nrow(results) == 0
+        error("Failed to get parent id for $post_id")
+    end
+
+    id = first(results)[:parent_id]
     return ismissing(id) ? nothing : id
 end
 
@@ -107,13 +116,16 @@ function simulation_step!(
     tag_id::Int;
     description::Union{String,Nothing} = nothing,
 )::Dict
+    
+
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
     DBInterface.execute(
         db,
         "insert into period (tag_id, step, description) values (?, ?, ?)",
         [tag_id, step, description],
-    )
+    ) |> DataFrame
+
 
     for v in shuffle(votes)
         parent_id = get_parent_id(db, v.post_id)
