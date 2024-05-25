@@ -67,7 +67,6 @@ node-ext:
    && cp binding.cc /artifact/ \
    && cp index.js /artifact/ \
    && cp test.js /artifact/
-
   SAVE ARTIFACT /artifact
 
 test-node-ext:
@@ -143,6 +142,7 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
+  BUILD +test-node-ext
 
 ci-deploy:
   BUILD +ci-test
