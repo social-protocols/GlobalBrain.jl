@@ -11,10 +11,19 @@ function init_score_db(database_path::String)
     end
 
     db = SQLite.DB(database_path)
-    create_tables(db)
-    create_views(db)
-    create_triggers(db)
-    @info "Score database successfully initialized at $database_path"
+
+    results = DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> DataFrame
+
+    SQLite.transaction(db) do
+        create_tables(db)
+        create_views(db)
+        create_triggers(db)
+        @info "Score database successfully initialized at $database_path"
+
+    end
+
+    return db
+
 end
 
 
