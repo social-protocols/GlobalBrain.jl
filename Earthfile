@@ -80,8 +80,7 @@ INSTALL_NPM_PACKAGE:
   ARG --required destination
   # commit hashes must be the same as in the nix flake
   COPY +flake-ref/flake_ref /globalbrain_flake_ref
-  ARG nixpkgs_ref=$(cat /globalbrain_flake_ref)
-  RUN nix profile install --impure "nixpkgs#julia_19-bin"
+  RUN nix profile install --impure "nixpkgs/$(cat /globalbrain_flake_ref)#julia_19-bin"
   COPY +node-ext/artifact $destination
   
 
