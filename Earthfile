@@ -26,7 +26,7 @@ nix-dev-shell:
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
 
 root-julia-setup:
-  FROM +nix-dev-shell
+  FROM +nix-dev-shell --DEVSHELL=build
   WORKDIR /app
   COPY Manifest.toml Project.toml ./
   # https://discourse.julialang.org/t/precompiling-module-each-time-without-any-change/99711
@@ -92,7 +92,7 @@ sim-run:
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
 vis-setup:
-  FROM +nix-dev-shell
+  FROM +nix-dev-shell --DEVSHELL=build
   WORKDIR /app/app
   COPY app/package.json app/package-lock.json ./
   RUN npm install
