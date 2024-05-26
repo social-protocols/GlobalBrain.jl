@@ -2,12 +2,11 @@
 
 VERSION 0.8
 
-alpine-with-nix:
-  FROM alpine:20240329
-  # need the 'testing'-repo to install `nix`
-  RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-  RUN apk add --no-cache nix bash
-  RUN mkdir -p /etc/nix && echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+nix-dev-shell:
+  ARG --required DEVSHELL
+  FROM nixos/nix:2.20.4
+  # enable flakes
+  RUN echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
   # replace /bin/sh with a script that sources `/root/sh_env` for every RUN command.
   # we use this to execute all `RUN`-commands in our nix dev shell.
   # we need to explicitly delete `/bin/sh` first, because it's a symlink to `/bin/busybox`,
@@ -15,23 +14,19 @@ alpine-with-nix:
   RUN rm /bin/sh
   # copy in our own `sh`, which wraps `bash`, and which sources `/root/sh_env`
   COPY ci_sh.sh /bin/sh
-
-nix-dev-shell:
-  ARG DEVSHELL=build
-  FROM +alpine-with-nix
   ARG ARCH=$(uname -m)
   # cache `/nix`, especially `/nix/store`, with correct chmod and a global id, so we can reuse it
-  CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
+  # only works before installing nix
+  # CACHE --persist --sharing shared --chmod 0755 --id nix-store /nix
   WORKDIR /app
   COPY flake.nix flake.lock .
   # build our dev-shell, creating a gcroot, so it won't be garbage collected by nix.
-  # TODO: `x86_64-linux` is hardcoded here, but it would be nice to determine it dynamically.
   RUN nix build --out-link /root/flake-devShell-gcroot ".#devShells.$ARCH-linux.$DEVSHELL"
   # set up our `/root/sh_env` file to source our flake env, will be used by ALL `RUN`-commands!
   RUN nix print-dev-env ".#$DEVSHELL" >> /root/sh_env
 
 root-julia-setup:
-  FROM +nix-dev-shell
+  FROM +nix-dev-shell --DEVSHELL=build
   WORKDIR /app
   COPY Manifest.toml Project.toml ./
   # https://discourse.julialang.org/t/precompiling-module-each-time-without-any-change/99711
@@ -105,7 +100,7 @@ sim-run:
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
 vis-setup:
-  FROM +nix-dev-shell
+  FROM +nix-dev-shell --DEVSHELL=build
   WORKDIR /app/app
   COPY app/package.json app/package-lock.json ./
   RUN npm install
