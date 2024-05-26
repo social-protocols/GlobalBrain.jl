@@ -68,11 +68,20 @@ node-ext:
    && cp test.js /artifact/
   SAVE ARTIFACT /artifact
 
+flake-ref:
+  FROM +nix-dev-shell --DEVSHELL="build"
+  RUN nix profile install --impure "nixpkgs#jq"
+  COPY flake.lock /globalbrain-flake.lock
+  RUN jq -r '.nodes.nixpkgs.locked.rev' /globalbrain-flake.lock > /flake_ref
+  SAVE ARTIFACT /flake_ref
+
 INSTALL_NPM_PACKAGE:
   FUNCTION
   ARG --required destination
   # commit hashes must be the same as in the nix flake
-  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#julia_19-bin"
+  COPY +flake-ref/flake_ref /globalbrain_flake_ref
+  ARG nixpkgs_ref=$(cat /globalbrain_flake_ref)
+  RUN nix profile install --impure "nixpkgs#julia_19-bin"
   COPY +node-ext/artifact $destination
   
 
@@ -83,7 +92,7 @@ test-node-ext:
   COPY globalbrain-node/globalbrain-node-test /app
   WORKDIR /app/globalbrain-node-test
   DO +INSTALL_NPM_PACKAGE --destination=/globalbrain-node-package
-  RUN nix profile install --impure "nixpkgs/2d627a2a704708673e56346fcb13d25344b8eaf3#nodejs_20"
+  RUN nix profile install --impure "nixpkgs#nodejs_20"
   RUN npm install --ignore-scripts --save /globalbrain-node-package
   RUN npm test 
 
