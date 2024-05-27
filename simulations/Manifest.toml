@@ -2,7 +2,7 @@
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "4874e611ba7302e2df9fe1899badc22f743e4899"
+project_hash = "cd7c46c81dae2142b1d4613c541073773d45817c"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -131,7 +131,7 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[deps.GlobalBrain]]
 deps = ["DataFrames", "Dates", "JSON", "Memoize", "Random", "SQLite", "Test"]
-git-tree-sha1 = "d717ac6c220c187c12bccc6fb9246c27e75484ca"
+git-tree-sha1 = "5251ab993eb54a194b2e4c46d47020d6282a31ec"
 repo-rev = "standalone-simulations-module"
 repo-url = ".."
 uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"

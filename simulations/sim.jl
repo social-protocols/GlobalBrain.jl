@@ -3,6 +3,7 @@ using Main.GlobalBrainSimulations
 using GlobalBrain
 using Test
 using Random
+using Distributions
 
 sim = include(joinpath(pwd(), ARGS[1]))
 

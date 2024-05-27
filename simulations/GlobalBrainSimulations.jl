@@ -4,10 +4,13 @@ using SQLite
 using GlobalBrain
 using Distributions
 using Memoize
+using DataFrames
+using Random
 
 export SimulationAPI
 export SimulationVote
 export get_sim_db
+export run_simulation!
 
 struct SimulationPost
     parent_id::Union{Int,Nothing}
