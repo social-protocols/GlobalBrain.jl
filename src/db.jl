@@ -126,7 +126,7 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
-    return sql_row_to_effect_event(r[1]).effect
+    return sql_row_to_effect(r[1])
 end
 
 """
@@ -283,23 +283,19 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
 end
 
 
-function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
-    return EffectEvent(
-        vote_event_id = row[:vote_event_id],
-        vote_event_time = row[:vote_event_time],
-        effect = Effect(
-            tag_id = row[:tag_id],
-            post_id = row[:post_id],
-            note_id = row[:note_id],
-            top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing : row[:top_subthread_id],
-            p = row[:p],
-            p_count = row[:p_count],
-            q = row[:q],
-            p_size = row[:p_size],
-            q_count = row[:q_count],
-            q_size = row[:q_size],
-            r = row[:r],
-        ),
+function sql_row_to_effect(row::SQLite.Row)::Effect
+    return Effect(
+        tag_id = row[:tag_id],
+        post_id = row[:post_id],
+        note_id = row[:note_id],
+        top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing : row[:top_subthread_id],
+        p = row[:p],
+        p_count = row[:p_count],
+        q = row[:q],
+        p_size = row[:p_size],
+        q_count = row[:q_count],
+        q_size = row[:q_size],
+        r = row[:r],
     )
 end
 

@@ -106,7 +106,7 @@ function simulation_step!(
     votes::Array{SimulationVote},
     tag_id::Int;
     description::Union{String,Nothing} = nothing,
-)::Dict
+    )::Tuple{Dict, Dict}
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
     DBInterface.execute(
@@ -138,6 +138,13 @@ function simulation_step!(
 
     score_rows =
         DBInterface.execute(db, "select * from score where tag_id = :tag_id", [tag_id])
+
+    effect_rows =
+        DBInterface.execute(db, "select * from effect where tag_id = :tag_id", [tag_id])
     scores = map(sql_row_to_score, score_rows)
-    return Dict(score.post_id => score for score in scores)
+    effects = map(sql_row_to_effect, effect_rows)
+    return (
+        Dict(score.post_id => score for score in scores),
+        Dict((effect.post_id, effect.note_id) => effect for effect in effects),
+    )
 end
