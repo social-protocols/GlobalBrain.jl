@@ -27,7 +27,13 @@ reset-db:
 
 
 sim name="":
-    time julia --project scripts/sim.jl {{name}}
+    time julia --project=simulations simulations/run.jl {{name}}
+
+sim-all:
+    find simulations/scenarios -type f -name "*.jl" | while IFS= read -r file; do \
+        echo "Processing $file..."; \
+        julia --project=simulations simulations/run.jl $file; \
+    done
 
 
 sim-db query="":
