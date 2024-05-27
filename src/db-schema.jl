@@ -286,9 +286,23 @@ function create_views(db::SQLite.DB)
 
         """
         create view ConditionalTally as 
-        with overall as (
+
+        -- this query is somewhat counter-intuitive. The strangeness arises from this rule:
+        -- Only count user as uninformed of a post when the user is informed of the parent of the post.
+        -- This rule is described here: https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-05-24-calculating-tallies.md
+        --
+        -- The the uninformed tally is just the partially-informed tally minus
+        -- the informed tally. The partially-informed tally is the tally of users who are informed
+        -- of the parent of the note but not the note itself.
+
+        -- So our first step is to select all partially-informed tallies.
+        with partially_informed as (
+          -- The partially-informed tally for note C and target A is the informed tally of the parent
+          -- of C and target A.
           select * from InformedTally
           UNION ALL
+          -- If the note is a direct child of the target then the partially-informed tally is the overall
+          -- tally for the target.
           select tag_id, post_id, post_id, count, total
           from tally
         )
@@ -298,20 +312,15 @@ function create_views(db::SQLite.DB)
           , informed.note_id
           , informed.informed_count
           , informed.informed_total
-          , overall.informed_count - informed.informed_count as uninformed_count
-          , overall.informed_total - informed.informed_total as uninformed_total
+          , partially_informed.informed_count - informed.informed_count as uninformed_count
+          , partially_informed.informed_total - informed.informed_total as uninformed_total
         from
-          -- this join is very counter-intuitive. The strangeness arises from this rule:
-          -- 2. Only count user as uninformed of a post when the user is informed of the parent of the post.
-          -- The way to think of this is that the informed tally is just the "overall" tally minus
-          -- the informed tally. But the "overall" tally is the tally of users who are informed
-          -- of the parent of the note -- not the tally of all users who voted on the target post.
-          overall
-          join post on (post.parent_id = overall.note_id)
+          partially_informed
+          join post on (post.parent_id = partially_informed.note_id)
           join InformedTally informed on informed.note_id = post.id
         where
-          overall.post_id = informed.post_id
-          and overall.tag_id = informed.tag_id
+          partially_informed.post_id = informed.post_id
+          and partially_informed.tag_id = informed.tag_id
         ;
         """,
     ]
@@ -320,51 +329,6 @@ function create_views(db::SQLite.DB)
 end
 
 function create_triggers(db::SQLite.DB)
-        # todo: 
-        #  -- don't output effects if there is p_count and q_count are zero 
-        #         > {"vote_event_id":24,"vote_event_time":1709893374865,"effect":{"tag_id":1,"post_id":1,"note_id":9,"p":0.5684,"p_count":0,"p_size":0,"q":0.5684,"q_count":0,"q_size":0}}
-        # TODO:
-        #  -- test case voting on the grandchild creates an informed vote for the child
-        #  -- test case of clearing vote on note causing informed vote on post to be cleared.
-
-        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
-
-        # The first thing to understand about these tallies is that they can "double count". If 10 users vote on a post without being informed of the note, and then they all
-        # were later informed of the note, then both the uninformed tally and the informed tally will have a sample size of 10. Even though there are only 10 actual users.
-
-        # On the other hand, it's possible for there to be no overlap, for example if 5 users voted on a post and were never informed of the note, and the other fiver voted
-        # on the post only after being informed (they were never uninformed).
-
-        # Another important thing to understand is that, currently, being included in the informed tally doesn't require users to change their vote. If all 10 users initially upvote a post, then all 10 users are informed,
-        # and none of them change their vote, then the informed vote and the uninformed tallies are both 10/10.
-
-        # The conditional tallies are simple aggregates of the **conditional vote**. table The conditional vote table tells us both the uninformed and informed vote of a user on a post/note combination.
-        # The uninformed_vote or informed_vote fields can be zero if there is no uninformed or informed vote, respectively.
-
-        # There are (at least theoretically) different ways that users can be informed. Our originally idea was that we consider a vote to be informed if the note was
-        # shown below the post at the time the user voted on the post. But as discussed in [this research note](https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-02-06-informed-probability.md), the fact
-        # of actually voting on a note is probably a better for proxy for whether the user has actually **considered** the note, which is really what we care about when talking
-        # about users being "informed". 
-
-        # So the event_type field is used to designate the way in which users are informed. event_type=1 means "voted on post while note was shown below post" and event_type=2 means
-        # "voted on post and voted on note". For event_type=2, the order doesn't matter. If at any time the user voted on the post without having voted on the note, there is an uninformed vote. 
-        # If at any time the user has voted on the post and the note there is an informed vote. This is why the same user can be counted twice, even if they only voted on the post once. 
-
-        # Since a note can be any descendent of the post, another important rule to underatand is that a conditional vote is only counted if the user also voted on the parent of the note.
-        # For example, if we have posts A→B→C, then the conditional votes for post A given informed/uninformed of note C only include users who also voted on B. So the uninformed votes are votes where user
-        # was informed of B but not C. And the informed votes are votes where the user was informed of B and C. But, since voting on a post implies considering its parent, the informed votes
-        # can be defined simply as votes where the user was informed of C.
-
-        # So a conditional vote on a post requires a vote on the parent of the note. If the note is a direct child of the vote, this is trivially true (we only count conditional votes on the post given
-        # the user has voted on the post). But in the case of *clearing* votes it creates some subtleties in the logic we have to think through (if a user clears their vote on a post, we set the
-        # vote value to zero and then update the informed or uninformed vote to be zero as appropriate. We should make sure *not* to update conditional votes only if the value of the vote on the parent of the note is not zero). 
-
-        # A finally thing to understand is that being uninformed is "sticky". You can't undo the fact that a user was once uninformed. Once the user becomes informed, then any changes
-        # to their vote changes their informed vote, not their uninformed vote.
-
-        # However, a user can become un-informed. This doesn't sound like it makes sense but we do allow users to clear their vote on the note. The semanitics of voting and then
-        # clearing a vote should pretty much be the same as never having voted. So both clearing their vote on the post and clearing their vote on the note should result in the uninformed
-        # vote being cleared. If the user clears their vote on the note but leaves their vote on the post, the uninformed vote should be updated.
 
     stmts = [
         """
@@ -463,6 +427,19 @@ function create_triggers(db::SQLite.DB)
         end;
         """,
 
+        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
+        # The logic and reasoning behind these calculations is discussed here:
+        # https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-05-24-calculating-tallies.md
+        #
+        # The informed tally table is an aggregate of the **informed vote**
+        # table. The informed vote table tells has an entry for every informed vote
+        # e.g. for every post-note combination a user has voted on. Since a
+        # a user can become-uninformed by clearing votes, the "informed" field 
+        # in this table can be zero.
+        #
+        # TODO:
+        #  -- test case voting on the grandchild creates an informed vote for the child
+        #  -- test case of clearing vote on note causing informed vote on post to be cleared.
 
         """
         create trigger afterInsertOnVoteEvent after insert on VoteEvent
@@ -517,7 +494,6 @@ function create_triggers(db::SQLite.DB)
               informed = excluded.informed
               , vote = excluded.vote
             ;
-
 
             insert into InformedVote
             select
