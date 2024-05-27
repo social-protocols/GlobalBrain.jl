@@ -185,7 +185,6 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
     end
 
     return first(results)
-
 end
 
 """
