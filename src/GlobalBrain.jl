@@ -21,7 +21,6 @@ include("service/json-events.jl")
 include("service/main.jl")
 include("db-schema.jl")
 include("db.jl")
-# include("simulations.jl")
 
 # --- Service
 export julia_main
@@ -82,13 +81,5 @@ export entropy
 export cross_entropy
 export relative_entropy
 export information_gain
-
-# --- Simulations
-# export get_sim_db
-# export SimulationPost
-# export SimulationVote
-# export SimulationAPI
-# export create_simulation_post!
-# export run_simulation!
 
 end
