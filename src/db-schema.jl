@@ -1,7 +1,8 @@
 function create_tables(db::SQLite.DB)
     stmts = [
+
         """
-        create table if not exists VoteEvent(
+        create table VoteEvent(
               vote_event_id   integer not null
             , vote_event_time integer not null
             , user_id         text    not null
@@ -15,7 +16,7 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists Vote(
+        create table Vote(
               vote_event_id   integer not null
             , vote_event_time integer not null
             , user_id         text not null
@@ -28,7 +29,7 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists Tally(
+        create table Tally(
               tag_id               integer not null
             , parent_id            integer
             , post_id              integer not null
@@ -40,35 +41,45 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists ConditionalVote(
-              user_id         text not null
-            , tag_id          integer not null
-            , post_id         integer not null
-            , note_id         integer not null
-            , event_type      integer not null
-            , informed_vote   integer not null
-            , uninformed_vote integer not null
-            , is_informed     integer not null
-            , primary key(user_id, tag_id, post_id, note_id, event_type)
+        create table InformedVote(
+          user_id text not null,
+          tag_id integer not null,
+          post_id integer not null,
+          note_id integer not null,
+          vote integer not null,
+          informed integer not null,
+          primary key(user_id, tag_id, post_id, note_id)
         ) strict;
         """,
 
+        # """
+        # create index InformedVote_user_tag_post
+        # on InformedVote(user_id, tag_id, post_id);
+        # """,
+
+        # """
+        # create index InformedVote_tag_post
+        # on InformedVote(tag_id, post_id);
+        # """,
+
+        # """
+        # create index InformedVote_tag_post_note
+        # on InformedVote(tag_id, post_id, note_id);
+        # """,
+       
         """
-        create table if not exists ConditionalTally(
+        create table InformedTally(
               tag_id           integer not null
             , post_id          integer not null
             , note_id          integer not null
-            , event_type       integer not null
             , informed_count   integer not null
             , informed_total   integer not null
-            , uninformed_count integer not null
-            , uninformed_total integer not null
-            , primary key(tag_id, post_id, note_id, event_type)
+            , primary key(tag_id, post_id, note_id)
          ) strict;
-         """,
+        """,
 
-         """
-        create table if not exists Post(
+        """
+        create table Post(
               parent_id  integer
             , id         integer not null
             , content    text default ''
@@ -77,7 +88,11 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists Lineage(
+        create index post_parent on Post(parent_id);
+        """,
+
+        """
+        create table Lineage(
               ancestor_id   integer
             , descendant_id integer not null
             , separation    integer not null
@@ -85,8 +100,20 @@ function create_tables(db::SQLite.DB)
         ) strict;
         """,
 
+
         """
-        create table if not exists EffectEvent(
+        create index Lineage_ancestor_id
+        on Lineage(ancestor_id);
+        """,
+
+        """
+        create index Lineage_descendant_id
+        on Lineage(descendant_id);
+        """,
+
+
+        """
+        create table EffectEvent(
               vote_event_id   integer not null
             , vote_event_time integer not null
             , tag_id          integer not null
@@ -105,7 +132,7 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists Effect(
+        create table Effect(
               vote_event_id   integer not null
             , vote_event_time integer not null
             , tag_id          integer not null
@@ -124,7 +151,13 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists ScoreEvent(
+        create index Effect_tag_post
+        on Effect(tag_id, post_id);
+        """,
+
+
+        """
+        create table ScoreEvent(
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , tag_id            integer not null
@@ -141,7 +174,7 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists Score(
+        create table Score(
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , tag_id            integer not null
@@ -158,7 +191,7 @@ function create_tables(db::SQLite.DB)
         """,
 
         """
-        create table if not exists LastVoteEvent(
+        create table LastVoteEvent(
               type                    integer
             , imported_vote_event_id  integer not null default 0
             , processed_vote_event_id integer not null default 0
@@ -181,23 +214,7 @@ function create_tables(db::SQLite.DB)
         create table Period(tag_id INTEGER not null, step INTEGER not null, description TEXT);
         """,
 
-        """
-        create index if not exists post_parent on Post(parent_id);
-        """,
 
-        """
-        create index if not exists Vote_tag_user_post on Vote(tag_id, user_id, post_id);
-        """,
-
-        """
-        create index if not exists ConditionalVote_tag_user_post
-        on ConditionalVote(tag_id, user_id, post_id);
-        """,
-
-        """
-        create index if not exists ConditionalVote_tag_user_post_note
-        on ConditionalVote(tag_id, user_id, post_id, note_id);
-        """,
     ]
 
     map((stmt) -> DBInterface.execute(db, stmt), stmts)
@@ -246,68 +263,64 @@ function create_views(db::SQLite.DB)
         """,
 
         """
-        -- Table to summarize what posts a user is/is not informed of (has/has not voted on)
-        -- This table implements two important rules.
-        -- 1. A user has considered a post if they have considered its parent.
-        -- 2. Only count user as uninformed of a post when the user is informed of the parent of the post.
-        create view InformationStatus as
-        with informed as ( 
-          -- first, find all posts that user is informed of (where they have voted on that post OR a parent)
-          select user_id, tag_id, post_id, 2 as event_type 
-          from vote
-          where vote != 0
-          -- and parent_id is null
-          UNION 
-          select user_id, tag_id, ancestor_id as post_id, 2 as event_type
-          from lineage
-          join vote on
-            descendant_id = vote.post_id
-            -- and parent_id is null
-          where vote != 0
-        )
-        , uninformed as (
-          -- first, find all posts that user is NOT informed of GIVEN they are informed of the parent.  
-          select informed.user_id, informed.tag_id, informed.post_id as parent_id, child.id as post_id, informed.event_type
-          from informed
-          join post child on informed.post_id = child.parent_id
-          left join informed informed_child on
-            informed_child.user_id = informed.user_id
-            and informed_child.tag_id = informed.tag_id 
-            and informed_child.post_id = child.id
-            and informed_child.event_type = 2
-          where
-            informed.event_type=2
-            and informed_child.post_id is null
-        )
-          select user_id, tag_id, post_id, event_type, 1 as informed from informed
-          union all
-          select user_id, tag_id, post_id, event_type, 0 as informed from uninformed
-        ;
+        create view ImplicitlyInformedVote as 
+          select
+            iv.user_id
+            , iv.tag_id
+            , iv.post_id
+            , lineage.ancestor_id as note_id
+            , iv.vote as vote
+            , (iv.informed or ifnull(vote.vote,0) != 0) as informed
+            , iv.note_id as informed_by_post_id
+          from 
+          InformedVote iv
+          join lineage
+            on lineage.descendant_id = iv.note_id
+            and lineage.ancestor_id > iv.post_id
+          left join vote 
+            on vote.post_id = lineage.ancestor_id
+            and vote.tag_id = iv.tag_id
+            and vote.user_id = iv.user_id
+        ;     
         """,
 
         """
-        -- The current conditional vote, not considering history. The current conditional vote
-        -- will be either informed or uninformed, whereas the conditionalVote table will contain
-        -- both an informed_vote and uninformed_vote, to record how users voted before becoming informed. 
-        create view CurrentConditionalVote as 
-          select 
-            vote.user_id
-            , vote.tag_id
-            , vote.post_id
-            , descendant_id as note_id
-            , 2 as event_type
-            -- uninformed vote
-            -- , vote
-            , case when informed then vote.vote else 0 end as informed_vote
-            , case when not informed then vote.vote else 0 end as uninformed_vote
-            , informed
+        create view ConditionalTally as 
+
+        -- this query is somewhat counter-intuitive. The strangeness arises from this rule:
+        -- Only count user as uninformed of a post when the user is informed of the parent of the post.
+        -- This rule is described here: https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-05-24-calculating-tallies.md
+        --
+        -- The the uninformed tally is just the partially-informed tally minus
+        -- the informed tally. The partially-informed tally is the tally of users who are informed
+        -- of the parent of the note but not the note itself.
+
+        -- So our first step is to select all partially-informed tallies.
+        with partially_informed as (
+          -- The partially-informed tally for note C and target A is the informed tally of the parent
+          -- of C and target A.
+          select * from InformedTally
+          UNION ALL
+          -- If the note is a direct child of the target then the partially-informed tally is the overall
+          -- tally for the target.
+          select tag_id, post_id, post_id, count, total
+          from tally
+        )
+        select
+          informed.tag_id
+          , informed.post_id
+          , informed.note_id
+          , informed.informed_count
+          , informed.informed_total
+          , partially_informed.informed_count - informed.informed_count as uninformed_count
+          , partially_informed.informed_total - informed.informed_total as uninformed_total
         from
-          vote
-          join lineage on lineage.ancestor_id = vote.post_id
-          join InformationStatus on 
-            InformationStatus.user_id = vote.user_id
-            and InformationStatus.tag_id = vote.tag_id
-            and InformationStatus.post_id = lineage.descendant_id
+          partially_informed
+          join post on (post.parent_id = partially_informed.note_id)
+          join InformedTally informed on informed.note_id = post.id
+        where
+          partially_informed.post_id = informed.post_id
+          and partially_informed.tag_id = informed.tag_id
         ;
         """,
     ]
@@ -316,51 +329,6 @@ function create_views(db::SQLite.DB)
 end
 
 function create_triggers(db::SQLite.DB)
-        # todo: 
-        #  -- don't output effects if there is p_count and q_count are zero 
-        #         > {"vote_event_id":24,"vote_event_time":1709893374865,"effect":{"tag_id":1,"post_id":1,"note_id":9,"p":0.5684,"p_count":0,"p_size":0,"q":0.5684,"q_count":0,"q_size":0}}
-        # TODO:
-        #  -- test case voting on the grandchild creates an informed vote for the child
-        #  -- test case of clearing vote on note causing informed vote on post to be cleared.
-
-        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
-
-        # The first thing to understand about these tallies is that they can "double count". If 10 users vote on a post without being informed of the note, and then they all
-        # were later informed of the note, then both the uninformed tally and the informed tally will have a sample size of 10. Even though there are only 10 actual users.
-
-        # On the other hand, it's possible for there to be no overlap, for example if 5 users voted on a post and were never informed of the note, and the other fiver voted
-        # on the post only after being informed (they were never uninformed).
-
-        # Another important thing to understand is that, currently, being included in the informed tally doesn't require users to change their vote. If all 10 users initially upvote a post, then all 10 users are informed,
-        # and none of them change their vote, then the informed vote and the uninformed tallies are both 10/10.
-
-        # The conditional tallies are simple aggregates of the **conditional vote**. table The conditional vote table tells us both the uninformed and informed vote of a user on a post/note combination.
-        # The uninformed_vote or informed_vote fields can be zero if there is no uninformed or informed vote, respectively.
-
-        # There are (at least theoretically) different ways that users can be informed. Our originally idea was that we consider a vote to be informed if the note was
-        # shown below the post at the time the user voted on the post. But as discussed in [this research note](https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-02-06-informed-probability.md), the fact
-        # of actually voting on a note is probably a better for proxy for whether the user has actually **considered** the note, which is really what we care about when talking
-        # about users being "informed". 
-
-        # So the event_type field is used to designate the way in which users are informed. event_type=1 means "voted on post while note was shown below post" and event_type=2 means
-        # "voted on post and voted on note". For event_type=2, the order doesn't matter. If at any time the user voted on the post without having voted on the note, there is an uninformed vote. 
-        # If at any time the user has voted on the post and the note there is an informed vote. This is why the same user can be counted twice, even if they only voted on the post once. 
-
-        # Since a note can be any descendent of the post, another important rule to underatand is that a conditional vote is only counted if the user also voted on the parent of the note.
-        # For example, if we have posts A→B→C, then the conditional votes for post A given informed/uninformed of note C only include users who also voted on B. So the uninformed votes are votes where user
-        # was informed of B but not C. And the informed votes are votes where the user was informed of B and C. But, since voting on a post implies considering its parent, the informed votes
-        # can be defined simply as votes where the user was informed of C.
-
-        # So a conditional vote on a post requires a vote on the parent of the note. If the note is a direct child of the vote, this is trivially true (we only count conditional votes on the post given
-        # the user has voted on the post). But in the case of *clearing* votes it creates some subtleties in the logic we have to think through (if a user clears their vote on a post, we set the
-        # vote value to zero and then update the informed or uninformed vote to be zero as appropriate. We should make sure *not* to update conditional votes only if the value of the vote on the parent of the note is not zero). 
-
-        # A finally thing to understand is that being uninformed is "sticky". You can't undo the fact that a user was once uninformed. Once the user becomes informed, then any changes
-        # to their vote changes their informed vote, not their uninformed vote.
-
-        # However, a user can become un-informed. This doesn't sound like it makes sense but we do allow users to clear their vote on the note. The semanitics of voting and then
-        # clearing a vote should pretty much be the same as never having voted. So both clearing their vote on the post and clearing their vote on the note should result in the uninformed
-        # vote being cleared. If the user clears their vote on the note but leaves their vote on the post, the uninformed vote should be updated.
 
     stmts = [
         """
@@ -406,12 +374,9 @@ function create_triggers(db::SQLite.DB)
         """
         -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
         -- that is, if the vote_event_id is greater than lastVoteEvent.vote_event_id
-        drop trigger if exists afterInsertOnInsertVoteEventImport;
-        """,
-
-        """
         create trigger afterInsertOnInsertVoteEventImport instead of insert on VoteEventImport
         begin
+
             insert into VoteEvent(
                   vote_event_id
                 , vote_event_time
@@ -462,33 +427,19 @@ function create_triggers(db::SQLite.DB)
         end;
         """,
 
-        """
-        create trigger afterInsertLineage2 after insert on Lineage
-        begin
-            -- When there is a new post, we need to record an uninformed vote for every user who has voted on an ancestor of the post
-            insert into ConditionalVote
-            select
-                  user_id
-                , tag_id
-                , post_id
-                , note_id
-                , event_type
-                , 0
-                -- for the user who first voted on the note, the CurrentConditionalVote view will show the user as been informed
-                -- but we want to record an uninformed vote for this user here.
-                , case when informed then informed_vote else uninformed_vote end
-                , 0
-            from CurrentConditionalVote
-            where
-                 CurrentConditionalVote.post_id = new.ancestor_id
-                 and CurrentConditionalVote.note_id = new.descendant_id
-             ;
-        end;
-        """,
-
-        """
-        drop trigger if exists afterInsertOnVoteEvent;
-        """,
+        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
+        # The logic and reasoning behind these calculations is discussed here:
+        # https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-05-24-calculating-tallies.md
+        #
+        # The informed tally table is an aggregate of the **informed vote**
+        # table. The informed vote table tells has an entry for every informed vote
+        # e.g. for every post-note combination a user has voted on. Since a
+        # a user can become-uninformed by clearing votes, the "informed" field 
+        # in this table can be zero.
+        #
+        # TODO:
+        #  -- test case voting on the grandchild creates an informed vote for the child
+        #  -- test case of clearing vote on note causing informed vote on post to be cleared.
 
         """
         create trigger afterInsertOnVoteEvent after insert on VoteEvent
@@ -522,61 +473,63 @@ function create_triggers(db::SQLite.DB)
             insert into Post(parent_id, id)
             values(new.parent_id, new.post_id) on conflict do nothing;
 
-
-            -- Record conditional vote record for all ancestors or descendants of the post that was voted on,
-            -- setting the informed_vote field depending on whether the user has voted on the descendant
-            insert into ConditionalVote
+ 
+            insert into InformedVote
             select
-                  user_id
-                , tag_id
-                , post_id
-                , note_id
-                , event_type
-                , informed_vote
-                , 0
-                , 1
-            from CurrentConditionalVote
-            where
-                 ( new.post_id = CurrentConditionalVote.post_id or new.post_id = CurrentConditionalVote.note_id )
-                 and new.user_id = CurrentConditionalVote.user_id
-                 and new.tag_id = CurrentConditionalVote.tag_id
-                 and informed
-            on conflict(user_id, tag_id, post_id, note_id, event_type) do update set
-                -- Uninformed vote "sticks". When the user becomes uninformed we keep the value of the vote as it was before
-                -- the user was informed. Informed vote does not stick, because a user clearing their vote on the note doesn't
-                -- imply they become uninformed (which can't really happen), but rather made a mistake about their vote and hand't
-                -- really considered the note.
-                uninformed_vote = uninformed_vote
-                , informed_vote = excluded.informed_vote
-                , is_informed = excluded.is_informed
+              new.user_id
+              , new.tag_id
+              , targetVote.post_id as post_id
+              , new.post_id as note_id
+              , targetVote.vote as vote
+              , new.vote != 0 as informed
+            from 
+              lineage
+              join vote targetVote 
+              on targetVote.post_id = lineage.ancestor_id
+            where 
+              lineage.descendant_id = new.post_id
+              and targetVote.tag_id = new.tag_id
+              and targetVote.user_id = new.user_id
+            on conflict(user_id, tag_id, post_id, note_id) do update set
+              informed = excluded.informed
+              , vote = excluded.vote
             ;
 
-            -- when the vote on the note is cleared, clear the informed_vote
-            update ConditionalVote 
-            set 
-                informed_vote = 0
-                , is_informed = 0
-            where new.vote = 0
-            and user_id = new.user_id
-            and tag_id = new.tag_id
-            and note_id = new.post_id
-            and event_type = 2
+            insert into InformedVote
+            select
+              new.user_id
+              , new.tag_id
+              , new.post_id as post_id
+              , noteVote.post_id as note_id
+              , new.vote as vote
+              , noteVote.vote != 0 as informed
+            from 
+              lineage
+              join vote noteVote 
+              on noteVote.post_id = lineage.descendant_id
+            where 
+              lineage.ancestor_id = new.post_id
+              and noteVote.tag_id = new.tag_id
+              and noteVote.user_id = new.user_id
+            on conflict(user_id, tag_id, post_id, note_id) do update set
+              informed = excluded.informed
+              , vote = excluded.vote
             ;
 
-            insert into lastVoteEvent(type, imported_vote_event_id)
-            values(1, new.vote_event_id) 
-            on conflict do update set imported_vote_event_id = new.vote_event_id;
+            insert into InformedVote
+            select user_id, tag_id, post_id, note_id, vote, informed
+            from ImplicitlyInformedVote
+            where informed_by_post_id = new.post_id
+            on conflict(user_id, tag_id, post_id, note_id) do update set
+              informed = excluded.informed
+              , vote = excluded.vote
+            ;
+
         end;
         """,
 
         """
-        drop trigger if exists afterInsertVote;
-        """,
-
-        """
         create trigger afterInsertVote after insert on Vote begin
-
-            -- update ConditionalVote set informed_vote = new.vote where user_id = new.user_id and tag_id = new.tag_id and post_id = new.post_id;
 
             insert into Tally(
                   tag_id
@@ -599,16 +552,12 @@ function create_triggers(db::SQLite.DB)
                 , count                = count + (new.vote == 1)
                 , latest_vote_event_id = new.vote_event_id
             ;
+
         end;
         """,
 
         """
-        drop trigger if exists afterUpdateVote;
-        """,
-
-        """
         create trigger afterUpdateVote after update on Vote begin
-            -- update ConditionalVote set informed_vote = new.vote where user_id = new.user_id and tag_id = new.tag_id and post_id = new.post_id ;
             update Tally
             set 
                 total                  = total + (new.vote != 0) - (old.vote != 0)
@@ -617,60 +566,52 @@ function create_triggers(db::SQLite.DB)
             where tag_id = new.tag_id
             and post_id = new.post_id
             ;
+
         end;
         """,
 
         """
-        create trigger afterInsertConditionalVote after insert on ConditionalVote begin
-            insert into ConditionalTally(
-                  tag_id
-                , post_id
-                , note_id
-                , event_type
-                , informed_count
-                , informed_total
-                , uninformed_count
-                , uninformed_total
-            ) 
-            values (
-                new.tag_id
-                , new.post_id
-                , new.note_id
-                , new.event_type
-                , (new.informed_vote == 1)
-                , (new.informed_vote != 0)
-                , (new.uninformed_vote == 1)
-                , (new.uninformed_vote != 0)
-            ) on conflict(tag_id, post_id, note_id, event_type) do update
-            set
-                  informed_count   = informed_count + (new.informed_vote == 1)
-                , informed_total   = informed_total + (new.informed_vote != 0) 
-                , uninformed_count = uninformed_count + (new.uninformed_vote == 1)
-                , uninformed_total = uninformed_total + (new.uninformed_vote != 0) 
-            ;
-        end;
+          create trigger afterInsertInformedVote after insert on InformedVote 
+          when new.informed = 1 
+          begin
+             insert into InformedTally(
+                    tag_id
+                  , post_id
+                  , note_id
+                  , informed_count
+                  , informed_total
+              ) 
+              values (
+                  new.tag_id
+                  , new.post_id
+                  , new.note_id
+                  , (new.vote = 1)
+                  , (new.vote != 0)
+              ) 
+              on conflict(tag_id, post_id, note_id) do update
+              set
+                    informed_count   = informed_count + (new.vote = 1)
+                  , informed_total   = informed_total + (new.vote != 0) 
+              ;
+          end;
         """,
 
         """
-        drop trigger if exists afterUpdateConditionalVote;
-        """,
-
-        """
-        create trigger afterUpdateConditionalVote after update on ConditionalVote begin
-            update ConditionalTally
+        create trigger afterUpdateInformedVote after update on InformedVote begin
+            update InformedTally
             set
-                informed_count     = informed_count + ((new.informed_vote == 1) - (old.informed_vote == 1))
-                , informed_total   = informed_total + ((new.informed_vote != 0) - (old.informed_vote != 0))
-                , uninformed_count = uninformed_count + ((new.uninformed_vote == 1) - (old.uninformed_vote == 1))
-                , uninformed_total = uninformed_total + ((new.uninformed_vote != 0) - (old.uninformed_vote != 0))
+                informed_count     = informed_count + ((new.vote = 1) - (old.vote = 1))
+                , informed_total   = informed_total + ((new.vote != 0) - (old.vote != 0))
             where
             tag_id = new.tag_id
             and post_id = new.post_id
             and note_id = new.note_id
-            and event_type = new.event_type
+            and new.informed = 1
             ;
         end;
         """,
+
+
     ]
 
     map((stmt) -> DBInterface.execute(db, stmt), stmts)

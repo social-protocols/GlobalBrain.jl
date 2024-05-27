@@ -1,4 +1,6 @@
 function misinformation(sim::SimulationAPI)
+    Random.seed!(3);
+
     A = sim.post!(nothing, "[VIDEO] Shocking devastation from an airstrike in [war-torn country]")
     root_post_id = A.post_id
 

@@ -5,6 +5,7 @@ using SQLite
 using Dates
 using Random
 using Memoize
+using DataFrames
 
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
