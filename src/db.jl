@@ -29,6 +29,7 @@ end
 Create a SQLite database with the schema required to run the Global Brain
 service at the provided path if it doesn't already exist.
 """
+
 function init_score_db(database_path::String)
     if isfile(database_path)
         @warn "Database already exists at $database_path"
@@ -44,19 +45,12 @@ function init_score_db(database_path::String)
         create_views(db)
         create_triggers(db)
         @info "Score database successfully initialized at $database_path"
-
     end
 
     return db
-
 end
 
-"""
-    get_score_db(database_path::String)::SQLite.DB
 
-Get a connection to the score database at the provided path. If the database does not
-exist, it will be created.
-"""
 function get_score_db(database_path::String)::SQLite.DB
     if !isfile(database_path)
         return init_score_db(database_path)
@@ -72,10 +66,8 @@ function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::Stri
             sql_query
         )
     end
-
     return preparedStatements[stmt_key]
 end
-
 
 
 function get_tallies_data(
@@ -162,7 +154,8 @@ function get_conditional_tally(
 
 end
 
-function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
+
+function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)::Effect
 
     stmt = get_prepared_statement(
         db,
@@ -187,14 +180,7 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
     return first(results)
 end
 
-"""
-    insert_score_event(
-        db::SQLite.DB,
-        score_event::ScoreEvent,
-    )::Nothing
 
-Insert a `ScoreEvent` instance into the score database.
-"""
 function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
     stmt = get_prepared_statement(
         db,
@@ -228,7 +214,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             score_event.vote_event_id,
             score_event.vote_event_time,
             score.tag_id,
-            # score.parent_id,
             score.post_id,
             score.top_note_id,
             score.critical_thread_id,
@@ -305,7 +290,6 @@ function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
         "set_last_processed_vote_event_id",
         "update lastVoteEvent set processed_vote_event_id = ?",
     )
-
     DBInterface.execute(
         stmt,
         [vote_event_id],
@@ -346,7 +330,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
             values (?, ?, ?, ?, ?, ?, ?, ?)
         """
     )
- 
+
     DBInterface.execute(
         stmt,
         (
@@ -409,27 +393,6 @@ end
 
 function sql_missing_to_nothing(val::Any)
     return ismissing(val) ? nothing : val
-end
-
-
-function get_or_insert_tag_id(db::SQLite.DB, tag::String)::Number
-
-    stmt = get_prepared_statement(
-        db,
-        "get_or_insert_tag_id",
-        "insert into tag(tag) values (?) on conflict do nothing returning id",
-    )
-
-    results = DBInterface.execute(
-        stmt,
-        [tag],
-    ) |> collect_results(r -> r[:id])
-
-    if length(results) == 0
-        error("Failed to get/insert tag $tag")
-    end
-
-    return first(results)
 end
 
 function get_effects_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector{Effect}
