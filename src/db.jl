@@ -1,4 +1,4 @@
-using DataFrames
+global preparedStatements = Dict{String, SQLite.Stmt}()
 
 """
     init_score_db(database_path::String)
@@ -14,7 +14,7 @@ function init_score_db(database_path::String)
 
     db = SQLite.DB(database_path)
 
-    results = DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> DataFrame
+    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> DataFrame
 
     SQLite.transaction(db) do
         create_tables(db)
@@ -40,9 +40,6 @@ function get_score_db(database_path::String)::SQLite.DB
     end
     return SQLite.DB(database_path)
 end
-
-
-global preparedStatements = Dict{String, SQLite.Stmt}()
 
 
 function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::String)
@@ -342,7 +339,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     )
 end
 
-using DataFrames
+
 function sql_row_to_effect_event(row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})::EffectEvent
     return EffectEvent(
         vote_event_id = row[:vote_event_id],
