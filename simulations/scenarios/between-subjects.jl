@@ -16,7 +16,7 @@
             SimulationVote(A.post_id, 1, i)
             for i in uninformed_users
         ]
-        scores, effects = sim.step!(1, votes; description="100 users upvote A.")
+        scores, _ = sim.step!(1, votes; description="100 users upvote A.")
         @test scores[A.post_id].p ≈ 1.0 atol = 0.1
     end
 
@@ -30,7 +30,7 @@
                 for i in informed_users
             ]
 
-        scores, effects = sim.step!(2, votes; description="100 new users upvote B.")
+        scores, _ = sim.step!(2, votes; description="100 new users upvote B.")
 
         @test scores[A.post_id].p ≈ 1.0 atol = 0.1
         @test scores[B.post_id].p ≈ 1.0 atol = 0.1
@@ -39,7 +39,7 @@
     # --------------------------------------------------------------------------
     # --- STEP 3 ---------------------------------------------------------------
     # --------------------------------------------------------------------------
-    
+
     @testset "Within subject Step 3" begin
         votes = [
                 SimulationVote(A.post_id, -1, i)
@@ -52,4 +52,3 @@
         @test scores[A.post_id].p ≈ 0.0 atol = 0.1
     end
 end
-

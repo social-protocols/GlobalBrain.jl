@@ -130,8 +130,8 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[deps.GlobalBrain]]
-deps = ["DataFrames", "Dates", "JSON", "Memoize", "Random", "SQLite", "Test"]
-git-tree-sha1 = "5251ab993eb54a194b2e4c46d47020d6282a31ec"
+deps = ["DataFrames", "Dates", "JSON", "Random", "SQLite", "Test"]
+git-tree-sha1 = "1658f072e60b16add4e207ce2baf660d6524fe6c"
 repo-rev = "standalone-simulations-module"
 repo-url = ".."
 uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"

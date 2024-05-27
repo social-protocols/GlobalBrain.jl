@@ -3,7 +3,7 @@
 # -- assumption: users vote honestly
 # -- expectation: upvote probability converges on P(blue marble)
 
-function marbles(sim::SimulationAPI)
+(sim::SimulationAPI) -> begin
     Random.seed!(3);
     # --------------------------------------------------------------------------
     # --- STEP 1 ---------------------------------------------------------------
@@ -19,7 +19,7 @@ function marbles(sim::SimulationAPI)
     ]
 
     @testset "Marbles Step 1" begin
-       scores = sim.step!(1, votes; description="True probability of a blue marble is $p. All users answer honestly.")
+       scores, _ = sim.step!(1, votes; description="True probability of a blue marble is $p. All users answer honestly.")
        @test scores[A.post_id].p ≈ 0.42 atol = 0.1
    end
 end

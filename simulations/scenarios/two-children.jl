@@ -1,7 +1,4 @@
-
-
-
-function two_children(sim::SimulationAPI)
+(sim::SimulationAPI) -> begin
     Random.seed!(3); 
 
     A = sim.post!(nothing, "A")
@@ -30,7 +27,7 @@ function two_children(sim::SimulationAPI)
         ]
 
         # votes = votesGivenBeliefs(A.post_id, repeat([p_a], n_users))
-        scores = sim.step!(1, votes, description="There are $n_users users. $(p_a*100)% agree with A.")
+        scores, _ = sim.step!(1, votes, description="There are $n_users users. $(p_a*100)% agree with A.")
 
         p = scores[A.post_id].p
 
@@ -56,7 +53,7 @@ function two_children(sim::SimulationAPI)
             for i in 1:n_subset1
         ]
 
-        scores = sim.step!(2, [votes_a; votes_b], description="Of the $n_subset1 users that consider B, $(p_a_given_b*100)% agree with A.")
+        scores, _ = sim.step!(2, [votes_a; votes_b], description="Of the $n_subset1 users that consider B, $(p_a_given_b*100)% agree with A.")
 
         p = scores[A.post_id].p
 
@@ -86,7 +83,7 @@ function two_children(sim::SimulationAPI)
             for i in n_subset1+1:(n_subset1+n_subset2)
         ]
 
-        scores = sim.step!(3, [votes_a; votes_c]; description="Among a separate group of $n_subset2 users that consider C, $(round(p_a_given_c*100, digits=2))% agree with A. Since C has a smaller effect on A than does B, it does not become the critical response and does not effect the informed upvote probability estimate for A.")
+        scores, _ = sim.step!(3, [votes_a; votes_c]; description="Among a separate group of $n_subset2 users that consider C, $(round(p_a_given_c*100, digits=2))% agree with A. Since C has a smaller effect on A than does B, it does not become the critical response and does not effect the informed upvote probability estimate for A.")
 
         p1 = scores[A.post_id].p
 

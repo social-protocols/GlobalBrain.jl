@@ -14,7 +14,7 @@
             SimulationVote(A.post_id, 1, i)
             for i in 1:n
         ]
-        scores, effects = sim.step!(1, votes; description="Everyone upvotes A.")
+        scores, _ = sim.step!(1, votes; description="Everyone upvotes A.")
         @test scores[A.post_id].p ≈ 1.0 atol = 0.1
     end
 
@@ -28,7 +28,7 @@
                 for i in 1:n
             ]
 
-        scores, effects = sim.step!(2, votes; description="Everyone upvotes B.")
+        scores, _ = sim.step!(2, votes; description="Everyone upvotes B.")
 
         @test scores[A.post_id].p ≈ 1.0 atol = 0.1
         @test scores[B.post_id].p ≈ 1.0 atol = 0.1

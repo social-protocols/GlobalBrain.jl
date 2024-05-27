@@ -101,6 +101,7 @@ function create_simulation_post!(
     return SimulationPost(parent_id, r[:id], content)
 end
 
+
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
     results = DBInterface.execute(
         db,
@@ -116,13 +117,15 @@ end
     return ismissing(id) ? nothing : id
 end
 
+
+
 function simulation_step!(
     db::SQLite.DB,
     step::Int,
     votes::Array{SimulationVote},
     tag_id::Int;
     description::Union{String,Nothing} = nothing,
-)::Dict
+)::Tuple{Dict, Dict}
     vote_event_id = get_last_processed_vote_event_id(db) + 1
 
     DBInterface.execute(
@@ -131,11 +134,14 @@ function simulation_step!(
         [tag_id, step, description],
     ) |> DataFrame
 
+
     for v in shuffle(votes)
         parent_id = get_parent_id(db, v.post_id)
         vote_event = VoteEvent(
             vote_event_id = vote_event_id,
             vote_event_time = step,
+            # TODO: refactor start_user scheme in simulations
+            # user_id = string(i + start_user),
             user_id = string(v.user_id),
             tag_id = tag_id,
             parent_id = parent_id,
@@ -152,8 +158,17 @@ function simulation_step!(
 
     score_rows =
         DBInterface.execute(db, "select * from score where tag_id = :tag_id", [tag_id])
+
+    effect_rows =
+        DBInterface.execute(db, "select * from effect where tag_id = :tag_id", [tag_id])
+
     scores = map(sql_row_to_score, score_rows)
-    return Dict(score.post_id => score for score in scores)
+    effects = map(sql_row_to_effect, effect_rows)
+
+    return (
+        Dict(score.post_id => score for score in scores),
+        Dict((effect.post_id, effect.note_id) => effect for effect in effects),
+    )
 end
 
 end

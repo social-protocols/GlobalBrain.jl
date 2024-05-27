@@ -29,7 +29,7 @@
             for i in group0
         ]
 
-        (scores, effects) = sim.step!(1, votes; description="Among users that only consider A, $(p_a*100)% agree with A.")
+        scores, _ = sim.step!(1, votes; description="Among users that only consider A, $(p_a*100)% agree with A.")
 
         p = scores[A.post_id].p
 
@@ -55,7 +55,7 @@
 
         all_votes = [votes_a; votes_b]
 
-        (scores, effects) = sim.step!(2, all_votes; description="Among users that consider B, $(p_a_given_b*100)% agree with A.")
+        scores, _ = sim.step!(2, all_votes; description="Among users that consider B, $(p_a_given_b*100)% agree with A.")
 
         p = scores[A.post_id].p
 
@@ -83,7 +83,7 @@
 
         all_votes = [votes_c1; votes_c2; votes_a_given_c; votes_a_given_b_and_c]
 
-        (scores, effects) = sim.step!(3, all_votes; description="Among users who only consider C, $(round(p_a_given_c*100, digits=2))% agree with A. Among users who consider B and C, $(round(p_a_given_b_and_c*100, digits=2))% agree with A.")
+        scores, _ = sim.step!(3, all_votes; description="Among users who only consider C, $(round(p_a_given_c*100, digits=2))% agree with A. Among users who consider B and C, $(round(p_a_given_b_and_c*100, digits=2))% agree with A.")
 
         p1 = scores[A.post_id].p
 
@@ -91,5 +91,4 @@
             @test_broken p1 ≈ p_a_given_b_and_c atol = 0.1
         end
     end
-
 end
