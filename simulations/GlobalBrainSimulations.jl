@@ -6,7 +6,6 @@ using SQLite
 using .GlobalBrain
 using Distributions
 using Memoize
-using DataFrames
 using Random
 
 export SimulationAPI
@@ -93,15 +92,15 @@ function create_simulation_post!(
         db,
         "insert into post (parent_id, content) values (?, ?) on conflict do nothing returning id",
         [parent_id, content],
-    ) |> DataFrame
+    ) |> collect_results(row -> row[:id])
 
-    if nrow(results) == 0
+    if length(results) == 0
         error("Failed to insert post")
     end
 
-    r = first(results)
+    id = first(results)
 
-    return SimulationPost(parent_id, r[:id], content)
+    return SimulationPost(parent_id, id, content)
 end
 
 
@@ -110,13 +109,13 @@ end
         db,
         "select parent_id as parent_id from post where id = ?",
         [post_id],
-    ) |> DataFrame
+    ) |> collect_results(row -> row[:parent_id])
 
-    if nrow(results) == 0
+    if length(results) == 0
         error("Failed to get parent id for $post_id")
     end
 
-    id = first(results)[:parent_id]
+    id = first(results)
     return ismissing(id) ? nothing : id
 end
 
@@ -135,8 +134,7 @@ function simulation_step!(
         db,
         "insert into period (tag_id, step, description) values (?, ?, ?)",
         [tag_id, step, description],
-    ) |> DataFrame
-
+    ) |> collect_results()
 
     for v in shuffle(votes)
         parent_id = get_parent_id(db, v.post_id)

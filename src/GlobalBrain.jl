@@ -55,6 +55,7 @@ export sql_row_to_effect
 export sql_row_to_score
 export as_tallies_tree
 export get_or_insert_tag_id
+export collect_results
 
 # --- Probability models
 export Model
