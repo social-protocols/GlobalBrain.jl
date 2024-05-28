@@ -1,3 +1,5 @@
+global preparedStatements = Dict{String, SQLite.Stmt}()
+
 """
     init_score_db(database_path::String)
 
@@ -11,12 +13,20 @@ function init_score_db(database_path::String)
     end
 
     db = SQLite.DB(database_path)
-    create_tables(db)
-    create_views(db)
-    create_triggers(db)
-    @info "Score database successfully initialized at $database_path"
-end
 
+    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> DataFrame
+
+    SQLite.transaction(db) do
+        create_tables(db)
+        create_views(db)
+        create_triggers(db)
+        @info "Score database successfully initialized at $database_path"
+
+    end
+
+    return db
+
+end
 
 """
     get_score_db(database_path::String)::SQLite.DB
@@ -26,10 +36,23 @@ exist, it will be created.
 """
 function get_score_db(database_path::String)::SQLite.DB
     if !isfile(database_path)
-        init_score_db(database_path)
+        return init_score_db(database_path)
     end
     return SQLite.DB(database_path)
 end
+
+
+function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::String)
+    if !haskey(preparedStatements, stmt_key)
+        preparedStatements[stmt_key] = DBInterface.prepare(
+            db,
+            sql_query
+        )
+    end
+
+    return preparedStatements[stmt_key]
+end
+
 
 
 function get_tallies_data(
@@ -37,21 +60,26 @@ function get_tallies_data(
     tag_id::Int,
     parent_id::Union{Int,Nothing},
 )::Vector{TalliesData}
-    sql_query = """
+
+    stmt = get_prepared_statement(
+        db,
+        "get_tallies_data",
+        """
         select
             Tally.*
             , NeedsRecalculation.post_id is not null as needs_recalculation
         from Tally
         left join NeedsRecalculation using (post_id, tag_id)
-    where
+        where
         tally.tag_id = :tag_id
         and
             (:parent_id = parent_id)
             or
             (:parent_id is null and parent_id is null)
-    """
+        """
+    )
 
-    results = DBInterface.execute(db, sql_query, [tag_id, parent_id])
+    results = DBInterface.execute(stmt, [tag_id, parent_id])
 
     return [
         TalliesData(
@@ -72,7 +100,11 @@ function get_conditional_tally(
     post_id::Int,
     note_id::Int,
 )::ConditionalTally
-    sql_query = """
+
+    stmt = get_prepared_statement(
+        db,
+        "get_conditional_tally",
+        """
         select
             *
         from ConditionalTally 
@@ -81,12 +113,11 @@ function get_conditional_tally(
             and note_id = :note_id
             and tag_id = :tag_id
         """
+    )
 
-    results = DBInterface.execute(db, sql_query, [post_id, note_id, tag_id])
+    results = DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> DataFrame
 
-    r = iterate(results)
-
-    if isnothing(r)
+    if nrow(results) == 0
         return ConditionalTally(
             tag_id = tag_id,
             post_id = post_id,
@@ -96,18 +127,23 @@ function get_conditional_tally(
         )
     end
 
+    r = first(results)
+
     return ConditionalTally(
-        tag_id = r[1][:tag_id],
-        post_id = r[1][:post_id],
-        note_id = r[1][:note_id],
-        informed = BernoulliTally(r[1][:informed_count], r[1][:informed_total]),
-        uninformed = BernoulliTally(r[1][:uninformed_count], r[1][:uninformed_total]),
+        tag_id = r[:tag_id],
+        post_id = r[:post_id],
+        note_id = r[:note_id],
+        informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+        uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
     )
 end
 
 function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
 
-    sql = """
+    stmt = get_prepared_statement(
+        db,
+        "get_effect",
+        """
         select
             *,
             ifnull(top_subthread_id, 0) as top_subthread_id
@@ -116,17 +152,18 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
             tag_id = :tag_id
             and post_id = :post_id
             and note_id = :note_id
-    """
+        """
+    )
 
-    results = DBInterface.execute(db, sql, [tag_id, post_id, note_id])
+    results = DBInterface.execute(stmt, [tag_id, post_id, note_id]) |> DataFrame
 
-    r = iterate(results)
-
-    if isnothing(r)
+    if nrow(results) == 0
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
-    return sql_row_to_effect_event(r[1]).effect
+    r = first(results)
+
+    return sql_row_to_effect_event(r).effect
 end
 
 """
@@ -138,7 +175,10 @@ end
 Insert a `ScoreEvent` instance into the score database.
 """
 function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
-    sql = """
+    stmt = get_prepared_statement(
+        db,
+        "insert_score_event",
+        """
         insert into ScoreEvent(
               vote_event_id
             , vote_event_time
@@ -157,12 +197,12 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
-    """
+        """
+    )
 
     score = score_event.score
     DBInterface.execute(
-        db,
-        sql,
+        stmt,
         (
             score_event.vote_event_id,
             score_event.vote_event_time,
@@ -182,7 +222,10 @@ end
 
 
 function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
-    sql = """
+    stmt = get_prepared_statement(
+        db,
+        "insert_effect_event",
+        """
         insert into EffectEvent(
               vote_event_id
             , vote_event_time
@@ -200,13 +243,12 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
-
-    """
+        """
+    )
 
     effect = effect_event.effect
     DBInterface.execute(
-        db,
-        sql,
+        stmt,
         (
             effect_event.vote_event_id,
             effect_event.vote_event_time,
@@ -237,26 +279,37 @@ end
 
 
 function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
-    DBInterface.execute(
+    stmt = get_prepared_statement(
         db,
+        "set_last_processed_vote_event_id",
         "update lastVoteEvent set processed_vote_event_id = ?",
+    )
+
+    DBInterface.execute(
+        stmt,
         [vote_event_id],
     )
 end
 
 
 function get_last_processed_vote_event_id(db::SQLite.DB)
-    results = DBInterface.execute(db, "select processed_vote_event_id from lastVoteEvent")
-    r = iterate(results)
-    return r[1][:processed_vote_event_id]
+    stmt = get_prepared_statement(
+        db,
+        "get_last_processed_vote_event_id",
+        "select processed_vote_event_id from lastVoteEvent",
+    )
+
+    results = DBInterface.execute(stmt) |> DataFrame
+
+    return first(results)[:processed_vote_event_id]
 end
 
-
 function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
-    DBInterface.execute(
+    stmt = get_prepared_statement(
         db,
+        "insert_vote_event",
         """
-            insert into VoteEventImport
+            insert into VoteEvent
             (
                   vote_event_id
                 , vote_event_time
@@ -268,7 +321,11 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
                 , vote
             )
             values (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
+        """
+    )
+ 
+    DBInterface.execute(
+        stmt,
         (
             vote_event.vote_event_id,
             vote_event.vote_event_time,
@@ -283,7 +340,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
 end
 
 
-function sql_row_to_effect_event(row::SQLite.Row)::EffectEvent
+function sql_row_to_effect_event(row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})::EffectEvent
     return EffectEvent(
         vote_event_id = row[:vote_event_id],
         vote_event_time = row[:vote_event_time],
@@ -323,19 +380,25 @@ function sql_missing_to_nothing(val::Any)
     return ismissing(val) ? nothing : val
 end
 
+
 function get_or_insert_tag_id(db::SQLite.DB, tag::String)
 
-    results = DBInterface.execute(
+    stmt = get_prepared_statement(
         db,
+        "get_or_insert_tag_id",
         "insert into tag(tag) values (?) on conflict do nothing returning id",
-        [tag],
     )
 
-    r = iterate(results)
+    results = DBInterface.execute(
+        stmt,
+        [tag],
+    ) |> DataFrame
 
-    if length(r) == 0
+    if nrow(results) == 0
         error("Failed to get/insert tag $tag")
     end
 
-    return r[1][:id]
+    result = first(results)
+
+    return result[:id]
 end

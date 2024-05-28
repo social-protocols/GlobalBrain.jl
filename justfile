@@ -27,7 +27,7 @@ reset-db:
 
 
 sim name="":
-    julia --project scripts/sim.jl {{name}}
+    time julia --project scripts/sim.jl {{name}}
 
 
 sim-db:
