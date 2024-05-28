@@ -12,7 +12,6 @@ export SimulationAPI
 export SimulationVote
 export get_sim_db
 export run_simulation!
-export get_or_insert_tag_id
 
 const LEGACY_TAG_ID = 1
 

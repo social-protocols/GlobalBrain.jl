@@ -25,16 +25,8 @@ reset-db:
     julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $DATABASE_PATH
     rm ~/social-protocols-data/score-events.jsonl
 
-
 sim name="":
-    time julia --project=simulations simulations/run.jl {{name}}
-
-sim-all:
-    find simulations/scenarios -type f -name "*.jl" | while IFS= read -r file; do \
-        echo "Processing $file..."; \
-        julia --project=simulations simulations/run.jl $file; \
-    done
-
+    time julia --project=simulations simulations/run.jl simulations/scenarios {{name}}
 
 sim-db query="":
     litecli $SIM_DATABASE_PATH -e "{{query}}"
