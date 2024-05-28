@@ -27,6 +27,44 @@ function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
 end
 
 
+function replay_vote_event(
+    output_event::Function,
+    db::SQLite.DB,
+    vote_event::VoteEvent,
+)
+
+    existing_vote_event = get_vote_event(db, vote_event.vote_event_id)
+
+    @info "Existing vote event $existing_vote_event"
+    if existing_vote_event == nothing
+        @error "Vote event $(vote_event.vote_event_id) not found in the database"
+        return
+    end
+
+    if existing_vote_event != vote_event
+        @error "Vote event $(vote_event) not identical to previous event with same id ($existing_vote_event)"
+        return
+    end
+
+    for event in get_effects_for_vote_event(db, vote_event.vote_event_id)
+        output_event(event)
+    end
+
+    score_events = get_scores_for_vote_event(db, vote_event.vote_event_id)
+
+    # There is always a score event, but not necessarily an effect event.
+    if length(score_events) == 0
+        throw("Missing score event for vote_event_id=$(vote_event.vote_event_id)")
+    end
+
+
+    for event in score_events
+        output_event(event)
+    end
+
+end
+
+
 function process_vote_event(
     output_event::Function,
     db::SQLite.DB,
@@ -34,8 +72,8 @@ function process_vote_event(
 )
     last_processed_vote_event_id = get_last_processed_vote_event_id(db)
     if vote_event.vote_event_id <= last_processed_vote_event_id
-        @error "Already processed vote event $(vote_event.vote_event_id)"
-        throw("Failed to process vote event")
+        replay_vote_event(output_event, db, vote_event)
+        return
     end
 
     insert_vote_event(db, vote_event)

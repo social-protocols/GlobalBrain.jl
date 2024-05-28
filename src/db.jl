@@ -131,7 +131,7 @@ function get_conditional_tally(
         select
             *
         from ConditionalTally 
-        where 
+        where
             post_id = :post_id
             and note_id = :note_id
             and tag_id = :tag_id
@@ -169,10 +169,9 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
         "get_effect",
         """
         select
-            *,
-            ifnull(top_subthread_id, 0) as top_subthread_id
+            *
         from effect
-        where 
+        where
             tag_id = :tag_id
             and post_id = :post_id
             and note_id = :note_id
@@ -396,12 +395,25 @@ function sql_row_to_score(row::SQLite.Row)::Score
 end
 
 
+function sql_row_to_vote_event(row::SQLite.Row)::VoteEvent
+    return VoteEvent(
+        vote_event_id = row[:vote_event_id],
+        vote_event_time = row[:vote_event_time],
+        user_id = row[:user_id],
+        tag_id = row[:tag_id],
+        parent_id = sql_missing_to_nothing(row[:parent_id]),
+        post_id = row[:post_id],
+        note_id = sql_missing_to_nothing(row[:note_id]),
+        vote = row[:vote],
+    )
+end
+
 function sql_missing_to_nothing(val::Any)
     return ismissing(val) ? nothing : val
 end
 
 
-function get_or_insert_tag_id(db::SQLite.DB, tag::String)
+function get_or_insert_tag_id(db::SQLite.DB, tag::String)::Number
 
     stmt = get_prepared_statement(
         db,
@@ -416,6 +428,64 @@ function get_or_insert_tag_id(db::SQLite.DB, tag::String)
 
     if length(results) == 0
         error("Failed to get/insert tag $tag")
+    end
+
+    return first(results)
+end
+
+function get_effects_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector{Effect}
+
+    stmt = get_prepared_statement(
+        db,
+        "get_effects_for_vote_event",
+        """
+        select
+            *
+        from EffectEvent
+        where
+            vote_event_id = :vote_event_Id
+        """
+    )
+
+    return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_effect)
+end
+
+
+function get_scores_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector{Score}
+
+    stmt = get_prepared_statement(
+        db,
+        "get_scores_for_vote_event",
+        """
+        select
+            *
+        from ScoreEvent
+        where
+            vote_event_id = :vote_event_Id
+        """
+    )
+
+    return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_score)
+end
+
+function get_vote_event(db::SQLite.DB, vote_event_id::Int)::VoteEvent
+
+    stmt = get_prepared_statement(
+        db,
+        "get_vote_event",
+        """
+        select 
+            *
+        from VoteEvent
+        where
+            vote_event_id = :vote_event_id
+        """
+    )
+
+    results = DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_vote_event)
+
+    if length(results) == 0
+        throw("Missing vote event for vote_event_id=$(vote_event_id)")
     end
 
     return first(results)

@@ -15,8 +15,17 @@ TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     echo "Testing scoring algorithm";
     julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $TEST_DB_FILENAME
     julia --project -- scripts/run.jl $TEST_DB_FILENAME $test_vote_events_json_file $TMPDIR/score-events.jsonl;
-    echo "Comparing $TMPDIR/score-events.jsonl to $expected_score_events_file";
+    echo "Comparing $expected_score_events_file $TMPDIR/score-events.jsonl";
     diff -b $expected_score_events_file $TMPDIR/score-events.jsonl;
+
+    echo "Testing replay logic"
+    head -1 $test_vote_events_json_file > $TMPDIR/vote-events-head.jsonl
+    julia --project -- scripts/run.jl $TEST_DB_FILENAME $TMPDIR/vote-events-head.jsonl $TMPDIR/score-events-2.jsonl;
+
+    head -1 $expected_score_events_file > $TMPDIR/expected-score-events-replay.jsonl
+
+    echo "Comparing $TMPDIR/expected-score-events-replay.jsonl $TMPDIR/score-events-2.jsonl";
+    diff -b $TMPDIR/expected-score-events-replay.jsonl $TMPDIR/score-events-2.jsonl;
 ); 
 result=$?
 

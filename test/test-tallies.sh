@@ -15,7 +15,7 @@ TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $TEST_DB_FILENAME
     sqlite3 $TEST_DB_FILENAME -csv -header  ".import -skip 1 '|cat' VoteEventImport" < $TMPDIR/vote-events.csv;
     sqlite3 $TEST_DB_FILENAME -line ".eqp off" ".output $TMPDIR/tallies.txt" "select * from ConditionalTally order by tag_id, post_id, note_id;";
-    echo "Comparing $TMPDIR/tallies.txt to $expected_tallies_file";
+    echo "Comparing $expected_tallies_file $TMPDIR/tallies.txt";
     diff -b $expected_tallies_file $TMPDIR/tallies.txt
     result=$?
     if [ $result -eq 1 ]; then
