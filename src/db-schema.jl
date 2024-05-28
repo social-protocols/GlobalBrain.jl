@@ -303,7 +303,7 @@ function create_views(db::SQLite.DB)
           UNION ALL
           -- If the note is a direct child of the target then the
           -- partially-informed tally is the overall tally for the target.
-          select tag_id, post_id, post_id, count, total
+          select tag_id, post_id, post_id as note_id, count, total
           from tally
         )
         select
@@ -315,13 +315,15 @@ function create_views(db::SQLite.DB)
           , PartiallyInformed.count - Informed.count + ifnull(Preinformed.count,0) as uninformed_count
           , PartiallyInformed.total - Informed.total + ifnull(Preinformed.total,0) as uninformed_total
         from
-          PartiallyInformed
-          left join PreinformedTally Preinformed using (tag_id, post_id, note_id)
-          join Post on (post.parent_id = PartiallyInformed.note_id)
-          join InformedTally Informed on
-            Informed.note_id = post.id
+          InformedTally Informed 
+          join Post on (post.id = Informed.note_id)
+          join PartiallyInformed on
+            PartiallyInformed.note_id = post.parent_id
             and PartiallyInformed.post_id = informed.post_id
             and PartiallyInformed.tag_id = informed.tag_id
+          left join PreinformedTally Preinformed using(tag_id, post_id, note_id)
+        ;
+
         ;
         """,
     ]
@@ -437,10 +439,10 @@ function create_triggers(db::SQLite.DB)
             select 
                 tag_id
                 , post_id
-                , note_id
+                , new.id as note_id
                 , count
                 , total
-            from InformedTally
+            from PartiallyInformed
             where(note_id = new.parent_id)
             on conflict do nothing; -- this shouldn't be necessary, but for reasons I don't understand removing it is producing unique constraint failures 
         end;
