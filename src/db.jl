@@ -1,5 +1,28 @@
 global preparedStatements = Dict{String, SQLite.Stmt}()
 
+# Generic function to iterate over a SQLite query result and place results in
+# a vector. It is often convenient by default to iterate over the results of
+# a query, even if they are not needed, because to commit transactions there
+# can not be any open SQL statement. But you can't just put each SQLite.Row into
+# a vector (.e.g [row for row in result]) because the SQLite.Row object contains
+# only a reference to the query, and not the actual data. You actually need to read
+# the values out of the row and put them somewhere. The optional converter function
+# takes a SQLite.Row and returns whatever data is required.
+function collect_results(optional_converter::Union{Function, Nothing} =
+nothing)
+
+    converter = !isnothing(optional_converter) ? optional_converter : x -> begin
+        nothing
+    end 
+
+    f = rows -> begin
+        return [converter(row) for row in rows]
+    end
+
+    return f
+
+end
+
 """
     init_score_db(database_path::String)
 
@@ -14,7 +37,7 @@ function init_score_db(database_path::String)
 
     db = SQLite.DB(database_path)
 
-    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> DataFrame
+    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> collect_results()
 
     SQLite.transaction(db) do
         create_tables(db)
@@ -115,9 +138,17 @@ function get_conditional_tally(
         """
     )
 
-    results = DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> DataFrame
+    results = DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> collect_results(r -> begin
+        ConditionalTally(
+            tag_id = r[:tag_id],
+            post_id = r[:post_id],
+            note_id = r[:note_id],
+            informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+            uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
+        )
+    end)
 
-    if nrow(results) == 0
+    if length(results) == 0
         return ConditionalTally(
             tag_id = tag_id,
             post_id = post_id,
@@ -127,15 +158,8 @@ function get_conditional_tally(
         )
     end
 
-    r = first(results)
+    return first(results)
 
-    return ConditionalTally(
-        tag_id = r[:tag_id],
-        post_id = r[:post_id],
-        note_id = r[:note_id],
-        informed = BernoulliTally(r[:informed_count], r[:informed_total]),
-        uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
-    )
 end
 
 function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
@@ -155,15 +179,14 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)
         """
     )
 
-    results = DBInterface.execute(stmt, [tag_id, post_id, note_id]) |> DataFrame
+    results = DBInterface.execute(stmt, [tag_id, post_id, note_id]) |> collect_results(sql_row_to_effect)
 
-    if nrow(results) == 0
+    if length(results) == 0
         throw("Missing effect record for $tag_id, $post_id, $note_id")
     end
 
-    r = first(results)
+    return first(results)
 
-    return sql_row_to_effect_event(r).effect
 end
 
 """
@@ -299,9 +322,11 @@ function get_last_processed_vote_event_id(db::SQLite.DB)
         "select processed_vote_event_id from lastVoteEvent",
     )
 
-    results = DBInterface.execute(stmt) |> DataFrame
+    results = DBInterface.execute(stmt) |> collect_results(row -> begin
+        row[:processed_vote_event_id]
+    end)
 
-    return first(results)[:processed_vote_event_id]
+    return first(results)
 end
 
 function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
@@ -340,11 +365,8 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
 end
 
 
-function sql_row_to_effect_event(row::DataFrames.DataFrameRow{DataFrames.DataFrame, DataFrames.Index})::EffectEvent
-    return EffectEvent(
-        vote_event_id = row[:vote_event_id],
-        vote_event_time = row[:vote_event_time],
-        effect = Effect(
+function sql_row_to_effect(row::SQLite.Row)::Effect
+    Effect(
             tag_id = row[:tag_id],
             post_id = row[:post_id],
             note_id = row[:note_id],
@@ -356,7 +378,6 @@ function sql_row_to_effect_event(row::DataFrames.DataFrameRow{DataFrames.DataFra
             q_count = row[:q_count],
             q_size = row[:q_size],
             r = row[:r],
-        ),
     )
 end
 
@@ -392,13 +413,11 @@ function get_or_insert_tag_id(db::SQLite.DB, tag::String)
     results = DBInterface.execute(
         stmt,
         [tag],
-    ) |> DataFrame
+    ) |> collect_results(r -> r[:id])
 
-    if nrow(results) == 0
+    if length(results) == 0
         error("Failed to get/insert tag $tag")
     end
 
-    result = first(results)
-
-    return result[:id]
+    return first(results)
 end
