@@ -72,8 +72,8 @@ function create_tables(db::SQLite.DB)
               tag_id           integer not null
             , post_id          integer not null
             , note_id          integer not null
-            , informed_count   integer not null
-            , informed_total   integer not null
+            , count   integer not null
+            , total   integer not null
             , primary key(tag_id, post_id, note_id)
          ) strict;
         """,
@@ -296,31 +296,32 @@ function create_views(db::SQLite.DB)
         -- of the parent of the note but not the note itself.
 
         -- So our first step is to select all partially-informed tallies.
-        with partially_informed as (
-          -- The partially-informed tally for note C and target A is the informed tally of the parent
-          -- of C and target A.
+        with PartiallyInformed as (
+          -- The partially-informed tally for note C and target A is the
+          -- informed tally of the parent of C and target A.
           select * from InformedTally
           UNION ALL
-          -- If the note is a direct child of the target then the partially-informed tally is the overall
-          -- tally for the target.
+          -- If the note is a direct child of the target then the
+          -- partially-informed tally is the overall tally for the target.
           select tag_id, post_id, post_id, count, total
           from tally
         )
         select
-          informed.tag_id
-          , informed.post_id
-          , informed.note_id
-          , informed.informed_count
-          , informed.informed_total
-          , partially_informed.informed_count - informed.informed_count as uninformed_count
-          , partially_informed.informed_total - informed.informed_total as uninformed_total
+          Informed.tag_id
+          , Informed.post_id
+          , Informed.note_id
+          , Informed.count as informed_count
+          , Informed.total as informed_total
+          , PartiallyInformed.count - Informed.count + ifnull(Preinformed.count,0) as uninformed_count
+          , PartiallyInformed.total - Informed.total + ifnull(Preinformed.total,0) as uninformed_total
         from
-          partially_informed
-          join post on (post.parent_id = partially_informed.note_id)
-          join InformedTally informed on informed.note_id = post.id
-        where
-          partially_informed.post_id = informed.post_id
-          and partially_informed.tag_id = informed.tag_id
+          PartiallyInformed
+          left join PreinformedTally Preinformed using (tag_id, post_id, note_id)
+          join Post on (post.parent_id = PartiallyInformed.note_id)
+          join InformedTally Informed on
+            Informed.note_id = post.id
+            and PartiallyInformed.post_id = informed.post_id
+            and PartiallyInformed.tag_id = informed.tag_id
         ;
         """,
     ]
@@ -407,25 +408,44 @@ function create_triggers(db::SQLite.DB)
         create trigger afterInsertPost after insert on Post
         when new.parent_id is not null
         begin
+
+            -- Insert a lineage record for parent
             insert into Lineage(ancestor_id, descendant_id, separation)
             values(new.parent_id, new.id, 1) on conflict do nothing;
+
+            -- Insert a lineage record for all ancestors of this parent
+            insert into Lineage
+            select 
+                  ancestor_id
+                , new.id as descendant_id
+                , 1 + separation as separation
+            from lineage ancestor 
+            where ancestor.descendant_id = new.parent_id;
+
+            -- Take a snapshot of the tally before the note was created
+            insert into PreinformedTally
+            with PartiallyInformed as (
+              -- The partially-informed tally for note C and target A is the
+              -- informed tally of the parent of C and target A.
+              select * from InformedTally
+              UNION ALL
+              -- If the note is a direct child of the target then the
+              -- partially-informed tally is the overall tally for the target.
+              select tag_id, post_id, post_id, count, total
+              from tally
+            )
+            select 
+                tag_id
+                , post_id
+                , note_id
+                , count
+                , total
+            from InformedTally
+            where(note_id = new.parent_id)
+            on conflict do nothing; -- this shouldn't be necessary, but for reasons I don't understand removing it is producing unique constraint failures 
         end;
         """,
 
-        """
-        create trigger afterInsertLineage after insert on Lineage
-        begin
-            -- Insert a record for all ancestors of this ancestor
-            insert into Lineage
-            select 
-                  ancestor.ancestor_id                 as ancestor_id
-                , new.descendant_id                    as descendant_id
-                , new.separation + ancestor.separation as separation
-            from lineage ancestor 
-            where ancestor.descendant_id = new.ancestor_id
-            on conflict do nothing;
-        end;
-        """,
 
         # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
         # The logic and reasoning behind these calculations is discussed here:
@@ -473,7 +493,6 @@ function create_triggers(db::SQLite.DB)
             insert into Post(parent_id, id)
             values(new.parent_id, new.post_id) on conflict do nothing;
 
- 
             insert into InformedVote
             select
               new.user_id
@@ -578,8 +597,8 @@ function create_triggers(db::SQLite.DB)
                     tag_id
                   , post_id
                   , note_id
-                  , informed_count
-                  , informed_total
+                  , count
+                  , total
               ) 
               values (
                   new.tag_id
@@ -590,8 +609,8 @@ function create_triggers(db::SQLite.DB)
               ) 
               on conflict(tag_id, post_id, note_id) do update
               set
-                    informed_count   = informed_count + (new.vote = 1)
-                  , informed_total   = informed_total + (new.vote != 0) 
+                    count   = count + (new.vote = 1)
+                  , total   = total + (new.vote != 0)
               ;
           end;
         """,
@@ -600,8 +619,8 @@ function create_triggers(db::SQLite.DB)
         create trigger afterUpdateInformedVote after update on InformedVote begin
             update InformedTally
             set
-                informed_count     = informed_count + ((new.vote = 1) - (old.vote = 1))
-                , informed_total   = informed_total + ((new.vote != 0) - (old.vote != 0))
+                count     = count + ((new.vote = 1) - (old.vote = 1))
+                , total   = total + ((new.vote != 0) - (old.vote != 0))
             where
             tag_id = new.tag_id
             and post_id = new.post_id
@@ -611,6 +630,17 @@ function create_triggers(db::SQLite.DB)
         end;
         """,
 
+        """
+        -- Holds a snapshot of tallies before a note is created.
+        create table PreinformedTally(
+              tag_id           integer not null
+            , post_id          integer not null
+            , note_id          integer not null
+            , count   integer not null
+            , total   integer not null
+            , primary key(tag_id, post_id, note_id)
+         ) strict;
+        """,
 
     ]
 

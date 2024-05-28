@@ -5,7 +5,6 @@ set -Eeuo pipefail
 test_vote_events_json_file='test-data/vote-events.jsonl'
 expected_score_events_file='test-data/expected-score-events.jsonl'
 
-
 TEST_DB_FILENAME=$SOCIAL_PROTOCOLS_DATADIR/test.db
 rm -f $TEST_DB_FILENAME
 

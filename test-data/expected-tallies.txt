@@ -12,7 +12,7 @@ uninformed_total = 0
   informed_count = 1
   informed_total = 2
 uninformed_count = 0
-uninformed_total = 1
+uninformed_total = 2
 
           tag_id = 1
          post_id = 2
@@ -51,16 +51,16 @@ uninformed_total = 0
          note_id = 10
   informed_count = 0
   informed_total = 1
-uninformed_count = 0
-uninformed_total = 0
+uninformed_count = 1
+uninformed_total = 1
 
           tag_id = 1
          post_id = 8
          note_id = 11
   informed_count = 0
   informed_total = 1
-uninformed_count = 0
-uninformed_total = 0
+uninformed_count = 1
+uninformed_total = 1
 
           tag_id = 1
          post_id = 8
