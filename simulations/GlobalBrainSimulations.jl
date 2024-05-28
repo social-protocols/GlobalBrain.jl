@@ -90,7 +90,11 @@ function create_simulation_post!(
 )::SimulationPost
     results = DBInterface.execute(
         db,
-        "insert into post (parent_id, content) values (?, ?) on conflict do nothing returning id",
+        "
+        insert into post (parent_id, content)
+        values (?, ?)
+        on conflict do nothing returning id
+        ",
         [parent_id, content],
     ) |> collect_results(row -> row[:id])
 
@@ -102,24 +106,6 @@ function create_simulation_post!(
 
     return SimulationPost(parent_id, id, content)
 end
-
-
-@memoize function get_parent_id(db::SQLite.DB, post_id::Int)
-    results = DBInterface.execute(
-        db,
-        "select parent_id as parent_id from post where id = ?",
-        [post_id],
-    ) |> collect_results(row -> row[:parent_id])
-
-    if length(results) == 0
-        error("Failed to get parent id for $post_id")
-    end
-
-    id = first(results)
-    return ismissing(id) ? nothing : id
-end
-
-
 
 function simulation_step!(
     db::SQLite.DB,
@@ -141,8 +127,6 @@ function simulation_step!(
         vote_event = VoteEvent(
             vote_event_id = vote_event_id,
             vote_event_time = step,
-            # TODO: refactor start_user scheme in simulations
-            # user_id = string(i + start_user),
             user_id = string(v.user_id),
             tag_id = tag_id,
             parent_id = parent_id,
@@ -170,6 +154,21 @@ function simulation_step!(
         Dict(score.post_id => score for score in scores),
         Dict((effect.post_id, effect.note_id) => effect for effect in effects),
     )
+end
+
+@memoize function get_parent_id(db::SQLite.DB, post_id::Int)
+    results = DBInterface.execute(
+        db,
+        "select parent_id as parent_id from post where id = ?",
+        [post_id],
+    ) |> collect_results(row -> row[:parent_id])
+
+    if length(results) == 0
+        error("Failed to get parent id for $post_id")
+    end
+
+    id = first(results)
+    return ismissing(id) ? nothing : id
 end
 
 end
