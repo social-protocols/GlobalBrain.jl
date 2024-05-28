@@ -100,13 +100,12 @@ node-ext-test:
   RUN npm install --ignore-scripts --save /globalbrain-node-package
   RUN npm test 
 
-
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
-  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.add("Distributions")' # HACK: we don't want Distributions to be compiled into the node extension. Better let the simulation depend on the core algorithm.
-  COPY --dir scripts simulations ./
-  RUN julia -t auto --code-coverage=none --check-bounds=yes --project scripts/sim.jl
+  COPY --dir src simulations ./
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project=simulations -e 'using Pkg; Pkg.instantiate()'
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project=simulations simulations/run.jl simulations/scenarios
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
 vis-setup:
