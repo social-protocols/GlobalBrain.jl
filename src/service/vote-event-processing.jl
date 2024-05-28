@@ -70,7 +70,7 @@ function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::V
 
     insert_vote_event(db, vote_event)
 
-    tallies_data = get_tallies_data(db, vote_event.tag_id, nothing)
+    tallies_data = get_tallies_data(db, nothing)
 
     score_posts(output_event, tallies_data)
 

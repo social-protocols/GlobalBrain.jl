@@ -35,7 +35,6 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
     end
 
     score = Score(
-        tag_id = post.tag_id,
         post_id = post_id,
         top_note_id = !isnothing(top_thread) ? top_thread.note_id : nothing,
         critical_thread_id = !isnothing(top_thread) ?
@@ -136,7 +135,6 @@ function calc_thread_effect(
     @debug "p=$p for $post_id=>$note_id"
 
     return Effect(
-        tag_id = note.tag_id,
         post_id = post_id,
         note_id = note_id,
         top_subthread_id = top_subthread_id,

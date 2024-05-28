@@ -2,7 +2,6 @@ Base.@kwdef struct VoteEvent
     vote_event_id::Int
     vote_event_time::Int
     user_id::String
-    tag_id::Int64
     parent_id::Union{Int,Nothing}
     post_id::Int64
     note_id::Union{Int64,Nothing}

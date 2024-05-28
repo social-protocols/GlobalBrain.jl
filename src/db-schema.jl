@@ -5,7 +5,6 @@ function create_tables(db::SQLite.DB)
               vote_event_id   integer not null
             , vote_event_time integer not null
             , user_id         text    not null
-            , tag_id          integer not null
             , parent_id       integer
             , post_id         integer not null
             , note_id         integer
@@ -18,59 +17,41 @@ function create_tables(db::SQLite.DB)
               vote_event_id   integer not null
             , vote_event_time integer not null
             , user_id         text not null
-            , tag_id          integer not null
             , parent_id       integer
             , post_id         integer not null
             , vote            integer not null
-            , primary key(user_id, tag_id, post_id)
+            , primary key(user_id, post_id)
         ) strict;
         """,
         """
         create table Tally(
-              tag_id               integer not null
-            , parent_id            integer
+              parent_id            integer
             , post_id              integer not null
             , latest_vote_event_id integer not null
             , count                integer not null
             , total                integer not null
-            , primary key(tag_id, post_id)
+            , primary key(post_id)
         ) strict;
         """,
         """
         create table InformedVote(
           user_id text not null,
-          tag_id integer not null,
           post_id integer not null,
           note_id integer not null,
           vote integer not null,
           informed integer not null,
-          primary key(user_id, tag_id, post_id, note_id)
+          primary key(user_id, post_id, note_id)
         ) strict;
         """,
 
-        # """
-        # create index InformedVote_user_tag_post
-        # on InformedVote(user_id, tag_id, post_id);
-        # """,
-
-        # """
-        # create index InformedVote_tag_post
-        # on InformedVote(tag_id, post_id);
-        # """,
-
-        # """
-        # create index InformedVote_tag_post_note
-        # on InformedVote(tag_id, post_id, note_id);
-        # """,
 
         """
         create table InformedTally(
-              tag_id           integer not null
-            , post_id          integer not null
+              post_id          integer not null
             , note_id          integer not null
             , count   integer not null
             , total   integer not null
-            , primary key(tag_id, post_id, note_id)
+            , primary key(post_id, note_id)
          ) strict;
         """,
         """
@@ -105,7 +86,6 @@ function create_tables(db::SQLite.DB)
         create table EffectEvent(
               vote_event_id   integer not null
             , vote_event_time integer not null
-            , tag_id          integer not null
             , post_id         integer not null 
             , note_id         integer not null
             , top_subthread_id         integer
@@ -123,7 +103,6 @@ function create_tables(db::SQLite.DB)
         create table Effect(
               vote_event_id   integer not null
             , vote_event_time integer not null
-            , tag_id          integer not null
             , post_id         integer not null 
             , note_id         integer not null
             , top_subthread_id         integer
@@ -134,18 +113,17 @@ function create_tables(db::SQLite.DB)
             , q_count         integer not null
             , q_size          integer not null
             , r               real    not null
-            , primary key(tag_id, post_id, note_id)
+            , primary key(post_id, note_id)
         ) strict;
         """,
         """
-        create index Effect_tag_post
-        on Effect(tag_id, post_id);
+        create index Effect_post
+        on Effect(post_id);
         """,
         """
         create table ScoreEvent(
               vote_event_id     integer not null
             , vote_event_time   integer not null
-            , tag_id            integer not null
             , post_id           integer not null
             , top_note_id       integer
             , critical_thread_id       integer
@@ -161,7 +139,6 @@ function create_tables(db::SQLite.DB)
         create table Score(
               vote_event_id     integer not null
             , vote_event_time   integer not null
-            , tag_id            integer not null
             , post_id           integer not null
             , top_note_id       integer
             , critical_thread_id       integer
@@ -170,7 +147,7 @@ function create_tables(db::SQLite.DB)
             , o_size            integer not null
             , p                 real    not null
             , score             real    not null
-            , primary key(tag_id, post_id)
+            , primary key(post_id)
         ) strict;
         """,
         """
@@ -183,12 +160,6 @@ function create_tables(db::SQLite.DB)
         """,
         """
         insert into LastVoteEvent values(1, 0, 0);
-        """,
-        """
-        create TABLE Tag (
-              id  integer NOT NULL PRIMARY KEY AUTOINCREMENT
-            , tag text NOT NULL
-        ) STRICT;
         """,
     ]
 
@@ -205,7 +176,7 @@ function create_views(db::SQLite.DB)
         create view NeedsRecalculation as
         -- First, select posts that were voted on since last processed_vote_event_id
         with leafNode as (
-            select post_id, tag_id
+            select post_id
             from tally
             join LastVoteEvent
             on latest_vote_event_id > processed_vote_event_id
@@ -214,12 +185,12 @@ function create_views(db::SQLite.DB)
 
         union
         -- Next, select all ancestors
-        select ancestor_id as post_id, tag_id
+        select ancestor_id as post_id
         from leafNode join Lineage Ancestor on (post_id = descendant_id)
 
         union
         -- Next, select all descendants
-        select descendant_id as post_id, tag_id
+        select descendant_id as post_id
         from leafNode
         join Lineage Descendant on (post_id = ancestor_id); -- descendant of item that was voted on
         """,
@@ -228,7 +199,6 @@ function create_views(db::SQLite.DB)
         select
             0  as vote_event_id,
             '' as user_id,
-            0  as tag_id,
             '' as parent_id,
             0  as post_id,
             '' as note_id,
@@ -239,7 +209,6 @@ function create_views(db::SQLite.DB)
         create view ImplicitlyInformedVote as 
           select
             iv.user_id
-            , iv.tag_id
             , iv.post_id
             , lineage.ancestor_id as note_id
             , iv.vote as vote
@@ -252,7 +221,6 @@ function create_views(db::SQLite.DB)
             and lineage.ancestor_id > iv.post_id
           left join vote 
             on vote.post_id = lineage.ancestor_id
-            and vote.tag_id = iv.tag_id
             and vote.user_id = iv.user_id
         ;     
         """,
@@ -275,12 +243,11 @@ function create_views(db::SQLite.DB)
           UNION ALL
           -- If the note is a direct child of the target then the
           -- partially-informed tally is the overall tally for the target.
-          select tag_id, post_id, post_id as note_id, count, total
+          select post_id, post_id as note_id, count, total
           from tally
         )
         select
-          Informed.tag_id
-          , Informed.post_id
+            Informed.post_id
           , Informed.note_id
           , Informed.count as informed_count
           , Informed.total as informed_total
@@ -292,8 +259,7 @@ function create_views(db::SQLite.DB)
           join PartiallyInformed on
             PartiallyInformed.note_id = post.parent_id
             and PartiallyInformed.post_id = informed.post_id
-            and PartiallyInformed.tag_id = informed.tag_id
-          left join PreinformedTally Preinformed using(tag_id, post_id, note_id)
+          left join PreinformedTally Preinformed using(post_id, note_id)
         ;
 
         ;
@@ -312,7 +278,6 @@ function create_triggers(db::SQLite.DB)
             values (
                   new.vote_event_id
                 , new.vote_event_time
-                , new.tag_id
                 , new.post_id
                 , new.note_id
                 , new.top_subthread_id
@@ -332,7 +297,6 @@ function create_triggers(db::SQLite.DB)
             values (
                 new.vote_event_id
                 , new.vote_event_time
-                , new.tag_id
                 , new.post_id
                 , new.top_note_id
                 , new.critical_thread_id
@@ -354,7 +318,6 @@ function create_triggers(db::SQLite.DB)
                   vote_event_id
                 , vote_event_time
                 , user_id
-                , tag_id
                 , parent_id
                 , post_id
                 , note_id
@@ -364,7 +327,6 @@ function create_triggers(db::SQLite.DB)
                   new.vote_event_id
                 , new.vote_event_time
                 , new.user_id
-                , new.tag_id
                 , case when new.parent_id = '' then null else new.parent_id end as parent_id
                 , new.post_id
                 , case when new.note_id = '' then null else new.note_id end as note_id
@@ -419,7 +381,6 @@ function create_triggers(db::SQLite.DB)
                   vote_event_id
                 , vote_event_time
                 , user_id
-                , tag_id
                 , parent_id
                 , post_id
                 , vote
@@ -428,11 +389,10 @@ function create_triggers(db::SQLite.DB)
                   new.vote_event_id
                 , new.vote_event_time
                 , new.user_id
-                , new.tag_id
                 , new.parent_id
                 , new.post_id
                 , new.vote
-            ) on conflict(user_id, tag_id, post_id) do update set
+            ) on conflict(user_id, post_id) do update set
                   vote            = new.vote
                 , vote_event_id   = new.vote_event_id
                 , vote_event_time = new.vote_event_time
@@ -445,7 +405,6 @@ function create_triggers(db::SQLite.DB)
             insert into InformedVote
             select
               new.user_id
-              , new.tag_id
               , targetVote.post_id as post_id
               , new.post_id as note_id
               , targetVote.vote as vote
@@ -456,9 +415,8 @@ function create_triggers(db::SQLite.DB)
               on targetVote.post_id = lineage.ancestor_id
             where 
               lineage.descendant_id = new.post_id
-              and targetVote.tag_id = new.tag_id
               and targetVote.user_id = new.user_id
-            on conflict(user_id, tag_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, note_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
@@ -466,7 +424,6 @@ function create_triggers(db::SQLite.DB)
             insert into InformedVote
             select
               new.user_id
-              , new.tag_id
               , new.post_id as post_id
               , noteVote.post_id as note_id
               , new.vote as vote
@@ -477,18 +434,17 @@ function create_triggers(db::SQLite.DB)
               on noteVote.post_id = lineage.descendant_id
             where 
               lineage.ancestor_id = new.post_id
-              and noteVote.tag_id = new.tag_id
               and noteVote.user_id = new.user_id
-            on conflict(user_id, tag_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, note_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
 
             insert into InformedVote
-            select user_id, tag_id, post_id, note_id, vote, informed
+            select user_id, post_id, note_id, vote, informed
             from ImplicitlyInformedVote
             where informed_by_post_id = new.post_id
-            on conflict(user_id, tag_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, note_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
@@ -499,21 +455,19 @@ function create_triggers(db::SQLite.DB)
         create trigger afterInsertVote after insert on Vote begin
 
             insert into Tally(
-                  tag_id
-                , parent_id
+                  parent_id
                 , post_id
                 , latest_vote_event_id
                 , count
                 , total
             )
             values (
-                  new.tag_id
-                , new.parent_id
+                  new.parent_id
                 , new.post_id
                 , new.vote_event_id
                 , (new.vote == 1)
                 , (new.vote != 0)
-            ) on conflict(tag_id, post_id) do update 
+            ) on conflict(post_id) do update 
             set 
                   total                = total + (new.vote != 0)
                 , count                = count + (new.vote == 1)
@@ -529,8 +483,7 @@ function create_triggers(db::SQLite.DB)
                 total                  = total + (new.vote != 0) - (old.vote != 0)
                 , count                = count + (new.vote == 1) - (old.vote == 1)
                 , latest_vote_event_id = new.vote_event_id
-            where tag_id = new.tag_id
-            and post_id = new.post_id
+            where post_id = new.post_id
             ;
 
         end;
@@ -540,20 +493,18 @@ function create_triggers(db::SQLite.DB)
         when new.informed = 1 
         begin
            insert into InformedTally(
-                  tag_id
-                , post_id
+                  post_id
                 , note_id
                 , count
                 , total
             ) 
             values (
-                new.tag_id
-                , new.post_id
+                  new.post_id
                 , new.note_id
                 , (new.vote = 1)
                 , (new.vote != 0)
             ) 
-            on conflict(tag_id, post_id, note_id) do update
+            on conflict(post_id, note_id) do update
             set
                   count   = count + (new.vote = 1)
                 , total   = total + (new.vote != 0)
@@ -568,8 +519,7 @@ function create_triggers(db::SQLite.DB)
                 count     = count + ((new.vote = 1 and new.informed) - (old.vote = 1 and old.informed))
                 , total   = total + ((new.vote != 0 and new.informed) - (old.vote != 0 and old.informed))
             where
-            tag_id = new.tag_id
-            and post_id = new.post_id
+            post_id = new.post_id
             and note_id = new.note_id
             ;
         end;
@@ -577,8 +527,7 @@ function create_triggers(db::SQLite.DB)
         """
         create view PreinformedVote as 
             select
-                informedVote.tag_id
-                , informedVote.post_id
+                  informedVote.post_id
                 , informedVote.note_id
                 , informedVote.user_id 
                 , voteEvent.vote
@@ -586,21 +535,20 @@ function create_triggers(db::SQLite.DB)
             from 
             informedVote
             join post note on note.id = informedVote.note_id
-            join voteEvent using (tag_id, post_id, user_id)
+            join voteEvent using (post_id, user_id)
             where vote_event_id <= note.first_vote_event_id
             and informed = 1
-            group by 1,2,3,4;
+            group by informedVote.post_id, informedVote.note_id, informedVote.user_id;
         """,
         """
         create view PreinformedTally as 
           select
-            tag_id
-            , post_id
+              post_id
             , note_id
             , sum(vote == 1) as count
             , sum(vote != 0) as total
           from PreinformedVote
-          group by 1, 2, 3
+          group by post_id, note_id
         ;
         """,
     ]
