@@ -10,7 +10,8 @@ db = get_sim_db(ENV["SIM_DATABASE_PATH"]; reset = true)
 
 @info "Running simulation $(ARGS[1])..."
 @testset "$(ARGS[1])" begin
-    run_simulation!(sim, db, tag_id = get_or_insert_tag_id(db, ARGS[1]))
+    # TODO: extract filename without file ending
+    run_simulation!(sim, db, simulation_name = ARGS[1])
 end
 
 close(db)

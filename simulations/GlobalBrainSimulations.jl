@@ -14,6 +14,8 @@ export get_sim_db
 export run_simulation!
 export get_or_insert_tag_id
 
+const LEGACY_TAG_ID = 1
+
 struct SimulationPost
     parent_id::Union{Int,Nothing}
     post_id::Int
@@ -28,7 +30,7 @@ end
 
 mutable struct Simulation
     db::SQLite.DB
-    tag_id::Int
+    simulation_id::Int
     step::Int
 end
 
@@ -40,7 +42,12 @@ end
 function SimulationAPI(sim::Simulation)
     return SimulationAPI(
         function (parent_id::Union{Number,Nothing}, content::String)
-            create_simulation_post!(sim.db, parent_id, content)
+            create_simulation_post!(
+                sim.db,
+                sim.simulation_id,
+                parent_id,
+                content
+            )
         end,
         function (
             step::Int,
@@ -54,7 +61,7 @@ function SimulationAPI(sim::Simulation)
                 sim.db,
                 step,
                 votes,
-                sim.tag_id;
+                sim.simulation_id;
                 description = description,
             )
             sim.step = step
@@ -75,26 +82,64 @@ function init_sim_db(path::String)
     if isfile(path)
         rm(path)
     end
-    init_score_db(path)
+    db = init_score_db(path)
+    create_sim_db_tables(db)
 end
 
-function run_simulation!(sim::Function, db::SQLite.DB; tag_id)
-    s = Simulation(db, tag_id, 0)
+function create_sim_db_tables(db::SQLite.DB)
+    DBInterface.execute(
+        db,
+        """
+        create table Simulation (
+            simulation_id integer not null primary key autoincrement
+            , simulation_name text not null
+            , created_at integer not null default (unixepoch('subsec')*1000)
+        )
+        """
+    )
+
+    DBInterface.execute(
+        db,
+        """
+        create table PostSimulation (
+            post_id integer not null
+            , simulation_id integer not null
+            , primary key(post_id, simulation_id)
+        )
+        """
+    )
+end
+
+function insert_simulation(db::SQLite.DB, simulation_name::String)::Int
+    return DBInterface.execute(
+        db,
+        """
+        insert into Simulation (simulation_name)
+        values (?) returning simulation_id
+        """,
+        [simulation_name],
+    ) |> collect_results(row -> row[:simulation_id]) |> first
+end
+
+function run_simulation!(sim::Function, db::SQLite.DB; simulation_name = "default")
+    simulation_id = insert_simulation(db, simulation_name)
+    s = Simulation(db, simulation_id, 0)
     sim(SimulationAPI(s))
 end
 
 function create_simulation_post!(
     db::SQLite.DB,
+    simulation_id::Int,
     parent_id::Union{Int,Nothing},
     content::String,
 )::SimulationPost
     results = DBInterface.execute(
         db,
-        "
+        """
         insert into post (parent_id, content)
         values (?, ?)
         on conflict do nothing returning id
-        ",
+        """,
         [parent_id, content],
     ) |> collect_results(row -> row[:id])
 
@@ -103,6 +148,15 @@ function create_simulation_post!(
     end
 
     id = first(results)
+    
+    DBInterface.execute(
+        db,
+        """
+        insert into PostSimulation (post_id, simulation_id)
+        values (?, ?)
+        """,
+        [id, simulation_id]
+    )
 
     return SimulationPost(parent_id, id, content)
 end
@@ -111,7 +165,7 @@ function simulation_step!(
     db::SQLite.DB,
     step::Int,
     votes::Array{SimulationVote},
-    tag_id::Int;
+    simulation_id::Int;
     description::Union{String,Nothing} = nothing,
 )::Tuple{Dict, Dict}
     vote_event_id = get_last_processed_vote_event_id(db) + 1
@@ -119,7 +173,7 @@ function simulation_step!(
     DBInterface.execute(
         db,
         "insert into period (tag_id, step, description) values (?, ?, ?)",
-        [tag_id, step, description],
+        [LEGACY_TAG_ID, step, description],
     ) |> collect_results()
 
     for v in shuffle(votes)
@@ -128,7 +182,7 @@ function simulation_step!(
             vote_event_id = vote_event_id,
             vote_event_time = step,
             user_id = string(v.user_id),
-            tag_id = tag_id,
+            tag_id = LEGACY_TAG_ID,
             parent_id = parent_id,
             post_id = v.post_id,
             note_id = nothing,
@@ -141,14 +195,27 @@ function simulation_step!(
         vote_event_id += 1
     end
 
-    score_rows =
-        DBInterface.execute(db, "select * from score where tag_id = :tag_id", [tag_id])
+    scores = DBInterface.execute(
+        db,
+        """
+        select Score.* from Score
+        join PostSimulation
+        on PostSimulation.post_id = Score.post_id
+        where PostSimulation.simulation_id = ?
+        """,
+        [simulation_id]
+    ) |> collect_results(row -> sql_row_to_score(row))
 
-    effect_rows =
-        DBInterface.execute(db, "select * from effect where tag_id = :tag_id", [tag_id])
-
-    scores = map(sql_row_to_score, score_rows)
-    effects = map(sql_row_to_effect, effect_rows)
+    effects = DBInterface.execute(
+        db,
+        """
+        select Effect.* from Effect
+        join PostSimulation
+        on PostSimulation.post_id = Effect.post_id
+        where PostSimulation.simulation_id = ?
+        """,
+        [simulation_id]
+    ) |> collect_results(row -> sql_row_to_effect(row))
 
     return (
         Dict(score.post_id => score for score in scores),
