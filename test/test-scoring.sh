@@ -8,6 +8,8 @@ expected_score_events_file='test-data/expected-score-events.jsonl'
 TEST_DB_FILENAME=$SOCIAL_PROTOCOLS_DATADIR/test.db
 rm -f $TEST_DB_FILENAME
 
+echo "Using test database $TEST_DB_FILENAME"
+
 TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     set -e
     echo "Testing scoring algorithm";
