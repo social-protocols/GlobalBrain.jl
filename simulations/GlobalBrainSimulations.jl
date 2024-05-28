@@ -13,8 +13,6 @@ export SimulationVote
 export get_sim_db
 export run_simulation!
 
-const LEGACY_TAG_ID = 1
-
 struct SimulationPost
     simulation_id::Int
     parent_id::Union{Int,Nothing}
@@ -186,7 +184,6 @@ function simulation_step!(
             vote_event_id = vote_event_id,
             vote_event_time = step,
             user_id = string(v.user_id),
-            tag_id = LEGACY_TAG_ID,
             parent_id = parent_id,
             post_id = v.post_id,
             note_id = nothing,

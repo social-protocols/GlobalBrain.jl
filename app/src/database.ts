@@ -87,13 +87,12 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
       SELECT MAX(vote_event_id), *
       FROM ScoreEvent
       WHERE vote_event_time <= :period
-      GROUP BY tag_id, post_id
+      GROUP BY post_id
     )
     , currentScore AS(
       SELECT
           vote_event_id
         , vote_event_time
-        , tag_id
         , post_id
         , top_note_id
         , o

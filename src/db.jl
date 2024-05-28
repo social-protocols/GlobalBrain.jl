@@ -68,7 +68,6 @@ end
 
 function get_tallies_data(
     db::SQLite.DB,
-    tag_id::Int,
     parent_id::Union{Int,Nothing},
 )::Vector{TalliesData}
 
@@ -80,23 +79,20 @@ function get_tallies_data(
             Tally.*
             , NeedsRecalculation.post_id is not null as needs_recalculation
         from Tally
-        left join NeedsRecalculation using (post_id, tag_id)
+        left join NeedsRecalculation using (post_id)
         where
-        tally.tag_id = :tag_id
-        and
             (:parent_id = parent_id)
             or
             (:parent_id is null and parent_id is null)
         """,
     )
 
-    results = DBInterface.execute(stmt, [tag_id, parent_id])
+    results = DBInterface.execute(stmt, [parent_id])
 
     return [
         TalliesData(
             SQLTalliesData(
                 tally = BernoulliTally(row[:count], row[:total]),
-                tag_id = tag_id,
                 post_id = row[:post_id],
                 needs_recalculation = row[:needs_recalculation],
                 db = db,
@@ -107,7 +103,6 @@ end
 
 function get_conditional_tally(
     db::SQLite.DB,
-    tag_id::Int,
     post_id::Int,
     note_id::Int,
 )::ConditionalTally
@@ -122,15 +117,13 @@ function get_conditional_tally(
         where
             post_id = :post_id
             and note_id = :note_id
-            and tag_id = :tag_id
         """,
     )
 
     results =
-        DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> collect_results(
+        DBInterface.execute(stmt, [post_id, note_id]) |> collect_results(
             r -> begin
                 ConditionalTally(
-                    tag_id = r[:tag_id],
                     post_id = r[:post_id],
                     note_id = r[:note_id],
                     informed = BernoulliTally(r[:informed_count], r[:informed_total]),
@@ -141,7 +134,6 @@ function get_conditional_tally(
 
     if length(results) == 0
         return ConditionalTally(
-            tag_id = tag_id,
             post_id = post_id,
             note_id = note_id,
             informed = BernoulliTally(0, 0),
@@ -154,7 +146,7 @@ function get_conditional_tally(
 end
 
 
-function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)::Effect
+function get_effect(db::SQLite.DB, post_id::Int, note_id::Int)::Effect
 
     stmt = get_prepared_statement(
         db,
@@ -164,18 +156,17 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)::Eff
             *
         from effect
         where
-            tag_id = :tag_id
-            and post_id = :post_id
+            post_id = :post_id
             and note_id = :note_id
         """,
     )
 
     results =
-        DBInterface.execute(stmt, [tag_id, post_id, note_id]) |>
+        DBInterface.execute(stmt, [post_id, note_id]) |>
         collect_results(sql_row_to_effect)
 
     if length(results) == 0
-        throw("Missing effect record for $tag_id, $post_id, $note_id")
+        throw("Missing effect record for $post_id, $note_id")
     end
 
     return first(results)
@@ -190,7 +181,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         insert into ScoreEvent(
               vote_event_id
             , vote_event_time
-            , tag_id
             -- , parent_id
             , post_id
             , top_note_id
@@ -203,7 +193,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             , p
             , score
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
         """,
     )
@@ -214,7 +204,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         (
             score_event.vote_event_id,
             score_event.vote_event_time,
-            score.tag_id,
             score.post_id,
             score.top_note_id,
             score.critical_thread_id,
@@ -236,7 +225,6 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
         insert into EffectEvent(
               vote_event_id
             , vote_event_time
-            , tag_id
             , post_id
             , note_id
             , top_subthread_id
@@ -248,7 +236,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , q_size
             , r
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
         """,
     )
@@ -259,7 +247,6 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
         (
             effect_event.vote_event_id,
             effect_event.vote_event_time,
-            effect.tag_id,
             effect.post_id,
             effect.note_id,
             effect.top_subthread_id,
@@ -320,13 +307,12 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
                   vote_event_id
                 , vote_event_time
                 , user_id
-                , tag_id
                 , parent_id
                 , post_id
                 , note_id
                 , vote
             )
-            values (?, ?, ?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?, ?, ?)
         """,
     )
 
@@ -336,7 +322,6 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
             vote_event.vote_event_id,
             vote_event.vote_event_time,
             vote_event.user_id,
-            vote_event.tag_id,
             vote_event.parent_id,
             vote_event.post_id,
             vote_event.note_id,
@@ -347,7 +332,6 @@ end
 
 function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
-        tag_id = row[:tag_id],
         post_id = row[:post_id],
         note_id = row[:note_id],
         top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing :
@@ -365,7 +349,6 @@ end
 
 function sql_row_to_score(row::SQLite.Row)::Score
     return Score(
-        tag_id = row[:tag_id],
         post_id = row[:post_id],
         top_note_id = sql_missing_to_nothing(row[:top_note_id]),
         critical_thread_id = sql_missing_to_nothing(row[:critical_thread_id]),
@@ -383,7 +366,6 @@ function sql_row_to_vote_event(row::SQLite.Row)::VoteEvent
         vote_event_id = row[:vote_event_id],
         vote_event_time = row[:vote_event_time],
         user_id = row[:user_id],
-        tag_id = row[:tag_id],
         parent_id = sql_missing_to_nothing(row[:parent_id]),
         post_id = row[:post_id],
         note_id = sql_missing_to_nothing(row[:note_id]),

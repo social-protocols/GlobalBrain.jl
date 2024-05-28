@@ -29,7 +29,6 @@ export type VoteEvent = {
   vote_event_id: number
   vote_event_time: number
   user_id: string
-  tag_id: number
   parent_id: number | null
   post_id: number
   note_id: number | null
@@ -39,7 +38,6 @@ export type VoteEvent = {
 export type Effect = {
   vote_event_id: number
   vote_event_time: number
-  tag_id: number
   post_id: number
   note_id: number
   top_subthread_id: number | null
@@ -56,7 +54,6 @@ export type Effect = {
 export type EffectEvent = {
   vote_event_id: number
   vote_event_time: number
-  tag_id: number
   post_id: number
   note_id: number
   top_subthread_id: number | null

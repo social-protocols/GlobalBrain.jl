@@ -1,5 +1,4 @@
 Base.@kwdef struct ConditionalTally
-    tag_id::Int
     post_id::Int
     note_id::Int
     informed::Tally
@@ -23,7 +22,6 @@ note was shown and not shown respectively.
     note was shown.
 """
 Base.@kwdef struct Effect
-    tag_id::Int64
     post_id::Int64
     note_id::Union{Int64,Nothing}
     top_subthread_id::Union{Int64,Nothing}
@@ -44,7 +42,6 @@ end
 The data used to calculate the score of a post.
 """
 Base.@kwdef struct Score
-    tag_id::Int64
     post_id::Int64
     top_note_id::Union{Int64,Nothing}
     critical_thread_id::Union{Int64,Nothing}
