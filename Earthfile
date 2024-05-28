@@ -103,8 +103,10 @@ node-ext-test:
 sim-run:
   FROM +root-julia-setup
   ENV SIM_DATABASE_PATH=sim.db
-  COPY --dir src simulations ./
+  COPY --dir src ./
+  COPY simulations/GlobalBrainSimulations.jl simulations/run.jl simulations/Manifest.toml simulations/Project.toml ./simulations
   RUN julia -t auto --code-coverage=none --check-bounds=yes --project=simulations -e 'using Pkg; Pkg.instantiate()'
+  COPY --dir simulations/scenarios ./simulations
   RUN julia -t auto --code-coverage=none --check-bounds=yes --project=simulations simulations/run.jl simulations/scenarios
   SAVE ARTIFACT sim.db AS LOCAL app/public/
 
