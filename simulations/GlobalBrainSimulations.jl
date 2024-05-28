@@ -1,7 +1,9 @@
 module GlobalBrainSimulations
 
+include("../src/GlobalBrain.jl")
+
 using SQLite
-using GlobalBrain
+using .GlobalBrain
 using Distributions
 using Memoize
 using DataFrames
@@ -11,6 +13,7 @@ export SimulationAPI
 export SimulationVote
 export get_sim_db
 export run_simulation!
+export get_or_insert_tag_id
 
 struct SimulationPost
     parent_id::Union{Int,Nothing}

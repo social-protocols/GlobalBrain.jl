@@ -1,6 +1,5 @@
 include("GlobalBrainSimulations.jl")
 using Main.GlobalBrainSimulations
-using GlobalBrain
 using Test
 using Random
 using Distributions

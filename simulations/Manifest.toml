@@ -2,7 +2,7 @@
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "cd7c46c81dae2142b1d4613c541073773d45817c"
+project_hash = "30f49c4701a7660a7d10f0fab1c38476cc7b4673"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -128,14 +128,6 @@ weakdeps = ["PDMats", "SparseArrays", "Statistics"]
 [[deps.Future]]
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
-
-[[deps.GlobalBrain]]
-deps = ["DataFrames", "Dates", "JSON", "Random", "SQLite", "Test"]
-git-tree-sha1 = "11c7e1b63a7a1d72894bcaff3d9efce6dfbf8164"
-repo-rev = "standalone-simulations-module"
-repo-url = ".."
-uuid = "dffebd05-efb3-44aa-8450-e5fd44cffdf5"
-version = "1.0.0-DEV"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
