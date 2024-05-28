@@ -17,8 +17,8 @@ run:
 dev:
     julia --eval "using Pkg; Pkg.develop(path = pwd())"
 
-db:
-    litecli $DATABASE_PATH
+db query="":
+    litecli $DATABASE_PATH -e "{{query}}"
 
 reset-db:
     rm -f $DATABASE_PATH
@@ -30,11 +30,11 @@ sim name="":
     time julia --project scripts/sim.jl {{name}}
 
 
-sim-db:
-    litecli $SIM_DATABASE_PATH
+sim-db query="":
+    litecli $SIM_DATABASE_PATH -e "{{query}}"
 
-test-db:
-    litecli $SOCIAL_PROTOCOLS_DATADIR/test.db
+test-db query="":
+    litecli $SOCIAL_PROTOCOLS_DATADIR/test.db -e "{{query}}"
 
 visualize:
     cd app && npm install && npm run dev
