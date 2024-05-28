@@ -5,7 +5,6 @@ using SQLite
 using Dates
 using Random
 using Memoize
-using DataFrames
 
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
@@ -53,7 +52,7 @@ export insert_vote_event
 export set_last_processed_vote_event_id
 export get_last_processed_vote_event_id
 export sql_row_to_detailed_tally
-export sql_row_to_effect_event
+export sql_row_to_effect
 export sql_row_to_score
 export as_tallies_tree
 export get_or_insert_tag_id
