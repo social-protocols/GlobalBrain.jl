@@ -364,7 +364,6 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     )
 end
 
-
 function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
             tag_id = row[:tag_id],
