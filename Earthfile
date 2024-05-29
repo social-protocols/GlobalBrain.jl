@@ -43,50 +43,57 @@ node-ext:
   COPY --dir globalbrain-node/julia/build.jl globalbrain-node/julia/globalbrain.h ./
   # Example c callable lib project: https://github.com/JuliaLang/PackageCompiler.jl/tree/master/examples/MyLib
   RUN julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
+  # rpath pointed to /nix/store, TODO: report upstream to julia / PackageCompiler
+  # To patch a new file, first print the rpath using:
+  # RUN patchelf --print-rpath build/lib/julia/<libfile>
+  RUN patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-internal.so.1 \
+   && patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-codegen.so.1.9 \
+   && patchelf --set-rpath '$ORIGIN' build/lib/julia/libgfortran.so.5
+  RUN find build -name '*.so*' -type f -exec bash -c 'echo -n "{}, rpath=" && patchelf --print-rpath {}' \; | sort
 
   WORKDIR /app/globalbrain-node
   COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./
   COPY --dir globalbrain-node/binding.cc globalbrain-node/binding.gyp globalbrain-node/index.js ./
   RUN npm install
   COPY globalbrain-node/test.js ./
-  RUN npm test
+  # RUN npm test
 
   # Create artifact
   RUN mkdir -p /artifact/julia/build \
-   && cp -r julia/build /artifact/julia/ \
-   && cp -r build /artifact/ \
-   && cp package.json /artifact/ \
-   && cp package-lock.json /artifact/ \
-   && cp binding.gyp /artifact/ \
-   && cp binding.cc /artifact/ \
-   && cp index.js /artifact/ \
-   && cp test.js /artifact/
+   && mv julia/build /artifact/julia/ \
+   && mv build /artifact/ \
+   && mv package.json /artifact/ \
+   && mv package-lock.json /artifact/ \
+   && mv binding.gyp /artifact/ \
+   && mv binding.cc /artifact/ \
+   && mv index.js /artifact/ \
+   && mv test.js /artifact/
+  RUN find /artifact -type d -exec du -sh {} \;
   SAVE ARTIFACT /artifact
 
-flake-ref:
-  FROM +nix-dev-shell --DEVSHELL="build"
-  RUN nix profile install --impure "nixpkgs#jq"
-  COPY flake.lock /globalbrain-flake.lock
-  RUN jq -r '.nodes.nixpkgs.locked.rev' /globalbrain-flake.lock > /flake_ref
-  SAVE ARTIFACT /flake_ref
 
-INSTALL_NPM_PACKAGE:
-  FUNCTION
-  ARG --required destination
-  # commit hashes must be the same as in the nix flake
-  COPY +flake-ref/flake_ref /globalbrain_flake_ref
-  RUN nix profile install --impure "nixpkgs/$(cat /globalbrain_flake_ref)#julia_19-bin"
-  COPY +node-ext/artifact $destination
-  
-
-test-node-ext:
+node-ext-test:
   FROM nixos/nix:2.20.4
   # enable flakes
   RUN echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-  COPY globalbrain-node/globalbrain-node-test /app
-  WORKDIR /app/globalbrain-node-test
-  DO +INSTALL_NPM_PACKAGE --destination=/globalbrain-node-package
   RUN nix profile install --impure "nixpkgs#nodejs_20"
+  RUN nix profile install --impure "nixpkgs#gcc"
+  COPY +node-ext/artifact /globalbrain-node-package
+  COPY globalbrain-node/globalbrain-node-test /app/globalbrain-node-test
+  WORKDIR /app/globalbrain-node-test
+
+  # call from C
+  ENV GB_OUT=/globalbrain-node-package/julia/build
+  ENV GLOBALBRAIN_INCLUDES=$GB_OUT/include/julia_init.h $GB_OUT/include/globalbrain.h
+  ENV GLOBALBRAIN_PATH=$GB_OUT/lib/libglobalbrain.so
+  RUN gcc test.c -o test-c.out -I$GB_OUT/include -L$GB_OUT/lib -ljulia -lglobalbrain
+  RUN rm -f test.db && ./test-c.out
+
+  # call from C++
+  RUN g++ test.cc -o test-cc.out -I$GB_OUT/include -L$GB_OUT/lib -ljulia -lglobalbrain
+  RUN rm -f test.db && ./test-cc.out
+
+  # call from javascript
   RUN npm install --ignore-scripts --save /globalbrain-node-package
   RUN npm test 
 
