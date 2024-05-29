@@ -10,8 +10,8 @@ println("Creating library in $target_dir")
 # https://julialang.github.io/PackageCompiler.jl/stable/refs.html#PackageCompiler.create_library
 PackageCompiler.create_library(globalbrainSourceDir, target_dir;
                                 lib_name="globalbrain",
-                                incremental=false,
-                                filter_stdlibs=true,
+                                incremental=true,
+                                filter_stdlibs=false,
                                 force=true, # Overwrite target_dir.
                                 header_files = ["$(@__DIR__)/globalbrain.h"],
                             )

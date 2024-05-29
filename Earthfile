@@ -161,6 +161,7 @@ ci-test:
   BUILD +sim-run
   BUILD +vis-build
   BUILD +vis-format-check
+  BUILD +node-ext-test
 
 ci-deploy:
   BUILD +ci-test
