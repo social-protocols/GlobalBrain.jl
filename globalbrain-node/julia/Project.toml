@@ -2,4 +2,5 @@
 PackageCompiler = "9b87118b-4619-50d2-8e1e-99f35a4d4d9d"
 
 [compat]
-julia = "=1.9.4"
+julia = "=1.10.3"
+
