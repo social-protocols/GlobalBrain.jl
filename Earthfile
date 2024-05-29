@@ -46,10 +46,13 @@ node-ext:
   # rpath pointed to /nix/store, TODO: report upstream to julia / PackageCompiler
   # To patch a new file, first print the rpath using:
   # RUN patchelf --print-rpath build/lib/julia/<libfile>
-  RUN patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-internal.so.1 \
-   && patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-codegen.so.1.9 \
-   && patchelf --set-rpath '$ORIGIN' build/lib/julia/libgfortran.so.5
-  RUN find build -name '*.so*' -type f -exec bash -c 'echo -n "{}, rpath=" && patchelf --print-rpath {}' \; | sort
+
+  RUN find build | sort
+  RUN patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-internal.so \
+   && patchelf --set-rpath '$ORIGIN/..:$ORIGIN' build/lib/julia/libjulia-codegen.so \
+   && patchelf --set-rpath '$ORIGIN' build/lib/julia/libgfortran.so \
+   && patchelf --set-rpath '$ORIGIN' build/lib/julia/libmbedtls.so 
+  RUN find build -name '*.so*' -type f -exec bash -c 'echo -n "{}, rpath=" && patchelf --print-rpath {} && ldd {}' \;
 
   WORKDIR /app/globalbrain-node
   COPY globalbrain-node/package.json globalbrain-node/package-lock.json ./

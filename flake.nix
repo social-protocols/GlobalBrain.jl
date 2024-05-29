@@ -32,7 +32,7 @@
           diffutils
           jq
           pkgs-sqlite.sqlite-interactive
-          julia_19-bin
+          julia-bin
           nodejs_20
           python3 # for node-gyp
           gcc
