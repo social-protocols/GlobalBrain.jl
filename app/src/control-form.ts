@@ -20,8 +20,9 @@ export function initializeSimulationSelectInput(
 ): string {
   addSimulationSelectInput(simulationNames)
 
-  const selectElement =
-    document.getElementById("simulationName") as HTMLSelectElement
+  const selectElement = document.getElementById(
+    "simulationName",
+  ) as HTMLSelectElement
 
   // Get the current simulation ID from the URL or fallback to the select element's default value
   const simulationName: string = getSelectedSimulationName()
@@ -40,7 +41,9 @@ export function initializeSimulationSelectInput(
 }
 
 function addSimulationSelectInput(simulationNames: string[]) {
-  const simulationSelect = document.getElementById("simulationName") as HTMLSelectElement
+  const simulationSelect = document.getElementById(
+    "simulationName",
+  ) as HTMLSelectElement
   simulationSelect.innerHTML = ""
   simulationNames.forEach((id, i) => {
     const option = document.createElement("option")
@@ -52,8 +55,9 @@ function addSimulationSelectInput(simulationNames: string[]) {
 }
 
 export function getSelectedSimulationName(): string {
-  const selectElement =
-    document.getElementById("simulationName") as HTMLSelectElement
+  const selectElement = document.getElementById(
+    "simulationName",
+  ) as HTMLSelectElement
 
   // Get the current simulation ID from the URL or fallback to the select element's default value
   return getSimulationNameFromURL() || selectElement.value!

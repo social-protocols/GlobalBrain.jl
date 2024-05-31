@@ -292,12 +292,8 @@ async function renderTreeChart(
     .attr("font-size", "12px")
     .attr("text-anchor", "middle")
 
-  addUpvoteProbabilityBar(
-    voteGroup,
-    -55,
-    "black",
-    (d: PostWithScore) =>
-      d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
+  addUpvoteProbabilityBar(voteGroup, -55, "black", (d: PostWithScore) =>
+    d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
   )
 
   addUpvoteProbabilityBar(

@@ -28,17 +28,18 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-  const simulationsQueryResult =
-    db.exec("select simulation_id, simulation_name from simulation")
+  const simulationsQueryResult = db.exec(
+    "select simulation_id, simulation_name from simulation",
+  )
 
-  const simulations: Simulation[] =
-    unpackDBResult(simulationsQueryResult[0])
-      .map((x: any) => {
-        return {
-          simulationId: x.simulation_id,
-          simulationName: x.simulation_name,
-        } as Simulation
-      })
+  const simulations: Simulation[] = unpackDBResult(
+    simulationsQueryResult[0],
+  ).map((x: any) => {
+    return {
+      simulationId: x.simulation_id,
+      simulationName: x.simulation_name,
+    } as Simulation
+  })
 
   const simulationNames = simulations.map((x: Simulation) => x.simulationName)
   const simulationName = initializeSimulationSelectInput(simulationNames)
