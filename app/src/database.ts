@@ -58,7 +58,10 @@ export async function getRootPostIds(db: any, simulationId: number) {
   return res
 }
 
-export async function getSimulationId(db: any, simulationName: string) {
+export async function getSimulationId(
+  db: any,
+  simulationName: string,
+): Promise<number> {
   let stmt = db.prepare(`
     SELECT simulation_id from Simulation where simulation_name = :simulationName
   `)

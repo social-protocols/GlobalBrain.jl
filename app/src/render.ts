@@ -12,7 +12,6 @@ import {
   SimulationFilter,
   VoteEvent,
 } from "./types"
-import { getSimulationFilter } from "./control-form.ts"
 
 import * as d3 from "d3"
 
@@ -36,7 +35,7 @@ const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 
 export async function render(db: any, simulationFilter: SimulationFilter) {
-  let simulationName = simulationFilter.simulationId!
+  let simulationName = simulationFilter.simulationName!
   let simulationId = await getSimulationId(db, simulationName)
 
   let period = simulationFilter.period!
@@ -59,13 +58,7 @@ export async function render(db: any, simulationFilter: SimulationFilter) {
 
   svg.html("")
 
-  // -----------------------------------
-  // --- LINE PLOTS --------------------
-  // -----------------------------------
-
-  // await renderLineChart(svg, data, lookups, root.id)
-
-  await renderTreeChart(svg, data, lookups, root.id)
+  await renderTreeChart(svg, data, lookups)
 
   let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === root.id)
 
@@ -112,74 +105,12 @@ function getXAxis(
   )
 
   return [minVoteEventId, maxVoteEventId, xTickValues]
-  // , maxVoteEventId, xTickValues
-}
-
-async function renderLineChart(
-  svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
-  data: VisualizationData,
-  lookups: LookupData,
-  rootId: number,
-) {
-  let rootPostScore = data.scoreEvents.filter((d) => d["post_id"] === rootId)
-
-  let [minVoteEventId, maxVoteEventId, xTickValues] = getXAxis(rootId, lookups)
-
-  let scaleProbability = d3
-    .scaleLinear()
-    .domain([0, 1])
-    .range([LINEPLOT_HEIGHT, 0])
-  let scaleVoteId = d3
-    .scaleLinear()
-    .domain([minVoteEventId, maxVoteEventId])
-    .range([0, LINEPLOT_WIDTH])
-
-  let lineGroup = svg.append("g").attr("transform", "translate(30, 10)")
-  // Add axes
-  let xAxis = d3.axisBottom(scaleVoteId).tickValues(xTickValues).tickSize(3)
-  let yAxis = d3
-    .axisLeft(scaleProbability)
-    .tickValues([0.0, 0.25, 0.5, 0.75, 1.0])
-    .tickSize(3)
-  lineGroup.append("g").attr("transform", "translate(0, 101)").call(xAxis)
-  lineGroup.append("g").call(yAxis)
-
-  let lineGenerator = d3.line()
-
-  // Overall probability line
-  let pathDataOverallProb: Array<[number, number]> = rootPostScore.map((e) => {
-    // TODO: rename "o" back to "overallProb"
-    return [scaleVoteId(e.vote_event_id), scaleProbability(e.o)]
-  })
-
-  let pathOverallProb = lineGenerator(pathDataOverallProb)
-  lineGroup
-    .append("path")
-    .attr("d", pathOverallProb)
-    .attr("stroke", "black")
-    .attr("stroke-width", 2)
-    .attr("opacity", 0.5)
-    .attr("fill", "none")
-
-  // Informed probability line
-  let pathDataP: Array<[number, number]> = rootPostScore.map((e) => {
-    return [scaleVoteId(e.vote_event_id), scaleProbability(e.p)]
-  })
-  let pathP = lineGenerator(pathDataP)
-  lineGroup
-    .append("path")
-    .attr("d", pathP)
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 2)
-    .attr("opacity", 0.5)
-    .attr("fill", "none")
 }
 
 async function renderTreeChart(
   svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>,
   data: VisualizationData,
   lookups: LookupData,
-  rootId: number,
 ) {
   // -----------------------------------
   // --- EDGES -------------------------
@@ -252,15 +183,7 @@ async function renderTreeChart(
     .attr("y", 0)
     .attr("width", POST_RECT_WIDTH)
     .attr("height", POST_RECT_HEIGHT)
-    // .style("fill", "white")
     .attr("stroke", "black")
-  // TODO: fix -> no parentP and parentQ on discussionTree anymore
-  // .attr("stroke", (d) => {
-  //   if (d.parentP == d.parentQ) {
-  //     return "black"
-  //   }
-  //   return d.parentP > d.parentQ ? "forestgreen" : "tomato"
-  // })
 
   // Post content
   nodeGroup
@@ -303,8 +226,6 @@ async function renderTreeChart(
     x: number,
     fill: string,
     heightPercentageFunc: (post: PostWithScoreWithPosition) => number,
-    opacityFunc: (post: PostWithScoreWithPosition) => number,
-    displayFunc: (post: PostWithScoreWithPosition) => string,
   ) {
     let group = groupSelection.append("g")
 
@@ -317,7 +238,7 @@ async function renderTreeChart(
       .attr("opacity", 0.05)
       .style("fill", "transparent")
       .attr("stroke", "black")
-      .attr("display", displayFunc)
+      .attr("display", "inline")
 
     group
       .append("rect")
@@ -327,9 +248,8 @@ async function renderTreeChart(
       .attr("y", (d) => {
         return POST_RECT_HEIGHT - heightPercentageFunc(d) * POST_RECT_HEIGHT
       })
-      .attr("opacity", opacityFunc)
       .style("fill", fill)
-      .attr("display", displayFunc)
+      .attr("display", "inline")
   }
 
   let voteGroup = nodeGroup.append("g")
@@ -361,7 +281,6 @@ async function renderTreeChart(
     .attr("text-anchor", "middle")
 
   // Downvote count
-
   voteGroup
     .append("text")
     .text((d) =>
@@ -379,31 +298,13 @@ async function renderTreeChart(
     "black",
     (d: PostWithScore) =>
       d.o_count / d.o_size == 0 ? 0.05 : d.o_count / d.o_size,
-    (d: PostWithScore) => 1 - 1 / (1 + 0.3 * d.o_size),
-    () => "inline",
   )
 
   addUpvoteProbabilityBar(
     voteGroup,
     -85,
     "steelblue",
-    (d: PostWithScore) => {
-      // let edges = lookups.childEffectsByPostId[d.id] || []
-      // let topNoteEdge = edges[0]
-      // return topNoteEdge && topNoteEdge.p_count !== 0
-      //   ? topNoteEdge.p_count / topNoteEdge.p_size
-      //   : 0.05
-      return d.p
-    },
-    (d: PostWithScore) => {
-      // return d.p_sizxe
-      // let edges = lookups.childEffectsByPostId[d.id] || []
-      // let topNoteEdge = edges[0]
-      // return topNoteEdge && 1 - 1 / (1 + 0.3 * topNoteEdge.p_size)
-      return 1
-    },
-    (d: PostWithScore) => "inline",
-    // lookups.childrenIdsByPostId[d.id] ? "inline" : "none",
+    (d: PostWithScore) => d.p,
   )
 }
 

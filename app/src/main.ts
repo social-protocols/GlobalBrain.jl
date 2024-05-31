@@ -8,13 +8,14 @@ import {
   setPeriodsSelectInput,
   initializeSimulationSelectInput,
   getSimulationFilter,
-  getSelectedSimulationId,
+  getSelectedSimulationName,
 } from "./control-form.ts"
+import { Simulation } from "./types.ts"
 
 // Architecture:
 // - Unidirectional data flow from mutable state to view
 // - central mutable state, which is represented by the control form
-// - the ?simulationId URL parameter value is synced with the simulationID select input in the form
+// - the ?simulationName URL parameter value is synced with the simulationID select input in the form
 // - Whenever an item on the form is changed:
 //   - the state is updated
 //   - state is used to fetch data from the database
@@ -27,25 +28,31 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-	const simulationIdsQueryResult =
-		db.exec("select simulation_id, simulation_name from simulation")
+  const simulationsQueryResult =
+    db.exec("select simulation_id, simulation_name from simulation")
 
-	const simulations = unpackDBResult(simulationIdsQueryResult[0])
-	const simulationNames = simulations.map((x: any) => x.simulation_name)
+  const simulations: Simulation[] =
+    unpackDBResult(simulationsQueryResult[0])
+      .map((x: any) => {
+        return {
+          simulationId: x.simulation_id,
+          simulationName: x.simulation_name,
+        } as Simulation
+      })
 
-  const simulationId = initializeSimulationSelectInput(simulationNames)
-
-  setPeriodsSelectInput(db, simulationId)
+  const simulationNames = simulations.map((x: Simulation) => x.simulationName)
+  const simulationName = initializeSimulationSelectInput(simulationNames)
+  setPeriodsSelectInput(db, simulationName)
 
   document.getElementById("period")!.addEventListener("change", function () {
     render(db, getSimulationFilter())
   })
 
   document
-    .getElementById("simulationId")!
+    .getElementById("simulationName")!
     .addEventListener("change", function () {
-      const simulationId = getSelectedSimulationId()
-      setPeriodsSelectInput(db, simulationId)
+      const simulationName = getSelectedSimulationName()
+      setPeriodsSelectInput(db, simulationName)
       render(db, getSimulationFilter())
     })
 

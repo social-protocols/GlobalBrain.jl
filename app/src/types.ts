@@ -1,5 +1,10 @@
+export type Simulation = {
+  simulationId: number
+  simulationName: string
+}
+
 export type SimulationFilter = {
-  simulationId: string | null
+  simulationName: string | null
   period: number | null
 }
 
