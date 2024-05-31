@@ -75,10 +75,14 @@ function addSimulationSelectInput(simulationIds: string[]) {
 
 export function setPeriodsSelectInput(db: any, simulationId: string) {
   const periodIdsQueryResult = db.exec(
-    "select step, description from Period join Tag on (Tag.id = tag_id) where tag = :simulationId",
+    `
+		select step, description
+		from Period
+		join simulation on (simulation.simulation_id = period.simulation_id)
+		where simulation_name = :simulationId
+		`,
     { ":simulationId": simulationId },
   )
-  console.log("Getting periods for tag", simulationId)
   const periods = unpackDBResult(periodIdsQueryResult[0])
 
   console.log("Periods", periods)

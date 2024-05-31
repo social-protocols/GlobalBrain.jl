@@ -2,7 +2,6 @@ import "./style.css"
 import simDbUrl from "../public/sim.db?url"
 import initSqlJs from "sql.js"
 import wasmUrl from "../node_modules/sql.js/dist/sql-wasm.wasm?url"
-import { SimulationFilter } from "./types.ts"
 import { unpackDBResult } from "./database.ts"
 import { render } from "./render.ts"
 import {
@@ -11,6 +10,7 @@ import {
   getSimulationFilter,
   getSelectedSimulationId,
 } from "./control-form.ts"
+
 // Architecture:
 // - Unidirectional data flow from mutable state to view
 // - central mutable state, which is represented by the control form
@@ -27,12 +27,13 @@ async function main() {
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise])
   const db = new SQL.Database(new Uint8Array(buf))
 
-  const simulationsQueryResult = db.exec("select distinct(tag) from tag")
-  const simulationIds = unpackDBResult(simulationsQueryResult[0]).map(
-    (x: any) => x.tag,
-  )
+	const simulationIdsQueryResult =
+		db.exec("select simulation_id, simulation_name from simulation")
 
-  const simulationId = initializeSimulationSelectInput(simulationIds)
+	const simulations = unpackDBResult(simulationIdsQueryResult[0])
+	const simulationNames = simulations.map((x: any) => x.simulation_name)
+
+  const simulationId = initializeSimulationSelectInput(simulationNames)
 
   setPeriodsSelectInput(db, simulationId)
 
@@ -55,4 +56,4 @@ google.charts.load("current", { packages: ["corechart", "line"] })
 google.charts.setOnLoadCallback(main)
 window.addEventListener("resize", main, false)
 
-// main()
+main()

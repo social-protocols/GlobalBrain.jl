@@ -1,7 +1,7 @@
 import {
   getData,
   getRootPostIds,
-  getTagId,
+  getSimulationId,
   type VisualizationData,
 } from "./database"
 import { getLookups, type LookupData } from "./lookups"
@@ -36,15 +36,16 @@ const UP_ARROW_SVG_POLYGON_COORDS = "0,10 10,10 5,0"
 const DOWN_ARROW_SVG_POLYGON_COORDS = "0,0 10,0 5,10"
 
 export async function render(db: any, simulationFilter: SimulationFilter) {
-  let simulationId = simulationFilter.simulationId!
-  let tagId = await getTagId(db, simulationId)
+  let simulationName = simulationFilter.simulationId!
+  let simulationId = await getSimulationId(db, simulationName)
 
   let period = simulationFilter.period!
   // TODO: handle case with several root post ids
-  let rootPostIds = await getRootPostIds(db, tagId)
-  let rootPostId = rootPostIds[0].post_id
+  let rootPostIds = await getRootPostIds(db, simulationId)
 
-  let data = await getData(db, tagId, rootPostId, period)
+  let rootPostId = rootPostIds[0].id
+
+  let data = await getData(db, simulationId, rootPostId, period)
   let lookups = getLookups(data)
 
   let root = lookups.postsByPostId[lookups.childrenIdsByPostId[0][0]]
