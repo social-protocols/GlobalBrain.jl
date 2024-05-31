@@ -209,12 +209,6 @@ function create_tables(db::SQLite.DB)
             , tag text NOT NULL
         ) STRICT;
         """,
-
-        """
-        create table Period(tag_id INTEGER not null, step INTEGER not null, description TEXT);
-        """,
-
-
     ]
 
     map((stmt) -> DBInterface.execute(db, stmt), stmts)

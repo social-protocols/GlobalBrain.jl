@@ -107,6 +107,17 @@ function create_sim_db_tables(db::SQLite.DB)
         )
         """
     )
+
+    DBInterface.execute(
+        db,
+        """
+        create table Period (
+              simulation_id integer not null
+            , step integer not null
+            , description text
+        )
+        """,
+    )
 end
 
 function insert_simulation(db::SQLite.DB, simulation_name::String)::Int
@@ -171,8 +182,8 @@ function simulation_step!(
 
     DBInterface.execute(
         db,
-        "insert into period (tag_id, step, description) values (?, ?, ?)",
-        [LEGACY_TAG_ID, step, description],
+        "insert into period (simulation_id, step, description) values (?, ?, ?)",
+        [simulation_id, step, description],
     ) |> collect_results()
 
     for v in shuffle(votes)
