@@ -90,7 +90,7 @@ function create_sim_db_tables(db::SQLite.DB)
         db,
         """
         create table Simulation (
-            simulation_id integer not null primary key autoincrement
+              simulation_id integer not null primary key autoincrement
             , simulation_name text not null
             , created_at integer not null default (unixepoch('subsec')*1000)
         )
@@ -101,7 +101,7 @@ function create_sim_db_tables(db::SQLite.DB)
         db,
         """
         create table PostSimulation (
-            post_id integer not null
+              post_id integer not null
             , simulation_id integer not null
             , primary key(post_id, simulation_id)
         )
@@ -158,7 +158,7 @@ function create_simulation_post!(
     end
 
     id = first(results)
-    
+
     DBInterface.execute(
         db,
         """
@@ -208,7 +208,8 @@ function simulation_step!(
     scores = DBInterface.execute(
         db,
         """
-        select Score.* from Score
+        select Score.*
+        from Score
         join PostSimulation
         on PostSimulation.post_id = Score.post_id
         where PostSimulation.simulation_id = ?
@@ -219,7 +220,8 @@ function simulation_step!(
     effects = DBInterface.execute(
         db,
         """
-        select Effect.* from Effect
+        select Effect.*
+        from Effect
         join PostSimulation
         on PostSimulation.post_id = Effect.post_id
         where PostSimulation.simulation_id = ?
