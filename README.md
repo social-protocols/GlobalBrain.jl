@@ -26,7 +26,10 @@ Finally, `simulations.jl` contains a simulation framework with which simple scen
 
 **`simulations/`**
 
-Simulations created with the framework in `simulations.jl` are located in the `simulations` folder.
+A simulations module (`GlobalBrainSimulations.jl`) to test scenarios against the Global Brain algorithm.
+We use it as a testing framework.
+Simulations are located in `simulations/scenarios`.
+Each scenario is a Julia script with a single anonymous function that takes a `SimulationAPI` object as input.
 
 **`app/`**
 
@@ -35,16 +38,5 @@ A visualization app with which simulations can be explored and analyzed.
 
 ## Workflows
 
-We use the [`just`](https://github.com/casey/just) command runner to automate workflows.
-Following are a few of the recipes we provide.
-
-- run the service: `just run`
-- reset the service database: `just reset-db`
-- open a sqlite REPL of the service database: `just db`
-
-- run the simulations: `just sim`
-- open a sqlite REPL of the simulation database: `just sim-db`
-- run the simulation visualization app: `just app`
-
-- run Julia unit tests: `just unit-tests`
-- run algorithm integration tests: `just test`
+We use the [`just`](https://github.com/casey/just) command runner to automate some workflows.
+Run `just` to see a list of workflows.

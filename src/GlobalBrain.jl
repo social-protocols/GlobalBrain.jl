@@ -4,7 +4,6 @@ using JSON
 using SQLite
 using Dates
 using Random
-using Memoize
 
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
@@ -21,7 +20,6 @@ include("service/json-events.jl")
 include("service/main.jl")
 include("db-schema.jl")
 include("db.jl")
-include("simulations.jl")
 
 # --- Service
 export julia_main
@@ -56,6 +54,7 @@ export sql_row_to_effect
 export sql_row_to_score
 export as_tallies_tree
 export get_or_insert_tag_id
+export collect_results
 
 # --- Probability models
 export Model
@@ -82,13 +81,5 @@ export entropy
 export cross_entropy
 export relative_entropy
 export information_gain
-
-# --- Simulations
-export get_sim_db
-export SimulationPost
-export SimulationVote
-export SimulationAPI
-export create_simulation_post!
-export run_simulation!
 
 end

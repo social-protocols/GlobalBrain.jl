@@ -15,7 +15,7 @@
 # ------------------------------------------------------------------------------
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
-function b_implies_a(sim::SimulationAPI)
+(sim::SimulationAPI) -> begin
     Random.seed!(3);
 
     A = sim.post!(nothing, "Is A true?")
@@ -46,7 +46,7 @@ function b_implies_a(sim::SimulationAPI)
                 SimulationVote(root_post_id, -1, i)
             for i in 1:n_users
         ]
-        scores = sim.step!(1, votes_0; description="All users have common prior belief P(A)=$p_a. So everyone downvotes A. The estimated upvoteProbability quickly approaches zero.")
+        scores, _ = sim.step!(1, votes_0; description="All users have common prior belief P(A)=$p_a. So everyone downvotes A. The estimated upvoteProbability quickly approaches zero.")
         @testset "B implies A: Step 1" begin
             @test scores[root_post_id].p ≈ 0.0 atol = 0.1
         end
@@ -74,7 +74,7 @@ function b_implies_a(sim::SimulationAPI)
                 SimulationVote(root_post_id, -1, i)
             for i in 1:n_subset
         ]
-        scores = sim.step!(2, [votes_1; votes_2]; description="Someone posts B, and everyone who sees B agrees. Further, everyone has a common prior P(A|B)=$p_a_given_b, so users change their vote and upvote A. The estimated informed upvoteProbability quickly approaches 1." )
+        scores, _ = sim.step!(2, [votes_1; votes_2]; description="Someone posts B, and everyone who sees B agrees. Further, everyone has a common prior P(A|B)=$p_a_given_b, so users change their vote and upvote A. The estimated informed upvoteProbability quickly approaches 1." )
 
         @testset "B implies A: Step 2" begin
             @test scores[note_id].p ≈ 1.0 atol = 0.1

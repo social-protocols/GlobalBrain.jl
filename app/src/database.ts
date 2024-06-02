@@ -11,15 +11,15 @@ export type VisualizationData = {
 
 export async function getData(
   db: any,
-  tagId: number,
+  simulationId: number,
   rootPostId: number,
   period: number,
 ): Promise<VisualizationData> {
   let discussionTree = await getDiscussionTree(db, rootPostId, period)
-  let effects = await getEffects(db, tagId, period)
-  let effectEvents = await getEffectEvent(db)
-  let scoreEvents = await getScoreEvent(db)
-  let voteEvents = await getVoteEvent(db)
+  let effects = await getEffects(db, simulationId, period)
+  let effectEvents = await getEffectEvents(db)
+  let scoreEvents = await getScoreEvents(db)
+  let voteEvents = await getVoteEvents(db)
 
   return {
     discussionTree: discussionTree,
@@ -41,14 +41,16 @@ export function unpackDBResult(result: { columns: string[]; values: any[] }) {
   })
 }
 
-export async function getRootPostIds(db: any, tagId: number) {
+export async function getRootPostIds(db: any, simulationId: number) {
   let stmt = db.prepare(`
-    SELECT DISTINCT post_id
-    FROM VoteEvent
-    WHERE tag_id = :tagId
-    AND parent_id IS NULL
+		select distinct id
+		from Post
+		join PostSimulation
+		on post.id = PostSimulation.post_id
+		where simulation_id = :simulationId
+		and parent_id is null
   `)
-  stmt.bind({ ":tagId": tagId })
+  stmt.bind({ ":simulationId": simulationId })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())
@@ -56,16 +58,19 @@ export async function getRootPostIds(db: any, tagId: number) {
   return res
 }
 
-export async function getTagId(db: any, tag: string) {
+export async function getSimulationId(
+  db: any,
+  simulationName: string,
+): Promise<number> {
   let stmt = db.prepare(`
-    SELECT id from tag where tag = :tag
+    SELECT simulation_id from Simulation where simulation_name = :simulationName
   `)
-  stmt.bind({ ":tag": tag })
+  stmt.bind({ ":simulationName": simulationName })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())
   }
-  return res[0]!.id
+  return res[0]!.simulation_id
 }
 
 async function getDiscussionTree(db: any, postId: number, period: number) {
@@ -131,15 +136,17 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
   return res
 }
 
-async function getEffects(db: any, tagId: number, period: number) {
+async function getEffects(db: any, simulationId: number, period: number) {
   let stmt = db.prepare(`
-    SELECT MAX(vote_event_id) AS max_id, *
-    FROM EffectEvent
-    WHERE tag_id = :tagId
-    AND vote_event_time <= :period
-    GROUP BY post_id, note_id
+		select max(vote_event_id) as max_id, EffectEvent.*
+		from EffectEvent
+		join PostSimulation
+		on EffectEvent.post_id = PostSimulation.post_id
+		where simulation_id = :simulationId
+		and vote_event_time <= :period
+		group by EffectEvent.post_id, EffectEvent.note_id
   `)
-  stmt.bind({ ":tagId": tagId, ":period": period })
+  stmt.bind({ ":simulationId": simulationId, ":period": period })
   let res = []
   while (stmt.step()) {
     res.push(stmt.getAsObject())
@@ -151,7 +158,7 @@ async function getEffects(db: any, tagId: number, period: number) {
   return effectsWithMagnitude
 }
 
-async function getScoreEvent(db: any) {
+async function getScoreEvents(db: any) {
   let stmt = db.prepare(`SELECT * FROM ScoreEvent`)
   let res = []
   while (stmt.step()) {
@@ -160,7 +167,7 @@ async function getScoreEvent(db: any) {
   return res
 }
 
-async function getEffectEvent(db: any) {
+async function getEffectEvents(db: any) {
   let stmt = db.prepare(`SELECT * FROM EffectEvent`)
   let res = []
   while (stmt.step()) {
@@ -173,7 +180,7 @@ async function getEffectEvent(db: any) {
   return effectsWithMagnitude
 }
 
-async function getVoteEvent(db: any) {
+async function getVoteEvents(db: any) {
   let stmt = db.prepare(`SELECT * FROM VoteEvent`)
   let res = []
   while (stmt.step()) {
