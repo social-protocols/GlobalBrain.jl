@@ -1,6 +1,5 @@
 function create_tables(db::SQLite.DB)
     stmts = [
-
         """
         create table VoteEvent(
               vote_event_id   integer not null
@@ -14,7 +13,6 @@ function create_tables(db::SQLite.DB)
             , primary key(vote_event_id)
         ) strict;
         """,
-
         """
         create table Vote(
               vote_event_id   integer not null
@@ -27,7 +25,6 @@ function create_tables(db::SQLite.DB)
             , primary key(user_id, tag_id, post_id)
         ) strict;
         """,
-
         """
         create table Tally(
               tag_id               integer not null
@@ -39,7 +36,6 @@ function create_tables(db::SQLite.DB)
             , primary key(tag_id, post_id)
         ) strict;
         """,
-
         """
         create table InformedVote(
           user_id text not null,
@@ -66,7 +62,7 @@ function create_tables(db::SQLite.DB)
         # create index InformedVote_tag_post_note
         # on InformedVote(tag_id, post_id, note_id);
         # """,
-       
+
         """
         create table InformedTally(
               tag_id           integer not null
@@ -77,7 +73,6 @@ function create_tables(db::SQLite.DB)
             , primary key(tag_id, post_id, note_id)
          ) strict;
         """,
-
         """
         create table Post(
               parent_id  integer
@@ -86,11 +81,9 @@ function create_tables(db::SQLite.DB)
             , primary key(id)
         ) strict;
         """,
-
         """
         create index post_parent on Post(parent_id);
         """,
-
         """
         create table Lineage(
               ancestor_id   integer
@@ -99,19 +92,14 @@ function create_tables(db::SQLite.DB)
             , primary key(ancestor_id, descendant_id)
         ) strict;
         """,
-
-
         """
         create index Lineage_ancestor_id
         on Lineage(ancestor_id);
         """,
-
         """
         create index Lineage_descendant_id
         on Lineage(descendant_id);
         """,
-
-
         """
         create table EffectEvent(
               vote_event_id   integer not null
@@ -130,7 +118,6 @@ function create_tables(db::SQLite.DB)
             , primary key(vote_event_id, post_id, note_id)
         ) strict;
         """,
-
         """
         create table Effect(
               vote_event_id   integer not null
@@ -149,13 +136,10 @@ function create_tables(db::SQLite.DB)
             , primary key(tag_id, post_id, note_id)
         ) strict;
         """,
-
         """
         create index Effect_tag_post
         on Effect(tag_id, post_id);
         """,
-
-
         """
         create table ScoreEvent(
               vote_event_id     integer not null
@@ -172,7 +156,6 @@ function create_tables(db::SQLite.DB)
             , primary key(vote_event_id, post_id)
         ) strict;
         """,
-
         """
         create table Score(
               vote_event_id     integer not null
@@ -189,7 +172,6 @@ function create_tables(db::SQLite.DB)
             , primary key(tag_id, post_id)
         ) strict;
         """,
-
         """
         create table LastVoteEvent(
               type                    integer
@@ -198,11 +180,9 @@ function create_tables(db::SQLite.DB)
             , primary key(type)
         ) strict;
         """,
-
         """
         insert into LastVoteEvent values(1, 0, 0);
         """,
-
         """
         create TABLE Tag (
               id  integer NOT NULL PRIMARY KEY AUTOINCREMENT
@@ -242,7 +222,6 @@ function create_views(db::SQLite.DB)
         from leafNode
         join Lineage Descendant on (post_id = ancestor_id); -- descendant of item that was voted on
         """,
-
         """
         create view VoteEventImport as
         select
@@ -255,7 +234,6 @@ function create_views(db::SQLite.DB)
             0  as vote,
             0  as vote_event_time;
         """,
-
         """
         create view ImplicitlyInformedVote as 
           select
@@ -277,7 +255,6 @@ function create_views(db::SQLite.DB)
             and vote.user_id = iv.user_id
         ;     
         """,
-
         """
         create view ConditionalTally as 
 
@@ -348,7 +325,6 @@ function create_triggers(db::SQLite.DB)
             );
         end;
         """,
-
         """
         create trigger afterInsertScoreEvent after insert on ScoreEvent begin
             insert or replace into Score
@@ -367,7 +343,6 @@ function create_triggers(db::SQLite.DB)
             );
         end;
         """,
-
         """
         -- Inserting into ProcessVoteEvent will "process" the event and update the tallies, but only if the event hasn't been processed
         -- that is, if the vote_event_id is greater than lastVoteEvent.vote_event_id
@@ -399,7 +374,6 @@ function create_triggers(db::SQLite.DB)
             -- delete from voteEvent where vote_event_id = new.vote_event_id;
         end;
         """,
-
         """
         create trigger afterInsertPost after insert on Post
         when new.parent_id is not null
@@ -542,7 +516,6 @@ function create_triggers(db::SQLite.DB)
 
         end;
         """,
-
         """
         create trigger afterInsertVote after insert on Vote begin
 
@@ -570,7 +543,6 @@ function create_triggers(db::SQLite.DB)
 
         end;
         """,
-
         """
         create trigger afterUpdateVote after update on Vote begin
             update Tally
@@ -584,7 +556,6 @@ function create_triggers(db::SQLite.DB)
 
         end;
         """,
-
         """
           create trigger afterInsertInformedVote after insert on InformedVote 
           when new.informed = 1 
@@ -610,7 +581,6 @@ function create_triggers(db::SQLite.DB)
               ;
           end;
         """,
-
         """
         create trigger afterUpdateInformedVote after update on InformedVote begin
             update InformedTally
@@ -625,7 +595,6 @@ function create_triggers(db::SQLite.DB)
             ;
         end;
         """,
-
         """
         -- Holds a snapshot of tallies before a note is created.
         create table PreinformedTally(
@@ -637,7 +606,6 @@ function create_triggers(db::SQLite.DB)
             , primary key(tag_id, post_id, note_id)
          ) strict;
         """,
-
     ]
 
     map((stmt) -> DBInterface.execute(db, stmt), stmts)

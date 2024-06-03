@@ -6,9 +6,10 @@ instantiate:
     julia --project -e 'using Pkg; Pkg.instantiate()'
 
 format:
-    #julia --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
     cd app && npx prettier --write --ignore-path public/google-charts-loader.js .
     cd globalbrain-node && npx prettier --write . 
+    julia -e 'using Pkg; Pkg.add("JuliaFormatter")'
+    julia --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
 
 run:
     test -e $VOTE_EVENTS_PATH || touch $VOTE_EVENTS_PATH

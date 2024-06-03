@@ -1,4 +1,4 @@
-global preparedStatements = Dict{String, SQLite.Stmt}()
+global preparedStatements = Dict{String,SQLite.Stmt}()
 
 # Generic function to iterate over a SQLite query result and place results in
 # a vector. It is often convenient by default to iterate over the results of
@@ -8,12 +8,11 @@ global preparedStatements = Dict{String, SQLite.Stmt}()
 # only a reference to the query, and not the actual data. You actually need to read
 # the values out of the row and put them somewhere. The optional converter function
 # takes a SQLite.Row and returns whatever data is required.
-function collect_results(optional_converter::Union{Function, Nothing} =
-nothing)
+function collect_results(optional_converter::Union{Function,Nothing} = nothing)
 
     converter = !isnothing(optional_converter) ? optional_converter : x -> begin
         nothing
-    end 
+    end
 
     f = rows -> begin
         return [converter(row) for row in rows]
@@ -61,10 +60,7 @@ end
 
 function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::String)
     if !haskey(preparedStatements, stmt_key)
-        preparedStatements[stmt_key] = DBInterface.prepare(
-            db,
-            sql_query
-        )
+        preparedStatements[stmt_key] = DBInterface.prepare(db, sql_query)
     end
     return preparedStatements[stmt_key]
 end
@@ -91,7 +87,7 @@ function get_tallies_data(
             (:parent_id = parent_id)
             or
             (:parent_id is null and parent_id is null)
-        """
+        """,
     )
 
     results = DBInterface.execute(stmt, [tag_id, parent_id])
@@ -127,18 +123,21 @@ function get_conditional_tally(
             post_id = :post_id
             and note_id = :note_id
             and tag_id = :tag_id
-        """
+        """,
     )
 
-    results = DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> collect_results(r -> begin
-        ConditionalTally(
-            tag_id = r[:tag_id],
-            post_id = r[:post_id],
-            note_id = r[:note_id],
-            informed = BernoulliTally(r[:informed_count], r[:informed_total]),
-            uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
+    results =
+        DBInterface.execute(stmt, [post_id, note_id, tag_id]) |> collect_results(
+            r -> begin
+                ConditionalTally(
+                    tag_id = r[:tag_id],
+                    post_id = r[:post_id],
+                    note_id = r[:note_id],
+                    informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+                    uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
+                )
+            end,
         )
-    end)
 
     if length(results) == 0
         return ConditionalTally(
@@ -168,10 +167,12 @@ function get_effect(db::SQLite.DB, tag_id::Int, post_id::Int, note_id::Int)::Eff
             tag_id = :tag_id
             and post_id = :post_id
             and note_id = :note_id
-        """
+        """,
     )
 
-    results = DBInterface.execute(stmt, [tag_id, post_id, note_id]) |> collect_results(sql_row_to_effect)
+    results =
+        DBInterface.execute(stmt, [tag_id, post_id, note_id]) |>
+        collect_results(sql_row_to_effect)
 
     if length(results) == 0
         throw("Missing effect record for $tag_id, $post_id, $note_id")
@@ -204,7 +205,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
-        """
+        """,
     )
 
     score = score_event.score
@@ -249,7 +250,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
-        """
+        """,
     )
 
     effect = effect_event.effect
@@ -290,10 +291,7 @@ function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
         "set_last_processed_vote_event_id",
         "update lastVoteEvent set processed_vote_event_id = ?",
     )
-    DBInterface.execute(
-        stmt,
-        [vote_event_id],
-    )
+    DBInterface.execute(stmt, [vote_event_id])
 end
 
 
@@ -304,9 +302,10 @@ function get_last_processed_vote_event_id(db::SQLite.DB)
         "select processed_vote_event_id from lastVoteEvent",
     )
 
-    results = DBInterface.execute(stmt) |> collect_results(row -> begin
-        row[:processed_vote_event_id]
-    end)
+    results =
+        DBInterface.execute(stmt) |> collect_results(row -> begin
+            row[:processed_vote_event_id]
+        end)
 
     return first(results)
 end
@@ -328,7 +327,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
                 , vote
             )
             values (?, ?, ?, ?, ?, ?, ?, ?)
-        """
+        """,
     )
 
     DBInterface.execute(
@@ -348,17 +347,18 @@ end
 
 function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
-            tag_id = row[:tag_id],
-            post_id = row[:post_id],
-            note_id = row[:note_id],
-            top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing : row[:top_subthread_id],
-            p = row[:p],
-            p_count = row[:p_count],
-            q = row[:q],
-            p_size = row[:p_size],
-            q_count = row[:q_count],
-            q_size = row[:q_size],
-            r = row[:r],
+        tag_id = row[:tag_id],
+        post_id = row[:post_id],
+        note_id = row[:note_id],
+        top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing :
+                           row[:top_subthread_id],
+        p = row[:p],
+        p_count = row[:p_count],
+        q = row[:q],
+        p_size = row[:p_size],
+        q_count = row[:q_count],
+        q_size = row[:q_size],
+        r = row[:r],
     )
 end
 
@@ -406,7 +406,7 @@ function get_effects_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vecto
         from EffectEvent
         where
             vote_event_id = :vote_event_Id
-        """
+        """,
     )
 
     return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_effect)
@@ -424,7 +424,7 @@ function get_scores_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector
         from ScoreEvent
         where
             vote_event_id = :vote_event_Id
-        """
+        """,
     )
 
     return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_score)
@@ -441,10 +441,11 @@ function get_vote_event(db::SQLite.DB, vote_event_id::Int)::VoteEvent
         from VoteEvent
         where
             vote_event_id = :vote_event_id
-        """
+        """,
     )
 
-    results = DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_vote_event)
+    results =
+        DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_vote_event)
 
     if length(results) == 0
         throw("Missing vote event for vote_event_id=$(vote_event_id)")
