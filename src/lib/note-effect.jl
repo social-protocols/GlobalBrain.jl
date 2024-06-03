@@ -42,12 +42,19 @@ function upvote_probabilities(prior::BetaDistribution, tally::ConditionalTally)
     return upvote_probabilities_bayesian_average(prior, tally)
 end
 
-# Global prior constants. These should be estimated periodically using a Monte-Carlo chain on the full data set. 
-# But once estimated, then cay be treated as constants.
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 0.5
-const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
+
+# The global prior upvote probability is Beta(.25, .25), or a beta distribution with mean 0.5 and weight 0.5. 
+# See reasoning in: https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-06-03-choosing-priors.md#user-content-fnref-1-35b0437c85b2f65e7c3d7139bba82f66
+
+const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 0.50
+const GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN = 0.5
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
-    BetaDistribution(0.5, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
+    BetaDistribution(GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
+
+# The global prior weiht for the *informed* upvote probability is just a guess, based on the belief that the prior weight for the
+# informed upvote probability should be higher than that for the uninformed
+# upvote probability. A priori, arguments do not change minds.
+const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
 
 function upvote_probabilities_bayesian_average(
     prior::BetaDistribution,
