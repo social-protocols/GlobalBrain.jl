@@ -8,7 +8,6 @@ using Random
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
 include("lib/models/tallies-data.jl")
-include("lib/constants.jl")
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
 include("lib/algorithm.jl")
