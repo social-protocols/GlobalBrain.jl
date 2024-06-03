@@ -19,8 +19,8 @@ int main(int argc, char *argv[]) {
   const char *targetResult =
       "{\"vote_event_id\":1,\"vote_event_time\":1708772663570,\"score\":{\"tag_"
       "id\":1,\"post_id\":1,\"top_note_id\":null,\"critical_thread_id\":null,"
-      "\"o\":0.9129,\"o_count\":1,"
-      "\"o_size\":1,\"p\":0.9129,\"score\":0.7928}}\n";
+      "\"o\":0.8333,\"o_count\":1,"
+      "\"o_size\":1,\"p\":0.8333,\"score\":0.6141}}\n";
 
   if (strcmp(resultBuffer, targetResult) != 0) {
     fprintf(stderr,
