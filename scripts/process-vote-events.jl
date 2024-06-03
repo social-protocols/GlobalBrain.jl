@@ -1,14 +1,14 @@
-function julia_main()::Cint
-    @info "Starting Global Brain service..."
+include(joinpath("..", "src", "GlobalBrain.jl"))
+using Main.GlobalBrain
 
-    database_path = ARGS[1]
-    vote_events_path = ARGS[2]
-    output_path = ARGS[3]
+@info "Processing vote events stream..."
 
-    global_brain_service(database_path, vote_events_path, output_path)
-end
+database_path = ARGS[1]
+vote_events_path = ARGS[2]
+output_path = ARGS[3]
 
-function global_brain_service(
+
+function process_vote_events(
     database_path::String,
     vote_events_path::String,
     output_path::String,
@@ -31,3 +31,5 @@ function global_brain_service(
 
     return 0
 end
+
+process_vote_events(database_path, vote_events_path, output_path)
