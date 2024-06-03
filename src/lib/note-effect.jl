@@ -10,7 +10,7 @@ effect of `Nothing` is 0.0 by definition.
     * `effect::Union{Effect, Nothing}`: The effect to calculate the
     magnitude of.
 """
-function magnitude(effect::Union{Effect, Nothing})::Float64
+function magnitude(effect::Union{Effect,Nothing})::Float64
     return abs(effect.q - effect.p)
 end
 
@@ -48,8 +48,10 @@ end
 
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 0.50
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN = 0.5
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
-    BetaDistribution(GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
+const GLOBAL_PRIOR_UPVOTE_PROBABILITY = BetaDistribution(
+    GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN,
+    GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE,
+)
 
 # The global prior weiht for the *informed* upvote probability is just a guess, based on the belief that the prior weight for the
 # informed upvote probability should be higher than that for the uninformed

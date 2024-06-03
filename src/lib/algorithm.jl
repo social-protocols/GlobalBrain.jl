@@ -38,7 +38,9 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
         tag_id = post.tag_id,
         post_id = post_id,
         top_note_id = !isnothing(top_thread) ? top_thread.note_id : nothing,
-        critical_thread_id = !isnothing(top_thread) ? coalesce(top_thread.note_id, top_thread.top_subthread_id) : nothing,
+        critical_thread_id = !isnothing(top_thread) ?
+                             coalesce(top_thread.note_id, top_thread.top_subthread_id) :
+                             nothing,
         o = o.mean,
         o_count = this_tally.count,
         o_size = this_tally.size,
@@ -55,7 +57,7 @@ function find_top_thread(
     note::TalliesData,
     r::BetaDistribution,
     effects::Dict{Int,Vector{Effect}},
-)::Union{Effect, Nothing}
+)::Union{Effect,Nothing}
 
     note_id = note.post_id
 
@@ -82,7 +84,7 @@ function find_top_thread(
         return nothing
     end
 
-    if post_id == 1 && note_id == 2 
+    if post_id == 1 && note_id == 2
         for x in child_effects
             @debug "child_effect=$(thread_score(x))"
         end
@@ -95,7 +97,7 @@ function find_top_thread(
         ma > mb ? a : b
     end, child_effects)
 
-    if post_id == 1 && note_id == 2 
+    if post_id == 1 && note_id == 2
         @debug "Result here: $result"
     end
 
