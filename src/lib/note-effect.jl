@@ -44,10 +44,10 @@ end
 
 # Global prior constants. These should be estimated periodically using a Monte-Carlo chain on the full data set. 
 # But once estimated, then cay be treated as constants.
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 2.3
+const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 0.5
 const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
 const GLOBAL_PRIOR_UPVOTE_PROBABILITY =
-    BetaDistribution(0.875, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
+    BetaDistribution(0.5, GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE)
 
 function upvote_probabilities_bayesian_average(
     prior::BetaDistribution,
