@@ -1,6 +1,6 @@
 # Node extension for GlobalBrain.jl
 
-##  Based on example form Maxime Mouchet git+https://github.com/maxmouchet/julia-node-extension-demo.git
+## Based on example form Maxime Mouchet git+https://github.com/maxmouchet/julia-node-extension-demo.git
 
 ## TODOS:
 
