@@ -16,7 +16,7 @@ for file in readdir(scenarios_directory_path)
     sim = include(joinpath(pwd(), scenarios_directory_path, file))
     sim_name = endswith(file, ".jl") ? String(chop(file, tail = 3)) : file
     @info "Running simulation $(sim_name)..."
-    @testset "$(sim_name)" begin
+    begin
         run_simulation!(sim, db, simulation_name = sim_name)
     end
 end
