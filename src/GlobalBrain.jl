@@ -16,7 +16,6 @@ include("lib/note-effect.jl")
 include("service/events.jl")
 include("service/vote-event-processing.jl")
 include("service/json-events.jl")
-include("service/main.jl")
 include("db-schema.jl")
 include("db.jl")
 
