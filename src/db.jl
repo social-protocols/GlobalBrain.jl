@@ -309,10 +309,9 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
                 , user_id
                 , parent_id
                 , post_id
-                , note_id
                 , vote
             )
-            values (?, ?, ?, ?, ?, ?, ?)
+            values (?, ?, ?, ?, ?, ?)
         """,
     )
 
@@ -324,7 +323,6 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
             vote_event.user_id,
             vote_event.parent_id,
             vote_event.post_id,
-            vote_event.note_id,
             vote_event.vote,
         ),
     )
@@ -368,7 +366,6 @@ function sql_row_to_vote_event(row::SQLite.Row)::VoteEvent
         user_id = row[:user_id],
         parent_id = sql_missing_to_nothing(row[:parent_id]),
         post_id = row[:post_id],
-        note_id = sql_missing_to_nothing(row[:note_id]),
         vote = row[:vote],
     )
 end

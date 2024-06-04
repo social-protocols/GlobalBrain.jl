@@ -3,7 +3,6 @@ INPUT_STREAM_VOTE_EVENT_SCHEMA = Set([
     "user_id",
     "parent_id",
     "post_id",
-    "note_id",
     "vote",
     "vote_event_time",
 ])
@@ -26,7 +25,6 @@ function parse_vote_event(input::Dict{String,Any})::VoteEvent
         user_id = input["user_id"],
         parent_id = input["parent_id"],
         post_id = input["post_id"],
-        note_id = input["note_id"],
         vote = input["vote"],
     )
 end

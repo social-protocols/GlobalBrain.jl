@@ -186,7 +186,6 @@ function simulation_step!(
             user_id = string(v.user_id),
             parent_id = parent_id,
             post_id = v.post_id,
-            note_id = nothing,
             vote = v.vote,
         )
         process_vote_event(db, vote_event) do object
