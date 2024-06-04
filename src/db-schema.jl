@@ -585,13 +585,12 @@ function create_triggers(db::SQLite.DB)
         create trigger afterUpdateInformedVote after update on InformedVote begin
             update InformedTally
             set
-                count     = count + ((new.vote = 1) - (old.vote = 1))
-                , total   = total + ((new.vote != 0) - (old.vote != 0))
+                count     = count + ((new.vote = 1 and new.informed) - (old.vote = 1 and old.informed))
+                , total   = total + ((new.vote != 0 and new.informed) - (old.vote != 0 and old.informed))
             where
             tag_id = new.tag_id
             and post_id = new.post_id
             and note_id = new.note_id
-            and new.informed = 1
             ;
         end;
         """,
