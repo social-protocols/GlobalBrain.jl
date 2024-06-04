@@ -77,6 +77,7 @@ function create_tables(db::SQLite.DB)
         create table Post(
               parent_id  integer
             , id         integer not null
+            , first_vote_event_id integer not null
             , content    text default ''
             , primary key(id)
         ) strict;
@@ -391,28 +392,6 @@ function create_triggers(db::SQLite.DB)
                 , 1 + separation as separation
             from lineage ancestor 
             where ancestor.descendant_id = new.parent_id;
-
-            -- Take a snapshot of the tally before the note was created
-            insert into PreinformedTally
-            with PartiallyInformed as (
-              -- The partially-informed tally for note C and target A is the
-              -- informed tally of the parent of C and target A.
-              select * from InformedTally
-              UNION ALL
-              -- If the note is a direct child of the target then the
-              -- partially-informed tally is the overall tally for the target.
-              select tag_id, post_id, post_id, count, total
-              from tally
-            )
-            select 
-                tag_id
-                , post_id
-                , new.id as note_id
-                , count
-                , total
-            from PartiallyInformed
-            where(note_id = new.parent_id)
-            on conflict do nothing; -- this shouldn't be necessary, but for reasons I don't understand removing it is producing unique constraint failures 
         end;
         """,
 
@@ -460,8 +439,8 @@ function create_triggers(db::SQLite.DB)
             ;
 
             -- Insert a record for the post the first time we see this post id.
-            insert into Post(parent_id, id)
-            values(new.parent_id, new.post_id) on conflict do nothing;
+            insert into Post(parent_id, id, first_vote_event_id)
+            values(new.parent_id, new.post_id, new.vote_event_id) on conflict do nothing;
 
             insert into InformedVote
             select
@@ -596,15 +575,33 @@ function create_triggers(db::SQLite.DB)
         end;
         """,
         """
-        -- Holds a snapshot of tallies before a note is created.
-        create table PreinformedTally(
-              tag_id           integer not null
-            , post_id          integer not null
-            , note_id          integer not null
-            , count   integer not null
-            , total   integer not null
-            , primary key(tag_id, post_id, note_id)
-         ) strict;
+        create view PreinformedVote as 
+            select
+                informedVote.tag_id
+                , informedVote.post_id
+                , informedVote.note_id
+                , informedVote.user_id 
+                , voteEvent.vote
+                , max(vote_event_id) as last_vote_event_id 
+            from 
+            informedVote
+            join post note on note.id = informedVote.note_id
+            join voteEvent using (tag_id, post_id, user_id)
+            where vote_event_id <= note.first_vote_event_id
+            and informed = 1
+            group by 1,2,3,4;
+        """,
+        """
+        create view PreinformedTally as 
+          select
+            tag_id
+            , post_id
+            , note_id
+            , sum(vote == 1) as count
+            , sum(vote != 0) as total
+          from PreinformedVote
+          group by 1, 2, 3
+        ;
         """,
     ]
 
