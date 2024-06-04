@@ -4,7 +4,6 @@ Base.@kwdef struct VoteEvent
     user_id::String
     parent_id::Union{Int,Nothing}
     post_id::Int64
-    note_id::Union{Int64,Nothing}
     vote::Int
 end
 
