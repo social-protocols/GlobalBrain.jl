@@ -39,8 +39,7 @@ ci-test:
 
 build-shared-library:
     rm -rf globalbrain-node/julia/build
-    cd globalbrain-node/julia && julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
-    cd globalbrain-node && npm install && npm test
+    cd globalbrain-node/julia && time julia -t auto --startup-file=no --project -e 'using Pkg; Pkg.instantiate(); include("build.jl")'
 
 
 ############ TESTS ##############

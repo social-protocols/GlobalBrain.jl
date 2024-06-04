@@ -557,29 +557,30 @@ function create_triggers(db::SQLite.DB)
         end;
         """,
         """
-          create trigger afterInsertInformedVote after insert on InformedVote 
-          when new.informed = 1 
-          begin
-             insert into InformedTally(
-                    tag_id
-                  , post_id
-                  , note_id
-                  , count
-                  , total
-              ) 
-              values (
-                  new.tag_id
-                  , new.post_id
-                  , new.note_id
-                  , (new.vote = 1)
-                  , (new.vote != 0)
-              ) 
-              on conflict(tag_id, post_id, note_id) do update
-              set
-                    count   = count + (new.vote = 1)
-                  , total   = total + (new.vote != 0)
-              ;
-          end;
+        create trigger afterInsertInformedVote after insert on InformedVote 
+        when new.informed = 1 
+        begin
+           insert into InformedTally(
+                  tag_id
+                , post_id
+                , note_id
+                , count
+                , total
+            ) 
+            values (
+                new.tag_id
+                , new.post_id
+                , new.note_id
+                , (new.vote = 1)
+                , (new.vote != 0)
+            ) 
+            on conflict(tag_id, post_id, note_id) do update
+            set
+                  count   = count + (new.vote = 1)
+                , total   = total + (new.vote != 0)
+            ;
+
+        end;
         """,
         """
         create trigger afterUpdateInformedVote after update on InformedVote begin
