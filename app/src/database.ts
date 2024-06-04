@@ -94,7 +94,7 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
           vote_event_id
         , vote_event_time
         , post_id
-        , top_note_id
+        , top_comment_id
         , o
         , o_count
         , o_size
@@ -115,7 +115,7 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
         idsRecursive.*
       , vote_event_id
       , vote_event_time
-      , top_note_id
+      , top_comment_id
       , o
       , o_count
       , o_size
@@ -141,7 +141,7 @@ async function getEffects(db: any, simulationId: number, period: number) {
 		on EffectEvent.post_id = SimulationPost.id
 		where simulation_id = :simulationId
 		and vote_event_time <= :period
-		group by EffectEvent.post_id, EffectEvent.note_id
+		group by EffectEvent.post_id, EffectEvent.comment_id
   `)
   stmt.bind({ ":simulationId": simulationId, ":period": period })
   let res = []

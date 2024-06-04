@@ -136,7 +136,7 @@ function getLookupVoteEventsByPostId(
 function getLookupEffectsByPostIdNoteId(effects: Effect[]): Lookup<Effect> {
   let effectsByPostIdNoteId: Lookup<Effect> = {}
   effects.forEach((effect) => {
-    effectsByPostIdNoteId[`${effect["post_id"]}-${effect["note_id"]}`] = effect
+    effectsByPostIdNoteId[`${effect["post_id"]}-${effect["comment_id"]}`] = effect
   })
   return effectsByPostIdNoteId
 }

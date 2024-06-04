@@ -1,82 +1,82 @@
          post_id = 1
-         note_id = 2
+         comment_id = 2
   informed_count = 1
   informed_total = 3
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 1
-         note_id = 3
+         comment_id = 3
   informed_count = 1
   informed_total = 2
 uninformed_count = 1
 uninformed_total = 2
 
          post_id = 2
-         note_id = 3
+         comment_id = 3
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 4
-         note_id = 5
+         comment_id = 5
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 6
-         note_id = 7
+         comment_id = 7
   informed_count = 0
   informed_total = 1
 uninformed_count = 0
 uninformed_total = 1
 
          post_id = 8
-         note_id = 9
+         comment_id = 9
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 8
-         note_id = 10
+         comment_id = 10
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 8
-         note_id = 11
+         comment_id = 11
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 8
-         note_id = 12
+         comment_id = 12
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 9
-         note_id = 10
+         comment_id = 10
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 9
-         note_id = 11
+         comment_id = 11
   informed_count = 0
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
 
          post_id = 16
-         note_id = 17
+         comment_id = 17
   informed_count = 0
   informed_total = 0
 uninformed_count = 1

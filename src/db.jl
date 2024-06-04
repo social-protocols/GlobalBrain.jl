@@ -104,7 +104,7 @@ end
 function get_conditional_tally(
     db::SQLite.DB,
     post_id::Int,
-    note_id::Int,
+    comment_id::Int,
 )::ConditionalTally
 
     stmt = get_prepared_statement(
@@ -116,16 +116,16 @@ function get_conditional_tally(
         from ConditionalTally 
         where
             post_id = :post_id
-            and note_id = :note_id
+            and comment_id = :comment_id
         """,
     )
 
     results =
-        DBInterface.execute(stmt, [post_id, note_id]) |> collect_results(
+        DBInterface.execute(stmt, [post_id, comment_id]) |> collect_results(
             r -> begin
                 ConditionalTally(
                     post_id = r[:post_id],
-                    note_id = r[:note_id],
+                    comment_id = r[:comment_id],
                     informed = BernoulliTally(r[:informed_count], r[:informed_total]),
                     uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
                 )
@@ -135,7 +135,7 @@ function get_conditional_tally(
     if length(results) == 0
         return ConditionalTally(
             post_id = post_id,
-            note_id = note_id,
+            comment_id = comment_id,
             informed = BernoulliTally(0, 0),
             uninformed = BernoulliTally(0, 0),
         )
@@ -146,7 +146,7 @@ function get_conditional_tally(
 end
 
 
-function get_effect(db::SQLite.DB, post_id::Int, note_id::Int)::Effect
+function get_effect(db::SQLite.DB, post_id::Int, comment_id::Int)::Effect
 
     stmt = get_prepared_statement(
         db,
@@ -157,16 +157,16 @@ function get_effect(db::SQLite.DB, post_id::Int, note_id::Int)::Effect
         from effect
         where
             post_id = :post_id
-            and note_id = :note_id
+            and comment_id = :comment_id
         """,
     )
 
     results =
-        DBInterface.execute(stmt, [post_id, note_id]) |>
+        DBInterface.execute(stmt, [post_id, comment_id]) |>
         collect_results(sql_row_to_effect)
 
     if length(results) == 0
-        throw("Missing effect record for $post_id, $note_id")
+        throw("Missing effect record for $post_id, $comment_id")
     end
 
     return first(results)
@@ -183,7 +183,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             , vote_event_time
             -- , parent_id
             , post_id
-            , top_note_id
+            , top_comment_id
             , critical_thread_id
             -- , p
             -- , q
@@ -205,7 +205,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             score_event.vote_event_id,
             score_event.vote_event_time,
             score.post_id,
-            score.top_note_id,
+            score.top_comment_id,
             score.critical_thread_id,
             score.o,
             score.o_count,
@@ -226,7 +226,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
               vote_event_id
             , vote_event_time
             , post_id
-            , note_id
+            , comment_id
             , top_subthread_id
             , p
             , p_count
@@ -248,7 +248,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect_event.vote_event_id,
             effect_event.vote_event_time,
             effect.post_id,
-            effect.note_id,
+            effect.comment_id,
             effect.top_subthread_id,
             effect.p,
             effect.p_count,
@@ -331,7 +331,7 @@ end
 function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
         post_id = row[:post_id],
-        note_id = row[:note_id],
+        comment_id = row[:comment_id],
         top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing :
                            row[:top_subthread_id],
         p = row[:p],
@@ -348,7 +348,7 @@ end
 function sql_row_to_score(row::SQLite.Row)::Score
     return Score(
         post_id = row[:post_id],
-        top_note_id = sql_missing_to_nothing(row[:top_note_id]),
+        top_comment_id = sql_missing_to_nothing(row[:top_comment_id]),
         critical_thread_id = sql_missing_to_nothing(row[:critical_thread_id]),
         o = row[:o],
         o_count = row[:o_count],

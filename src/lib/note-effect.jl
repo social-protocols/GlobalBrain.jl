@@ -100,7 +100,7 @@ end
 
 #         return Effect(
 #             post_id = tally.parent_id,
-#             note_id = tally.post_id,
+#             comment_id = tally.post_id,
 #             uninformed_probability = uninformed_p,
 #             informed_probability = informed_p,
 #         )

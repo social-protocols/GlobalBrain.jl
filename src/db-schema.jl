@@ -36,10 +36,10 @@ function create_tables(db::SQLite.DB)
         create table InformedVote(
           user_id text not null,
           post_id integer not null,
-          note_id integer not null,
+          comment_id integer not null,
           vote integer not null,
           informed integer not null,
-          primary key(user_id, post_id, note_id)
+          primary key(user_id, post_id, comment_id)
         ) strict;
         """,
 
@@ -47,10 +47,10 @@ function create_tables(db::SQLite.DB)
         """
         create table InformedTally(
               post_id          integer not null
-            , note_id          integer not null
+            , comment_id          integer not null
             , count   integer not null
             , total   integer not null
-            , primary key(post_id, note_id)
+            , primary key(post_id, comment_id)
          ) strict;
         """,
         """
@@ -86,7 +86,7 @@ function create_tables(db::SQLite.DB)
               vote_event_id   integer not null
             , vote_event_time integer not null
             , post_id         integer not null 
-            , note_id         integer not null
+            , comment_id         integer not null
             , top_subthread_id         integer
             , p               real    not null
             , p_count         integer not null
@@ -95,7 +95,7 @@ function create_tables(db::SQLite.DB)
             , q_count         integer not null
             , q_size          integer not null
             , r               real    not null
-            , primary key(vote_event_id, post_id, note_id)
+            , primary key(vote_event_id, post_id, comment_id)
         ) strict;
         """,
         """
@@ -103,7 +103,7 @@ function create_tables(db::SQLite.DB)
               vote_event_id   integer not null
             , vote_event_time integer not null
             , post_id         integer not null 
-            , note_id         integer not null
+            , comment_id         integer not null
             , top_subthread_id         integer
             , p               real    not null
             , p_count         integer not null
@@ -112,7 +112,7 @@ function create_tables(db::SQLite.DB)
             , q_count         integer not null
             , q_size          integer not null
             , r               real    not null
-            , primary key(post_id, note_id)
+            , primary key(post_id, comment_id)
         ) strict;
         """,
         """
@@ -124,7 +124,7 @@ function create_tables(db::SQLite.DB)
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , post_id           integer not null
-            , top_note_id       integer
+            , top_comment_id       integer
             , critical_thread_id       integer
             , o                 real    not null
             , o_count           integer not null
@@ -139,7 +139,7 @@ function create_tables(db::SQLite.DB)
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , post_id           integer not null
-            , top_note_id       integer
+            , top_comment_id       integer
             , critical_thread_id       integer
             , o                 real    not null
             , o_count           integer not null
@@ -208,14 +208,14 @@ function create_views(db::SQLite.DB)
           select
             iv.user_id
             , iv.post_id
-            , lineage.ancestor_id as note_id
+            , lineage.ancestor_id as comment_id
             , iv.vote as vote
             , (iv.informed or ifnull(vote.vote,0) != 0) as informed
-            , iv.note_id as informed_by_post_id
+            , iv.comment_id as informed_by_post_id
           from 
           InformedVote iv
           join lineage
-            on lineage.descendant_id = iv.note_id
+            on lineage.descendant_id = iv.comment_id
             and lineage.ancestor_id > iv.post_id
           left join vote 
             on vote.post_id = lineage.ancestor_id
@@ -241,23 +241,23 @@ function create_views(db::SQLite.DB)
           UNION ALL
           -- If the note is a direct child of the target then the
           -- partially-informed tally is the overall tally for the target.
-          select post_id, post_id as note_id, count, total
+          select post_id, post_id as comment_id, count, total
           from tally
         )
         select
             Informed.post_id
-          , Informed.note_id
+          , Informed.comment_id
           , Informed.count as informed_count
           , Informed.total as informed_total
           , PartiallyInformed.count - Informed.count + ifnull(Preinformed.count,0) as uninformed_count
           , PartiallyInformed.total - Informed.total + ifnull(Preinformed.total,0) as uninformed_total
         from
           InformedTally Informed 
-          join Post on (post.id = Informed.note_id)
+          join Post on (post.id = Informed.comment_id)
           join PartiallyInformed on
-            PartiallyInformed.note_id = post.parent_id
+            PartiallyInformed.comment_id = post.parent_id
             and PartiallyInformed.post_id = informed.post_id
-          left join PreinformedTally Preinformed using(post_id, note_id)
+          left join PreinformedTally Preinformed using(post_id, comment_id)
         ;
 
         ;
@@ -277,7 +277,7 @@ function create_triggers(db::SQLite.DB)
                   new.vote_event_id
                 , new.vote_event_time
                 , new.post_id
-                , new.note_id
+                , new.comment_id
                 , new.top_subthread_id
                 , new.p
                 , new.p_count
@@ -296,7 +296,7 @@ function create_triggers(db::SQLite.DB)
                 new.vote_event_id
                 , new.vote_event_time
                 , new.post_id
-                , new.top_note_id
+                , new.top_comment_id
                 , new.critical_thread_id
                 , new.o
                 , new.o_count
@@ -402,7 +402,7 @@ function create_triggers(db::SQLite.DB)
             select
               new.user_id
               , targetVote.post_id as post_id
-              , new.post_id as note_id
+              , new.post_id as comment_id
               , targetVote.vote as vote
               , new.vote != 0 as informed
             from 
@@ -412,7 +412,7 @@ function create_triggers(db::SQLite.DB)
             where 
               lineage.descendant_id = new.post_id
               and targetVote.user_id = new.user_id
-            on conflict(user_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, comment_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
@@ -421,7 +421,7 @@ function create_triggers(db::SQLite.DB)
             select
               new.user_id
               , new.post_id as post_id
-              , noteVote.post_id as note_id
+              , noteVote.post_id as comment_id
               , new.vote as vote
               , noteVote.vote != 0 as informed
             from 
@@ -431,16 +431,16 @@ function create_triggers(db::SQLite.DB)
             where 
               lineage.ancestor_id = new.post_id
               and noteVote.user_id = new.user_id
-            on conflict(user_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, comment_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
 
             insert into InformedVote
-            select user_id, post_id, note_id, vote, informed
+            select user_id, post_id, comment_id, vote, informed
             from ImplicitlyInformedVote
             where informed_by_post_id = new.post_id
-            on conflict(user_id, post_id, note_id) do update set
+            on conflict(user_id, post_id, comment_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
             ;
@@ -490,17 +490,17 @@ function create_triggers(db::SQLite.DB)
         begin
            insert into InformedTally(
                   post_id
-                , note_id
+                , comment_id
                 , count
                 , total
             ) 
             values (
                   new.post_id
-                , new.note_id
+                , new.comment_id
                 , (new.vote = 1)
                 , (new.vote != 0)
             ) 
-            on conflict(post_id, note_id) do update
+            on conflict(post_id, comment_id) do update
             set
                   count   = count + (new.vote = 1)
                 , total   = total + (new.vote != 0)
@@ -516,7 +516,7 @@ function create_triggers(db::SQLite.DB)
                 , total   = total + ((new.vote != 0 and new.informed) - (old.vote != 0 and old.informed))
             where
             post_id = new.post_id
-            and note_id = new.note_id
+            and comment_id = new.comment_id
             ;
         end;
         """,
@@ -524,27 +524,27 @@ function create_triggers(db::SQLite.DB)
         create view PreinformedVote as 
             select
                   informedVote.post_id
-                , informedVote.note_id
+                , informedVote.comment_id
                 , informedVote.user_id 
                 , voteEvent.vote
                 , max(vote_event_id) as last_vote_event_id 
             from 
             informedVote
-            join post note on note.id = informedVote.note_id
+            join post note on note.id = informedVote.comment_id
             join voteEvent using (post_id, user_id)
             where vote_event_id <= note.first_vote_event_id
             and informed = 1
-            group by informedVote.post_id, informedVote.note_id, informedVote.user_id;
+            group by informedVote.post_id, informedVote.comment_id, informedVote.user_id;
         """,
         """
         create view PreinformedTally as 
           select
               post_id
-            , note_id
+            , comment_id
             , sum(vote == 1) as count
             , sum(vote != 0) as total
           from PreinformedVote
-          group by post_id, note_id
+          group by post_id, comment_id
         ;
         """,
     ]
