@@ -16,6 +16,7 @@ export run_simulation!
 const LEGACY_TAG_ID = 1
 
 struct SimulationPost
+    simulation_id::Int
     parent_id::Union{Int,Nothing}
     post_id::Int
     content::String
@@ -100,10 +101,12 @@ function create_sim_db_tables(db::SQLite.DB)
     DBInterface.execute(
         db,
         """
-        create table PostSimulation (
-              post_id integer not null
-            , simulation_id integer not null
-            , primary key(post_id, simulation_id)
+        create table SimulationPost (
+              simulation_id integer not null
+            , parent_id integer
+            , id integer not null
+            , content text not null
+            , primary key(id)
         )
         """
     )
@@ -146,11 +149,11 @@ function create_simulation_post!(
     results = DBInterface.execute(
         db,
         """
-        insert into post (parent_id, content)
-        values (?, ?)
+        insert into SimulationPost (simulation_id, parent_id, content)
+        values (?, ?, ?)
         on conflict do nothing returning id
         """,
-        [parent_id, content],
+        [simulation_id, parent_id, content],
     ) |> collect_results(row -> row[:id])
 
     if length(results) == 0
@@ -159,16 +162,7 @@ function create_simulation_post!(
 
     id = first(results)
 
-    DBInterface.execute(
-        db,
-        """
-        insert into PostSimulation (post_id, simulation_id)
-        values (?, ?)
-        """,
-        [id, simulation_id]
-    )
-
-    return SimulationPost(parent_id, id, content)
+    return SimulationPost(simulation_id, parent_id, id, content)
 end
 
 function simulation_step!(
@@ -210,9 +204,9 @@ function simulation_step!(
         """
         select Score.*
         from Score
-        join PostSimulation
-        on PostSimulation.post_id = Score.post_id
-        where PostSimulation.simulation_id = ?
+        join SimulationPost
+        on SimulationPost.id = Score.post_id
+        where SimulationPost.simulation_id = ?
         """,
         [simulation_id]
     ) |> collect_results(row -> sql_row_to_score(row))
@@ -222,9 +216,9 @@ function simulation_step!(
         """
         select Effect.*
         from Effect
-        join PostSimulation
-        on PostSimulation.post_id = Effect.post_id
-        where PostSimulation.simulation_id = ?
+        join SimulationPost
+        on SimulationPost.id = Effect.post_id
+        where SimulationPost.simulation_id = ?
         """,
         [simulation_id]
     ) |> collect_results(row -> sql_row_to_effect(row))
@@ -238,7 +232,7 @@ end
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
     results = DBInterface.execute(
         db,
-        "select parent_id as parent_id from post where id = ?",
+        "select parent_id as parent_id from SimulationPost where id = ?",
         [post_id],
     ) |> collect_results(row -> row[:parent_id])
 
