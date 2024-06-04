@@ -129,7 +129,7 @@ async function renderTreeChart(
         parent: lookups.postsByPostId[row["parent_id"]],
         post: lookups.postsByPostId[row["id"]],
         edgeData:
-          lookups.effectsByPostIdNoteId[`${row["parent_id"]}-${row["id"]}`],
+          lookups.effectsByPostIdCommentId[`${row["parent_id"]}-${row["id"]}`],
       }
     })
 
