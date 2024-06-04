@@ -302,7 +302,7 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
         db,
         "insert_vote_event",
         """
-            insert into VoteEvent
+            insert into VoteEventImport
             (
                   vote_event_id
                 , vote_event_time
