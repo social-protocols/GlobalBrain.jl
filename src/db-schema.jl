@@ -7,7 +7,6 @@ function create_tables(db::SQLite.DB)
             , user_id         text    not null
             , parent_id       integer
             , post_id         integer not null
-            , note_id         integer
             , vote            integer not null
             , primary key(vote_event_id)
         ) strict;
@@ -201,7 +200,6 @@ function create_views(db::SQLite.DB)
             '' as user_id,
             '' as parent_id,
             0  as post_id,
-            '' as note_id,
             0  as vote,
             0  as vote_event_time;
         """,
@@ -320,7 +318,6 @@ function create_triggers(db::SQLite.DB)
                 , user_id
                 , parent_id
                 , post_id
-                , note_id
                 , vote
             ) 
             select
@@ -329,7 +326,6 @@ function create_triggers(db::SQLite.DB)
                 , new.user_id
                 , case when new.parent_id = '' then null else new.parent_id end as parent_id
                 , new.post_id
-                , case when new.note_id = '' then null else new.note_id end as note_id
                 , new.vote
             where new.vote_event_id > (select imported_vote_event_id from lastVoteEvent)
             on conflict do nothing;

@@ -31,7 +31,6 @@ export type VoteEvent = {
   user_id: string
   parent_id: number | null
   post_id: number
-  note_id: number | null
   vote: number
 }
 
