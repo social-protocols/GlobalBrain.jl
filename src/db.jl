@@ -66,10 +66,7 @@ function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::Stri
 end
 
 
-function get_tallies_data(
-    db::SQLite.DB,
-    parent_id::Union{Int,Nothing},
-)::Vector{TalliesData}
+function get_tallies_data(db::SQLite.DB, parent_id::Union{Int,Nothing})::Vector{TalliesData}
 
     stmt = get_prepared_statement(
         db,

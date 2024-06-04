@@ -38,8 +38,7 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
         post_id = post_id,
         top_comment_id = !isnothing(top_thread) ? top_thread.comment_id : nothing,
         critical_thread_id = !isnothing(top_thread) ?
-                             coalesce(top_thread.comment_id, top_thread.top_subthread_id) :
-                             nothing,
+                             coalesce(top_thread.comment_id, top_thread.top_subthread_id) : nothing,
         o = o.mean,
         o_count = this_tally.count,
         o_size = this_tally.size,
