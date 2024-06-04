@@ -36,9 +36,9 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 
     score = Score(
         post_id = post_id,
-        top_note_id = !isnothing(top_thread) ? top_thread.note_id : nothing,
+        top_comment_id = !isnothing(top_thread) ? top_thread.comment_id : nothing,
         critical_thread_id = !isnothing(top_thread) ?
-                             coalesce(top_thread.note_id, top_thread.top_subthread_id) :
+                             coalesce(top_thread.comment_id, top_thread.top_subthread_id) :
                              nothing,
         o = o.mean,
         o_count = this_tally.count,
@@ -58,17 +58,17 @@ function find_top_thread(
     effects::Dict{Int,Vector{Effect}},
 )::Union{Effect,Nothing}
 
-    note_id = note.post_id
+    comment_id = note.post_id
 
-    @debug "find_top_thread $post_id=>$(note_id), r=$(r.mean)"
+    @debug "find_top_thread $post_id=>$(comment_id), r=$(r.mean)"
 
     children = note.children()
 
     n = length(children)
-    @debug "Got $n children for $note_id"
+    @debug "Got $n children for $comment_id"
 
 
-    @debug "Getting effects of children of $note_id on $post_id"
+    @debug "Getting effects of children of $comment_id on $post_id"
 
     child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
 
@@ -83,7 +83,7 @@ function find_top_thread(
         return nothing
     end
 
-    if post_id == 1 && note_id == 2
+    if post_id == 1 && comment_id == 2
         for x in child_effects
             @debug "child_effect=$(thread_score(x))"
         end
@@ -96,7 +96,7 @@ function find_top_thread(
         ma > mb ? a : b
     end, child_effects)
 
-    if post_id == 1 && note_id == 2
+    if post_id == 1 && comment_id == 2
         @debug "Result here: $result"
     end
 
@@ -112,7 +112,7 @@ function calc_thread_effect(
     effects,
 )::Effect
 
-    note_id = note.post_id
+    comment_id = note.post_id
 
     if !note.needs_recalculation
         return note.effect(post_id)
@@ -124,19 +124,19 @@ function calc_thread_effect(
 
     top_thread = find_top_thread(post_id, note, r, effects)
 
-    @debug "top_thread=$top_thread for $post_id=>$note_id"
+    @debug "top_thread=$top_thread for $post_id=>$comment_id"
 
     (p, top_subthread_id) = if !isnothing(top_thread)
-        (top_thread.p, coalesce(top_thread.top_subthread_id, top_thread.note_id))
+        (top_thread.p, coalesce(top_thread.top_subthread_id, top_thread.comment_id))
     else
         (r.mean, nothing)
     end
 
-    @debug "p=$p for $post_id=>$note_id"
+    @debug "p=$p for $post_id=>$comment_id"
 
     return Effect(
         post_id = post_id,
-        note_id = note_id,
+        comment_id = comment_id,
         top_subthread_id = top_subthread_id,
         p = p,
         p_count = tally.informed.count,
@@ -150,8 +150,8 @@ end
 
 
 function add!(effects::Dict{Int,Vector{Effect}}, effect::Effect)
-    if !haskey(effects, effect.note_id)
-        effects[effect.note_id] = []
+    if !haskey(effects, effect.comment_id)
+        effects[effect.comment_id] = []
     end
-    push!(effects[effect.note_id], effect)
+    push!(effects[effect.comment_id], effect)
 end

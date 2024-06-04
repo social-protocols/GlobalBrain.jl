@@ -11,7 +11,7 @@ export type SimulationFilter = {
 export type PostWithScore = {
   parent_id: number | null
   id: number
-  top_note_id: number | null
+  top_comment_id: number | null
   content: string
   vote_event_id: number
   vote_event_time: number
@@ -38,7 +38,7 @@ export type Effect = {
   vote_event_id: number
   vote_event_time: number
   post_id: number
-  note_id: number
+  comment_id: number
   top_subthread_id: number | null
   p: number
   p_count: number
@@ -54,7 +54,7 @@ export type EffectEvent = {
   vote_event_id: number
   vote_event_time: number
   post_id: number
-  note_id: number
+  comment_id: number
   top_subthread_id: number | null
   p: number
   p_count: number

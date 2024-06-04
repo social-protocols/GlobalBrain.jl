@@ -14,7 +14,7 @@ TMPDIR=`mktemp -d /tmp/global-brain-service-test.XXXXXX`; (
     cat test-data/vote-events.jsonl| jq -s | jq -r '(["vote_event_id","user_id","parent_id","post_id","vote","vote_event_time"]) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @csv' | tr -d '"' > $TMPDIR/vote-events.csv
     julia --project --eval "using GlobalBrain; init_score_db(ARGS[1])" $TEST_DB_FILENAME
     sqlite3 $TEST_DB_FILENAME -csv -header  ".import -skip 1 '|cat' VoteEventImport" < $TMPDIR/vote-events.csv;
-    sqlite3 $TEST_DB_FILENAME -line ".eqp off" ".output $TMPDIR/tallies.txt" "select * from ConditionalTally order by post_id, note_id;";
+    sqlite3 $TEST_DB_FILENAME -line ".eqp off" ".output $TMPDIR/tallies.txt" "select * from ConditionalTally order by post_id, comment_id;";
     echo "Comparing $expected_tallies_file $TMPDIR/tallies.txt";
     diff -b $expected_tallies_file $TMPDIR/tallies.txt
     result=$?

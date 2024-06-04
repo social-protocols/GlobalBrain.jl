@@ -59,12 +59,12 @@
     n_subset = 20
     begin
         B = sim.post!(root_post_id, "A is true")
-        note_id = B.post_id
+        comment_id = B.post_id
         posts_1 = [B]
         votes_1 = [
             posterior_b > 0.5 ?
-                SimulationVote(note_id, 1, i) :
-                SimulationVote(note_id, -1, i)
+                SimulationVote(comment_id, 1, i) :
+                SimulationVote(comment_id, -1, i)
             for i in 1:n_subset
         ]
 
@@ -77,12 +77,12 @@
         scores, _ = sim.step!(2, [votes_1; votes_2]; description="Someone posts B, and everyone who sees B agrees. Further, everyone has a common prior P(A|B)=$p_a_given_b, so users change their vote and upvote A. The estimated informed upvoteProbability quickly approaches 1." )
 
         @testset "B implies A: Step 2" begin
-            @test scores[note_id].p ≈ 1.0 atol = 0.1
+            @test scores[comment_id].p ≈ 1.0 atol = 0.1
 
             p = scores[root_post_id].p
             @test scores[root_post_id].p ≈ 0.9 atol = 0.1
 
-            @test scores[note_id].score > 2.5 # very high score because it changed lots of minds
+            @test scores[comment_id].score > 2.5 # very high score because it changed lots of minds
             @test (scores[root_post_id].score ≈ p * (1 + log2(p))) atol = 0.01
         end
     end

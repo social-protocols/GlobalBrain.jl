@@ -221,7 +221,7 @@ function simulation_step!(
 
     return (
         Dict(score.post_id => score for score in scores),
-        Dict((effect.post_id, effect.note_id) => effect for effect in effects),
+        Dict((effect.post_id, effect.comment_id) => effect for effect in effects),
     )
 end
 
