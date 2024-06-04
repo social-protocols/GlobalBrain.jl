@@ -85,3 +85,11 @@ uninformed_total = 1
   informed_total = 1
 uninformed_count = 1
 uninformed_total = 1
+
+          tag_id = 1
+         post_id = 16
+         note_id = 17
+  informed_count = 0
+  informed_total = 0
+uninformed_count = 1
+uninformed_total = 1
