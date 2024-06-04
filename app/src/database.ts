@@ -44,9 +44,7 @@ export function unpackDBResult(result: { columns: string[]; values: any[] }) {
 export async function getRootPostIds(db: any, simulationId: number) {
   let stmt = db.prepare(`
 		select distinct id
-		from Post
-		join PostSimulation
-		on post.id = PostSimulation.post_id
+		from SimulationPost
 		where simulation_id = :simulationId
 		and parent_id is null
   `)
@@ -81,9 +79,9 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
       where vote_event_time <= :period
     ),
     currentPosts AS(
-      SELECT post.*
-      FROM post
-      JOIN postsWithActivity using (id)
+      SELECT SimulationPost.*
+      FROM SimulationPost
+      JOIN postsWithActivity using(id)
     )
     , currentScoreWithMax AS(
       SELECT MAX(vote_event_id), *
@@ -140,8 +138,8 @@ async function getEffects(db: any, simulationId: number, period: number) {
   let stmt = db.prepare(`
 		select max(vote_event_id) as max_id, EffectEvent.*
 		from EffectEvent
-		join PostSimulation
-		on EffectEvent.post_id = PostSimulation.post_id
+		join SimulationPost
+		on EffectEvent.post_id = SimulationPost.id
 		where simulation_id = :simulationId
 		and vote_event_time <= :period
 		group by EffectEvent.post_id, EffectEvent.note_id
