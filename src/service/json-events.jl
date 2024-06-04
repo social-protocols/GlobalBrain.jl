@@ -1,11 +1,5 @@
-INPUT_STREAM_VOTE_EVENT_SCHEMA = Set([
-    "vote_event_id",
-    "user_id",
-    "parent_id",
-    "post_id",
-    "vote",
-    "vote_event_time",
-])
+INPUT_STREAM_VOTE_EVENT_SCHEMA =
+    Set(["vote_event_id", "user_id", "parent_id", "post_id", "vote", "vote_event_time"])
 
 
 function check_schema_or_throw(input::Dict{String,Any}, required_schema::Set)::Bool

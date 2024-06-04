@@ -31,9 +31,8 @@ export function getLookups(data: VisualizationData): LookupData {
   const postsByPostId: Lookup<PostWithScore> = getLookupPostsByPostId(
     data.discussionTree,
   )
-  const effectsByPostIdCommentId: Lookup<Effect> = getLookupEffectsByPostIdCommentId(
-    data.effects,
-  )
+  const effectsByPostIdCommentId: Lookup<Effect> =
+    getLookupEffectsByPostIdCommentId(data.effects)
   const effectEventsByPostId: Lookup<EffectEvent[]> =
     getLookupEffectEventsByPostId(data.effectEvents)
 
@@ -136,7 +135,8 @@ function getLookupVoteEventsByPostId(
 function getLookupEffectsByPostIdCommentId(effects: Effect[]): Lookup<Effect> {
   let effectsByPostIdCommentId: Lookup<Effect> = {}
   effects.forEach((effect) => {
-    effectsByPostIdCommentId[`${effect["post_id"]}-${effect["comment_id"]}`] = effect
+    effectsByPostIdCommentId[`${effect["post_id"]}-${effect["comment_id"]}`] =
+      effect
   })
   return effectsByPostIdCommentId
 }

@@ -42,8 +42,6 @@ function create_tables(db::SQLite.DB)
           primary key(user_id, post_id, comment_id)
         ) strict;
         """,
-
-
         """
         create table InformedTally(
               post_id          integer not null
