@@ -116,6 +116,7 @@ Base.@ccallable function process_vote_event_json_c(
 
         return buffer
     catch e
+        stacktrace(catch_backtrace())
         @error "Error in process_vote_event_json_c" exception = e
         return
     end
