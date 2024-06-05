@@ -52,6 +52,25 @@ function create_tables(db::SQLite.DB)
          ) strict;
         """,
         """
+        create table PreinformedVote(
+          user_id text not null,
+          post_id integer not null,
+          comment_id integer not null,
+          vote integer not null,
+          last_vote_event_id integer not null,
+          primary key(user_id, post_id, comment_id)
+        ) strict;
+        """,
+        """
+        create table PreinformedTally(
+              post_id          integer not null
+            , comment_id          integer not null
+            , count   integer not null
+            , total   integer not null
+            , primary key(post_id, comment_id)
+         ) strict;
+        """,
+        """
         create table Post(
               parent_id  integer
             , id         integer not null
@@ -262,6 +281,21 @@ function create_views(db::SQLite.DB)
         ;     
         """,
         """
+        create view PreinformedVoteView as 
+            select
+                  informed.user_id
+                , informed.post_id
+                , informed.comment_id
+                , case when informed.vote != 0 and informed.informed and preinformed.vote != 0 then preinformed.vote else 0 end as vote
+                , max(vote_event_id) as last_vote_event_id
+            from
+            informedVote informed
+            join post note on note.id = informed.comment_id
+            join voteEvent preinformed using (post_id, user_id)
+            where vote_event_id <= note.first_vote_event_id
+            group by informed.post_id, informed.comment_id, informed.user_id;
+        """,
+        """
         create view ConditionalTally as 
 
         -- this query is somewhat counter-intuitive. The strangeness arises from this rule:
@@ -455,6 +489,7 @@ function create_triggers(db::SQLite.DB)
               , vote = excluded.vote
             ;
 
+
         end;
         """,
         """
@@ -516,6 +551,16 @@ function create_triggers(db::SQLite.DB)
                 , total   = total + (new.vote != 0)
             ;
 
+            insert into PreinformedVote
+            select * from PreinformedVoteView where
+              user_id = new.user_id
+              and post_id = new.post_id
+              and comment_id = new.comment_id
+            on conflict do update set
+              vote = excluded.vote
+              , last_vote_event_id = excluded.last_vote_event_id
+            ;
+
         end;
         """,
         """
@@ -528,33 +573,52 @@ function create_triggers(db::SQLite.DB)
             post_id = new.post_id
             and comment_id = new.comment_id
             ;
+
+            insert into PreinformedVote
+            select * from PreinformedVoteView where
+              user_id = new.user_id
+              and post_id = new.post_id
+              and comment_id = new.comment_id
+            on conflict do update set
+              vote = excluded.vote
+              , last_vote_event_id = excluded.last_vote_event_id
+            ;
         end;
         """,
         """
-        create view PreinformedVote as 
-            select
-                  informed.post_id
-                , informed.comment_id
-                , informed.user_id
-                , case when informed.vote != 0 and informed.informed and preinformed.vote != 0 then preinformed.vote else 0 end as vote
-                , max(vote_event_id) as last_vote_event_id 
-            from 
-            informedVote informed
-            join post note on note.id = informed.comment_id
-            join voteEvent preinformed using (post_id, user_id)
-            where vote_event_id <= note.first_vote_event_id
-            group by informed.post_id, informed.comment_id, informed.user_id;
+        create trigger afterInsertPreinformedVote after insert on PreinformedVote 
+        begin
+           insert into PreinformedTally(
+                  post_id
+                , comment_id
+                , count
+                , total
+            )
+            values (
+                  new.post_id
+                , new.comment_id
+                , (new.vote = 1)
+                , (new.vote != 0)
+            )
+            on conflict(post_id, comment_id) do update
+            set
+                  count   = count + (new.vote = 1)
+                , total   = total + (new.vote != 0)
+            ;
+        end;
         """,
         """
-        create view PreinformedTally as 
-          select
-              post_id
-            , comment_id
-            , sum(vote == 1) as count
-            , sum(vote != 0) as total
-          from PreinformedVote
-          group by post_id, comment_id
-        ;
+        create trigger afterUpdatePreinformedVote after update on PreinformedVote begin
+            update PreinformedTally
+            set
+                count     = count + ((new.vote = 1) - (old.vote = 1))
+                , total   = total + ((new.vote != 0) - (old.vote != 0))
+            where
+            post_id = new.post_id
+            and comment_id = new.comment_id
+            ;
+        end;
+
         """,
     ]
 
