@@ -202,22 +202,63 @@ function create_views(db::SQLite.DB)
             0  as vote_event_time;
         """,
         """
-        create view ImplicitlyInformedVote as 
+        create view DirectlyInformedVote as
+          select
+            Vote.user_id
+            , targetVote.post_id as post_id
+            , Vote.post_id as comment_id
+            , targetVote.vote as vote
+            , Vote.vote != 0 as informed
+            , Vote.post_id as informed_by_post_id
+          from
+            Vote join Lineage on
+              Lineage.descendant_id = Vote.post_id
+            join Vote targetVote on
+              targetVote.user_id = Vote.user_id
+              and targetVote.post_id = Lineage.ancestor_id
+        ;
+        """,
+        """
+        create view IndirectlyInformedVote as
           select
             iv.user_id
             , iv.post_id
-            , lineage.ancestor_id as comment_id
+            , Lineage.ancestor_id as comment_id
             , iv.vote as vote
             , (iv.informed or ifnull(vote.vote,0) != 0) as informed
             , iv.comment_id as informed_by_post_id
           from 
-          InformedVote iv
-          join lineage
-            on lineage.descendant_id = iv.comment_id
-            and lineage.ancestor_id > iv.post_id
+          DirectlyInformedVote iv
+          join Lineage
+            on Lineage.descendant_id = iv.comment_id
+            and Lineage.ancestor_id > iv.post_id
           left join vote 
-            on vote.post_id = lineage.ancestor_id
+            on vote.post_id = Lineage.ancestor_id
             and vote.user_id = iv.user_id
+          where iv.informed = 1
+        ;
+        """,
+        """
+        create view InformedVoteView as
+          select
+            vote.user_id
+            , vote.post_id
+            , Lineage.descendant_id as comment_id
+            , Vote.vote as vote
+            , (ifnull(direct.informed,0) or ifnull(indirect.informed,0)) as informed
+            , ifnull(direct.informed_by_post_id, indirect.informed_by_post_id) as informed_by_post_id
+          from Vote
+          join Lineage
+            on ancestor_id = Vote.post_id
+          left join IndirectlyInformedVote indirect on
+              Vote.user_id = indirect.user_id
+              and ancestor_id = indirect.post_id
+              and descendant_id = indirect.comment_id
+          left join DirectlyInformedVote direct on
+              Vote.user_id = direct.user_id
+              and ancestor_id = direct.post_id
+              and descendant_id = direct.comment_id
+          where direct.vote is not null or indirect.vote is not null
         ;     
         """,
         """
@@ -336,17 +377,17 @@ function create_triggers(db::SQLite.DB)
         when new.parent_id is not null
         begin
 
-            -- Insert a lineage record for parent
+            -- Insert a Lineage record for parent
             insert into Lineage(ancestor_id, descendant_id, separation)
             values(new.parent_id, new.id, 1) on conflict do nothing;
 
-            -- Insert a lineage record for all ancestors of this parent
+            -- Insert a Lineage record for all ancestors of this parent
             insert into Lineage
             select 
                   ancestor_id
                 , new.id as descendant_id
                 , 1 + separation as separation
-            from lineage ancestor 
+            from Lineage ancestor 
             where ancestor.descendant_id = new.parent_id;
         end;
         """,
@@ -378,7 +419,7 @@ function create_triggers(db::SQLite.DB)
                 , parent_id
                 , post_id
                 , vote
-            ) 
+            )
             values(
                   new.vote_event_id
                 , new.vote_event_time
@@ -396,48 +437,19 @@ function create_triggers(db::SQLite.DB)
             insert into Post(parent_id, id, first_vote_event_id)
             values(new.parent_id, new.post_id, new.vote_event_id) on conflict do nothing;
 
+
+            -- Insert an informed vote record for all ancestors and descendants of this post_id
             insert into InformedVote
             select
-              new.user_id
-              , targetVote.post_id as post_id
-              , new.post_id as comment_id
-              , targetVote.vote as vote
-              , new.vote != 0 as informed
-            from 
-              lineage
-              join vote targetVote 
-              on targetVote.post_id = lineage.ancestor_id
+              user_id
+              , post_id
+              , comment_id
+              , vote
+              , informed
+            from InformedVoteView
             where 
-              lineage.descendant_id = new.post_id
-              and targetVote.user_id = new.user_id
-            on conflict(user_id, post_id, comment_id) do update set
-              informed = excluded.informed
-              , vote = excluded.vote
-            ;
-
-            insert into InformedVote
-            select
-              new.user_id
-              , new.post_id as post_id
-              , noteVote.post_id as comment_id
-              , new.vote as vote
-              , noteVote.vote != 0 as informed
-            from 
-              lineage
-              join vote noteVote 
-              on noteVote.post_id = lineage.descendant_id
-            where 
-              lineage.ancestor_id = new.post_id
-              and noteVote.user_id = new.user_id
-            on conflict(user_id, post_id, comment_id) do update set
-              informed = excluded.informed
-              , vote = excluded.vote
-            ;
-
-            insert into InformedVote
-            select user_id, post_id, comment_id, vote, informed
-            from ImplicitlyInformedVote
-            where informed_by_post_id = new.post_id
+              (informed_by_post_id = new.post_id or post_id = new.post_id)
+              and user_id = new.user_id
             on conflict(user_id, post_id, comment_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
@@ -521,18 +533,17 @@ function create_triggers(db::SQLite.DB)
         """
         create view PreinformedVote as 
             select
-                  informedVote.post_id
-                , informedVote.comment_id
-                , informedVote.user_id 
-                , voteEvent.vote
+                  informed.post_id
+                , informed.comment_id
+                , informed.user_id
+                , case when informed.vote != 0 and informed.informed and preinformed.vote != 0 then preinformed.vote else 0 end as vote
                 , max(vote_event_id) as last_vote_event_id 
             from 
-            informedVote
-            join post note on note.id = informedVote.comment_id
-            join voteEvent using (post_id, user_id)
+            informedVote informed
+            join post note on note.id = informed.comment_id
+            join voteEvent preinformed using (post_id, user_id)
             where vote_event_id <= note.first_vote_event_id
-            and informed = 1
-            group by informedVote.post_id, informedVote.comment_id, informedVote.user_id;
+            group by informed.post_id, informed.comment_id, informed.user_id;
         """,
         """
         create view PreinformedTally as 
