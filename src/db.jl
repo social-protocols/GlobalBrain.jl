@@ -314,28 +314,16 @@ function insert_event(db::SQLite.DB, event::ScoreEvent)
     insert_score_event(db, event)
 end
 
-
-function set_last_processed_vote_event_id(db::SQLite.DB, vote_event_id::Int)
+function get_last_vote_event_id(db::SQLite.DB)
     stmt = get_prepared_statement(
         db,
-        "set_last_processed_vote_event_id",
-        "update lastVoteEvent set processed_vote_event_id = ?",
-    )
-    DBInterface.execute(stmt, [vote_event_id])
-end
-
-
-function get_last_processed_vote_event_id(db::SQLite.DB)
-    stmt = get_prepared_statement(
-        db,
-        "get_last_processed_vote_event_id",
-        "select processed_vote_event_id from lastVoteEvent",
+        "get_last_vote_event_id",
+        "select vote_event_id from LastVoteEvent",
     )
 
-    results =
-        DBInterface.execute(stmt) |> collect_results(row -> begin
-            row[:processed_vote_event_id]
-        end)
+    results = DBInterface.execute(stmt) |> collect_results(row -> begin
+        row[:vote_event_id]
+    end)
 
     return first(results)
 end
