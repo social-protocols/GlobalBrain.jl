@@ -16,7 +16,7 @@
     posterior_b = 1
     posterior_a = p_a_given_b
 
-    n_users = 160 
+    n_users = 300
 
     # Step 1: All users vote on A
     begin
@@ -39,7 +39,7 @@
 
     # Step 2
     # First n_subset1 users vote on B
-    n_subset1 = 40
+    n_subset1 = 100
     begin
         B = sim.post!(A.post_id, "B")
         # votes_b = votesGivenBeliefs(B.post_id, repeat([posterior_b], n_subset1))
@@ -66,7 +66,7 @@
 
     # Step 3
     # Second 50 users vote on C
-    n_subset2 = 30
+    n_subset2 = 40
     begin
         p_C = 1
         C = sim.post!(A.post_id, "C")
@@ -87,9 +87,9 @@
 
         p1 = scores[A.post_id].p
 
-        @testset "Step 2: C doesn't change minds ($p ≈ $p_a_given_c)" begin
+        @testset "Step 2: C doesn't change minds ($p ≈ $p1)" begin
             # should approach 1 but given small sample size still be a bit below 
-            @test p1 ≈ p atol = 0.1
+            @test p ≈ p1 atol = 0.1
         end
     end
 
