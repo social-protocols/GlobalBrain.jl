@@ -11,7 +11,7 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
     @debug "In score post $post_id"
 
     if !post.needs_recalculation
-        @debug "No recalculation needed for $(post_id). Using existing effect data"
+        @debug "No recalculation needed for $(post_id). Using existing score"
         return Vector{Score}()
     end
 
