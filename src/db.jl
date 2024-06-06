@@ -66,25 +66,31 @@ function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::Stri
 end
 
 
-function get_tallies_data(db::SQLite.DB, parent_id::Union{Int,Nothing})::Vector{TalliesData}
+
+function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{TalliesData}
 
     stmt = get_prepared_statement(
         db,
-        "get_tallies_data",
+        "get_root_tallies_data",
         """
+        -- get the root ancestor for last voted post id
+        -- the last voted post id might be a root node.
         select
             Tally.*
-            , NeedsRecalculation.post_id is not null as needs_recalculation
+            , true as needs_recalculation
         from Tally
-        left join NeedsRecalculation using (post_id)
+        left join lineage on
+            (:last_voted_post_id != tally.post_id) -- not strictly necessary, but avoids join in this case
+            and ancestor_id = Tally.post_id
+            and descendant_id = :last_voted_post_id
         where
-            (:parent_id = parent_id)
-            or
-            (:parent_id is null and parent_id is null)
+            (lineage.ancestor_id is not null or :last_voted_post_id = tally.post_id)
+            and parent_id is null
+        ;
         """,
     )
 
-    results = DBInterface.execute(stmt, [parent_id])
+    results = DBInterface.execute(stmt, [last_voted_post_id])
 
     return [
         TalliesData(
@@ -92,6 +98,46 @@ function get_tallies_data(db::SQLite.DB, parent_id::Union{Int,Nothing})::Vector{
                 tally = BernoulliTally(row[:count], row[:total]),
                 post_id = row[:post_id],
                 needs_recalculation = row[:needs_recalculation],
+                last_voted_post_id = last_voted_post_id,
+                db = db,
+            ),
+        ) for row in results
+    ]
+end
+
+
+function get_child_tallies_data(
+    db::SQLite.DB,
+    last_voted_post_id::Int,
+    parent_id::Int,
+)::Vector{TalliesData}
+
+    stmt = get_prepared_statement(
+        db,
+        "get_child_tallies_data",
+        """
+        select
+            Tally.*
+            , lineage.descendant_id is not null or :last_voted_post_id == Tally.post_id as needs_recalculation
+        from Tally
+        left join lineage
+            on ancestor_id = Tally.post_id and :last_voted_post_id = descendant_id
+            or descendant_id = Tally.post_id and :last_voted_post_id = ancestor_id
+        where
+            (parent_id is :parent_id)
+        ;
+        """,
+    )
+
+    results = DBInterface.execute(stmt, [last_voted_post_id, parent_id])
+
+    return [
+        TalliesData(
+            SQLTalliesData(
+                tally = BernoulliTally(row[:count], row[:total]),
+                post_id = row[:post_id],
+                needs_recalculation = row[:needs_recalculation],
+                last_voted_post_id = last_voted_post_id,
                 db = db,
             ),
         ) for row in results

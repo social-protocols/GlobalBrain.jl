@@ -42,7 +42,6 @@ export score
 # --- Database
 export get_score_db
 export init_score_db
-export get_tallies
 export insert_event
 export insert_vote_event
 export set_last_processed_vote_event_id

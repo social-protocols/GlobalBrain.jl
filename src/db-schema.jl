@@ -185,32 +185,6 @@ end
 function create_views(db::SQLite.DB)
     stmts = [
         """
-        -- Whenever there is a vote, we need to recalculate scores for
-        -- 1) the post that was voted on
-        -- 2) all ancestors of the post that was voted on (because a post's score depends on the votes on its descendants)
-        -- 3) all descendants of the post that was voted on (because a post's score also includes its effect ancestors)
-        create view NeedsRecalculation as
-        -- First, select posts that were voted on since last processed_vote_event_id
-        with leafNode as (
-            select post_id
-            from tally
-            join LastVoteEvent
-            on latest_vote_event_id > processed_vote_event_id
-        )
-        select * from leafNode
-
-        union
-        -- Next, select all ancestors
-        select ancestor_id as post_id
-        from leafNode join Lineage Ancestor on (post_id = descendant_id)
-
-        union
-        -- Next, select all descendants
-        select descendant_id as post_id
-        from leafNode
-        join Lineage Descendant on (post_id = ancestor_id); -- descendant of item that was voted on
-        """,
-        """
         create view VoteEventImport as
         select
             0  as vote_event_id,
