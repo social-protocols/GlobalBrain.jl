@@ -228,7 +228,7 @@ function create_views(db::SQLite.DB)
             , Vote.post_id as comment_id
             , targetVote.vote as vote
             , Vote.vote != 0 as informed
-            , Vote.post_id as informed_by_post_id
+            , Vote.post_id as informed_by_comment_id
           from
             Vote join Lineage on
               Lineage.descendant_id = Vote.post_id
@@ -245,7 +245,7 @@ function create_views(db::SQLite.DB)
             , Lineage.ancestor_id as comment_id
             , iv.vote as vote
             , (iv.informed or ifnull(vote.vote,0) != 0) as informed
-            , iv.comment_id as informed_by_post_id
+            , iv.comment_id as informed_by_comment_id
           from 
           DirectlyInformedVote iv
           join Lineage
@@ -254,30 +254,39 @@ function create_views(db::SQLite.DB)
           left join vote 
             on vote.post_id = Lineage.ancestor_id
             and vote.user_id = iv.user_id
-          where iv.informed = 1
+          where
+            iv.informed = 1
         ;
         """,
         """
+
         create view InformedVoteView as
+
           select
-            vote.user_id
-            , vote.post_id
-            , Lineage.descendant_id as comment_id
-            , Vote.vote as vote
-            , (ifnull(direct.informed,0) or ifnull(indirect.informed,0)) as informed
-            , ifnull(direct.informed_by_post_id, indirect.informed_by_post_id) as informed_by_post_id
-          from Vote
-          join Lineage
-            on ancestor_id = Vote.post_id
-          left join IndirectlyInformedVote indirect on
-              Vote.user_id = indirect.user_id
-              and ancestor_id = indirect.post_id
-              and descendant_id = indirect.comment_id
-          left join DirectlyInformedVote direct on
-              Vote.user_id = direct.user_id
-              and ancestor_id = direct.post_id
-              and descendant_id = direct.comment_id
-          where direct.vote is not null or indirect.vote is not null
+            user_id
+            , post_id
+            , comment_id
+            , vote
+
+            -- this windowing function is a performance bottleneck. It is necessary because there can be both
+            -- an indirectly and directly informed vote record, each of which could have a value of 0 in the informed field
+            -- we need both records in the output, because the trigger that inserts into InformedVote
+            -- needs to find the correct row based on informed_by_comment_id, but the value of the informed
+            -- field should be the same for both rows.
+
+            , max(informed) over (partition by user_id, post_id, comment_id) as informed
+            , informed_by_comment_id
+          from (
+            select
+              *
+            from DirectlyInformedVote
+
+            UNION ALL
+
+            select
+              *
+            from IndirectlyInformedVote
+          )
         ;     
         """,
         """
@@ -482,8 +491,9 @@ function create_triggers(db::SQLite.DB)
               , informed
             from InformedVoteView
             where 
-              (informed_by_post_id = new.post_id or post_id = new.post_id)
+              (informed_by_comment_id = new.post_id or post_id = new.post_id)
               and user_id = new.user_id
+            group by user_id, post_id, comment_id
             on conflict(user_id, post_id, comment_id) do update set
               informed = excluded.informed
               , vote = excluded.vote
