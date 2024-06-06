@@ -45,7 +45,7 @@ export init_score_db
 export insert_event
 export insert_vote_event
 export set_last_processed_vote_event_id
-export get_last_processed_vote_event_id
+export get_last_vote_event_id
 export sql_row_to_detailed_tally
 export sql_row_to_effect
 export sql_row_to_score

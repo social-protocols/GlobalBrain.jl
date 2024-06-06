@@ -169,13 +169,13 @@ function create_tables(db::SQLite.DB)
         """
         create table LastVoteEvent(
               type                    integer
-            , imported_vote_event_id  integer not null default 0
-            , processed_vote_event_id integer not null default 0
+            , vote_event_id  integer not null default 0
+            , voted_on_post_id integer
             , primary key(type)
         ) strict;
         """,
         """
-        insert into LastVoteEvent values(1, 0, 0);
+        insert into LastVoteEvent values(1, 0, null);
         """,
     ]
 
@@ -383,10 +383,10 @@ function create_triggers(db::SQLite.DB)
                 , case when new.parent_id = '' then null else new.parent_id end as parent_id
                 , new.post_id
                 , new.vote
-            where new.vote_event_id > (select imported_vote_event_id from lastVoteEvent)
-            on conflict do nothing;
-            -- We don't actually have keep vote events in this database once the triggers have updated the tallies.
-            -- delete from voteEvent where vote_event_id = new.vote_event_id;
+            ;
+
+            update LastVoteEvent set vote_event_id = new.vote_event_id, voted_on_post_id = new.post_id where vote_event_id < new.vote_event_id;
+
         end;
         """,
         """

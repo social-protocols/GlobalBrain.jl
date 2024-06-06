@@ -1,5 +1,5 @@
 function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
-    last_processed_vote_event_id = get_last_processed_vote_event_id(db)
+    last_processed_vote_event_id = get_last_vote_event_id(db)
     @info "Last processed vote event: $last_processed_vote_event_id"
 
     for line in eachline(input_stream)
@@ -62,19 +62,21 @@ end
 
 
 function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
-    last_processed_vote_event_id = get_last_processed_vote_event_id(db)
+    last_processed_vote_event_id = get_last_vote_event_id(db)
     if vote_event.vote_event_id <= last_processed_vote_event_id
         replay_vote_event(output_event, db, vote_event)
         return
     end
 
-    insert_vote_event(db, vote_event)
+    SQLite.transaction(db) do
 
-    tallies_data = get_tallies_data(db, nothing)
+        insert_vote_event(db, vote_event)
 
-    score_posts(output_event, tallies_data)
+        tallies_data = get_root_tallies_data(db, vote_event.post_id)
 
-    set_last_processed_vote_event_id(db, vote_event.vote_event_id)
+        score_posts(output_event, tallies_data)
+
+    end
 
     return
 end

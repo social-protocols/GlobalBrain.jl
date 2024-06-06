@@ -170,7 +170,7 @@ function simulation_step!(
     simulation_id::Int;
     description::Union{String,Nothing} = nothing,
 )::Tuple{Dict, Dict}
-    vote_event_id = get_last_processed_vote_event_id(db) + 1
+    vote_event_id = get_last_vote_event_id(db) + 1
 
     DBInterface.execute(
         db,
