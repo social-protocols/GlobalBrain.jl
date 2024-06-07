@@ -40,12 +40,7 @@ end
 function SimulationAPI(sim::Simulation)
     return SimulationAPI(
         function (parent_id::Union{Number,Nothing}, content::String)
-            create_simulation_post!(
-                sim.db,
-                sim.simulation_id,
-                parent_id,
-                content
-            )
+            create_simulation_post!(sim.db, sim.simulation_id, parent_id, content)
         end,
         function (
             step::Int,
@@ -93,7 +88,7 @@ function create_sim_db_tables(db::SQLite.DB)
             , simulation_name text not null
             , created_at integer not null default (unixepoch('subsec')*1000)
         )
-        """
+        """,
     )
 
     DBInterface.execute(
@@ -106,7 +101,7 @@ function create_sim_db_tables(db::SQLite.DB)
             , content text not null
             , primary key(id)
         )
-        """
+        """,
     )
 
     DBInterface.execute(
@@ -123,13 +118,15 @@ end
 
 function insert_simulation(db::SQLite.DB, simulation_name::String)::Int
     return DBInterface.execute(
-        db,
-        """
-        insert into Simulation (simulation_name)
-        values (?) returning simulation_id
-        """,
-        [simulation_name],
-    ) |> collect_results(row -> row[:simulation_id]) |> first
+               db,
+               """
+               insert into Simulation (simulation_name)
+               values (?) returning simulation_id
+               """,
+               [simulation_name],
+           ) |>
+           collect_results(row -> row[:simulation_id]) |>
+           first
 end
 
 function run_simulation!(sim::Function, db::SQLite.DB; simulation_name = "default")
@@ -144,15 +141,16 @@ function create_simulation_post!(
     parent_id::Union{Int,Nothing},
     content::String,
 )::SimulationPost
-    results = DBInterface.execute(
-        db,
-        """
-        insert into SimulationPost (simulation_id, parent_id, content)
-        values (?, ?, ?)
-        on conflict do nothing returning id
-        """,
-        [simulation_id, parent_id, content],
-    ) |> collect_results(row -> row[:id])
+    results =
+        DBInterface.execute(
+            db,
+            """
+            insert into SimulationPost (simulation_id, parent_id, content)
+            values (?, ?, ?)
+            on conflict do nothing returning id
+            """,
+            [simulation_id, parent_id, content],
+        ) |> collect_results(row -> row[:id])
 
     if length(results) == 0
         error("Failed to insert post")
@@ -169,7 +167,7 @@ function simulation_step!(
     votes::Array{SimulationVote},
     simulation_id::Int;
     description::Union{String,Nothing} = nothing,
-)::Tuple{Dict, Dict}
+)::Tuple{Dict,Dict}
     vote_event_id = get_last_vote_event_id(db) + 1
 
     DBInterface.execute(
@@ -195,29 +193,31 @@ function simulation_step!(
         vote_event_id += 1
     end
 
-    scores = DBInterface.execute(
-        db,
-        """
-        select Score.*
-        from Score
-        join SimulationPost
-        on SimulationPost.id = Score.post_id
-        where SimulationPost.simulation_id = ?
-        """,
-        [simulation_id]
-    ) |> collect_results(row -> sql_row_to_score(row))
+    scores =
+        DBInterface.execute(
+            db,
+            """
+            select Score.*
+            from Score
+            join SimulationPost
+            on SimulationPost.id = Score.post_id
+            where SimulationPost.simulation_id = ?
+            """,
+            [simulation_id],
+        ) |> collect_results(row -> sql_row_to_score(row))
 
-    effects = DBInterface.execute(
-        db,
-        """
-        select Effect.*
-        from Effect
-        join SimulationPost
-        on SimulationPost.id = Effect.post_id
-        where SimulationPost.simulation_id = ?
-        """,
-        [simulation_id]
-    ) |> collect_results(row -> sql_row_to_effect(row))
+    effects =
+        DBInterface.execute(
+            db,
+            """
+            select Effect.*
+            from Effect
+            join SimulationPost
+            on SimulationPost.id = Effect.post_id
+            where SimulationPost.simulation_id = ?
+            """,
+            [simulation_id],
+        ) |> collect_results(row -> sql_row_to_effect(row))
 
     return (
         Dict(score.post_id => score for score in scores),
@@ -226,11 +226,12 @@ function simulation_step!(
 end
 
 @memoize function get_parent_id(db::SQLite.DB, post_id::Int)
-    results = DBInterface.execute(
-        db,
-        "select parent_id as parent_id from SimulationPost where id = ?",
-        [post_id],
-    ) |> collect_results(row -> row[:parent_id])
+    results =
+        DBInterface.execute(
+            db,
+            "select parent_id as parent_id from SimulationPost where id = ?",
+            [post_id],
+        ) |> collect_results(row -> row[:parent_id])
 
     if length(results) == 0
         error("Failed to get parent id for $post_id")
