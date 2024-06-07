@@ -16,7 +16,7 @@
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
 (sim::SimulationAPI) -> begin
-    Random.seed!(3);
+    Random.seed!(3)
 
     A = sim.post!(nothing, "Is A true?")
     root_post_id = A.post_id
@@ -41,12 +41,14 @@
     begin
         posts_0 = [A]
         votes_0 = [
-            p_a > 0.5 ?
-                SimulationVote(root_post_id, 1, i) :
-                SimulationVote(root_post_id, -1, i)
-            for i in 1:n_users
+            p_a > 0.5 ? SimulationVote(root_post_id, 1, i) :
+            SimulationVote(root_post_id, -1, i) for i = 1:n_users
         ]
-        scores, _ = sim.step!(1, votes_0; description="All users have common prior belief P(A)=$p_a. So everyone downvotes A. The estimated upvoteProbability quickly approaches zero.")
+        scores, _ = sim.step!(
+            1,
+            votes_0;
+            description = "All users have common prior belief P(A)=$p_a. So everyone downvotes A. The estimated upvoteProbability quickly approaches zero.",
+        )
         @testset "B implies A: Step 1" begin
             @test scores[root_post_id].p ≈ 0.0 atol = 0.1
         end
@@ -62,19 +64,19 @@
         comment_id = B.post_id
         posts_1 = [B]
         votes_1 = [
-            posterior_b > 0.5 ?
-                SimulationVote(comment_id, 1, i) :
-                SimulationVote(comment_id, -1, i)
-            for i in 1:n_subset
+            posterior_b > 0.5 ? SimulationVote(comment_id, 1, i) :
+            SimulationVote(comment_id, -1, i) for i = 1:n_subset
         ]
 
         votes_2 = [
-            posterior_a > 0.5 ?
-                SimulationVote(root_post_id, 1, i) :
-                SimulationVote(root_post_id, -1, i)
-            for i in 1:n_subset
+            posterior_a > 0.5 ? SimulationVote(root_post_id, 1, i) :
+            SimulationVote(root_post_id, -1, i) for i = 1:n_subset
         ]
-        scores, _ = sim.step!(2, [votes_1; votes_2]; description="Someone posts B, and everyone who sees B agrees. Further, everyone has a common prior P(A|B)=$p_a_given_b, so users change their vote and upvote A. The estimated informed upvoteProbability quickly approaches 1." )
+        scores, _ = sim.step!(
+            2,
+            [votes_1; votes_2];
+            description = "Someone posts B, and everyone who sees B agrees. Further, everyone has a common prior P(A|B)=$p_a_given_b, so users change their vote and upvote A. The estimated informed upvoteProbability quickly approaches 1.",
+        )
 
         @testset "B implies A: Step 2" begin
             @test scores[comment_id].p ≈ 1.0 atol = 0.1

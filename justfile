@@ -10,6 +10,8 @@ format:
     cd globalbrain-node && npx prettier --write . 
     julia -e 'using Pkg; Pkg.add("JuliaFormatter")'
     julia --eval "using JuliaFormatter; format(joinpath(pwd(), \"src\"))"
+    julia --eval "using JuliaFormatter; format(joinpath(pwd(), \"simulations\"))"
+    julia --eval "using JuliaFormatter; format(joinpath(pwd(), \"simulations/scenarios\"))"
 
 db query="":
     litecli $DATABASE_PATH -e "{{query}}"
