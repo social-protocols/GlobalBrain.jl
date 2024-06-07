@@ -20,7 +20,7 @@ reset-db:
     rm ~/social-protocols-data/score-events.jsonl
 
 sim name="":
-    time julia --project=simulations simulations/run.jl simulations/scenarios {{name}}
+    time julia --project=simulations simulations/run.jl {{name}}
 
 sim-db query="":
     litecli $SIM_DATABASE_PATH -e "{{query}}"
