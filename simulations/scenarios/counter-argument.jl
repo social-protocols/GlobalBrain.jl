@@ -80,7 +80,7 @@
             [votes_A_step_2; votes_B_step_2];
             description = "Among the $m users that consider B, $(means["A|B"]*100)% agree with A.",
         )
-        @testset "Step 2: After first argument (p=$scores_step_2[A.post_id].p ≈ $(means["A|B"])" begin
+        @testset "Step 2: After first argument (p=$(scores_step_2[A.post_id].p) ≈ $(means["A|B"]))" begin
             @test scores_step_2[A.post_id].p ≈ means["A|B"] atol = 0.1
             @test scores_step_2[A.post_id].score > scores_step_1[A.post_id].score # Score increased because probability increased
             @test scores_step_2[B.post_id].score > 1 # High score because it changed minds about A 
