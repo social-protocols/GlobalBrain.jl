@@ -1,6 +1,5 @@
 (sim::SimulationAPI) -> begin
-    Random.seed!(3)
-
+    
     A = sim.post!(
         nothing,
         "[VIDEO] Shocking devastation from an airstrike in [war-torn country]",
