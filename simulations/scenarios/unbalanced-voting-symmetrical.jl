@@ -49,7 +49,7 @@
         p = scores[A.post_id].p
 
         @testset "Step 2: Arguments on each side" begin
-            @test p ≈ p_a atol = 0.1 broken = true
+            @test p ≈ p_a atol = 0.1
         end
     end
 

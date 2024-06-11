@@ -1,4 +1,4 @@
-# thread_score returns a score for determining the top comment for purposes of
+# weight returns a score for determining the top comment for purposes of
 # calculating the informed probability of the post. It is a measure of how
 # much the *critical thread that starts with that comment* changes the probability of
 # upvoting the post.
@@ -43,7 +43,7 @@
 # most informative thread, even though B as a post has negative information
 # value.
 #
-# We multiple thread_score by p_size as a heuristic to deal with duplicates.
+# We multiple weight by p_size as a heuristic to deal with duplicates.
 # Suppose we have the same posts A->B->C. Before C is submitted, the informed
 # probability of A will be close to 90%. However, C will reduce the this
 # significantly to 15%.
@@ -52,7 +52,7 @@
 # somebody submitted a duplicate of comment C, C', B' would become the top comment
 # and the informed probability of A will bounce back up to 90%. 
 #
-# Multiplying thread_score by p_size is a heuristic that kinds of deals with
+# Multiplying weight by p_size is a heuristic that kinds of deals with
 # this. We give more weight to comments that have had more attention, and
 # therefore have been exposed to more scrutiny and there is therefore a
 # greater chance of users responding with a counter argument. So at first,
@@ -74,7 +74,7 @@
 # GlobalBrain.relative_entropy(p, q) - GlobalBrain.relative_entropy(p, r)
 
 
-function thread_score(effect::Effect)
+function weight(effect::Effect)::Float64
     return relative_entropy(effect.p, effect.q) * effect.p_size
 end
 

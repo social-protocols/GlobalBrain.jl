@@ -21,8 +21,7 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    top_thread = find_top_thread(post_id, post, o, effects)
-    p = !isnothing(top_thread) ? top_thread.p : o.mean
+    p = weighted_average_informed_probability(post_id, post, o, effects)
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
 
@@ -36,9 +35,6 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 
     score = Score(
         post_id = post_id,
-        top_comment_id = !isnothing(top_thread) ? top_thread.comment_id : nothing,
-        critical_thread_id = !isnothing(top_thread) ?
-                             coalesce(top_thread.comment_id, top_thread.top_subthread_id) : nothing,
         o = o.mean,
         o_count = this_tally.count,
         o_size = this_tally.size,
@@ -50,16 +46,16 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 end
 
 
-function find_top_thread(
+function weighted_average_informed_probability(
     post_id::Int,
     target::TalliesData,
     r::BetaDistribution,
     effects::Dict{Int,Vector{Effect}},
-)::Union{Effect,Nothing}
+)::Number
 
     comment_id = target.post_id
 
-    @debug "find_top_thread $post_id=>$(comment_id), r=$(r.mean)"
+    @debug "weighted_average_informed_probability $post_id=>$(comment_id), r=$(r.mean)"
 
     children = target.children()
 
@@ -71,28 +67,26 @@ function find_top_thread(
 
     child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
 
-
     for effect in child_effects
         add!(effects, effect)
     end
 
-    child_effects = filter(x -> thread_score(x) > 0, child_effects)
+    child_effects = filter(x -> weight(x) > 0, child_effects)
+
+
 
     if length(child_effects) == 0
-        return nothing
+        return r.mean
     end
 
-    result = reduce((a, b) -> begin
-        ma = isnothing(a) ? 0 : thread_score(a)
-        mb = isnothing(b) ? 0 : thread_score(b)
-        ma > mb ? a : b
-    end, child_effects)
+    total_weight = sum(map(effect -> weight(effect), child_effects))
 
-    if post_id == 1 && comment_id == 2
-        @debug "Result here: $result"
-    end
+    weighted_sum = sum(map(effect -> weight(effect) * effect.p, child_effects))
 
-    return result
+    # println("Here: ", weighted_sum, total_weight, weighted_sum/total_weight)
+
+
+    return weighted_sum / total_weight
 
 end
 
@@ -114,30 +108,29 @@ function calc_thread_effect(
 
     (q, r) = upvote_probabilities(prior, tally)
 
-    top_thread = find_top_thread(post_id, target, r, effects)
-
-    @debug "top_thread=$top_thread for $post_id=>$comment_id"
-
-    (p, top_subthread_id) = if !isnothing(top_thread)
-        (top_thread.p, coalesce(top_thread.top_subthread_id, top_thread.comment_id))
-    else
-        (r.mean, nothing)
-    end
+    p = weighted_average_informed_probability(post_id, target, r, effects)
 
     @debug "p=$p for $post_id=>$comment_id"
 
-    return Effect(
-        post_id = post_id,
-        comment_id = comment_id,
-        top_subthread_id = top_subthread_id,
-        p = p,
-        p_count = tally.informed.count,
-        p_size = tally.informed.size,
-        q = q,
-        q_count = tally.uninformed.count,
-        q_size = tally.uninformed.size,
-        r = r.mean,
-    )
+    make_effect = (weight) ->
+        Effect(
+            post_id = post_id,
+            comment_id = comment_id,
+            p = p,
+            p_count = tally.informed.count,
+            p_size = tally.informed.size,
+            q = q,
+            q_count = tally.uninformed.count,
+            q_size = tally.uninformed.size,
+            r = r.mean,
+            weight = weight,
+        )
+
+    # First create an Effect with weight=0 because the weight function takes an Effect
+    e = make_effect(0)
+    s = weight(e)
+    # Then create an Effect with a weight
+    return make_effect(s)
 end
 
 
