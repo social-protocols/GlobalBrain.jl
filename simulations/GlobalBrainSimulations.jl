@@ -130,6 +130,7 @@ function insert_simulation(db::SQLite.DB, simulation_name::String)::Int
 end
 
 function run_simulation!(sim::Function, db::SQLite.DB; simulation_name = "default")
+    Random.seed!(3)
     simulation_id = insert_simulation(db, simulation_name)
     s = Simulation(db, simulation_id, 0)
     sim(SimulationAPI(s))
