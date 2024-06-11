@@ -82,13 +82,6 @@ function find_top_thread(
         return nothing
     end
 
-    if post_id == 1 && comment_id == 2
-        for x in child_effects
-            @debug "child_effect=$(thread_score(x))"
-        end
-    end
-
-
     result = reduce((a, b) -> begin
         ma = isnothing(a) ? 0 : thread_score(a)
         mb = isnothing(b) ? 0 : thread_score(b)
