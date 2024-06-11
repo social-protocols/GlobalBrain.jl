@@ -1,5 +1,5 @@
 (sim::SimulationAPI) -> begin
-    
+
     n_users = 200
     n_supporters = trunc(Int, n_users / 2)
     n_detractors = trunc(Int, n_users / 2)

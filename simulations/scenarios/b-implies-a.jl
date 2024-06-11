@@ -16,7 +16,7 @@
 # Expectation: Algorithm should estimate posterior_a close to true posterior_a
 
 (sim::SimulationAPI) -> begin
-    
+
     A = sim.post!(nothing, "Is A true?")
     root_post_id = A.post_id
 

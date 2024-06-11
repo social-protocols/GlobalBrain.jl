@@ -19,12 +19,28 @@ path =
         default_scenarios_path
     end : joinpath(pwd(), path_argument)
 
-filenames =
-    isdir(path) ? [joinpath(path, filename) for filename in readdir(path)] :
-    isfile(path) ? [path] : throw("Cannot find file or directory $path_argument")
+function expand_path(path::String)
+    Vector{String}
+    if isdir(path)
+        return collect(
+            Iterators.flatten([
+                expand_path(joinpath(path, filename)) for filename in readdir(path)
+            ]),
+        )
+    end
+    return [path]
+end
+
+filenames = expand_path(path)
 
 if length(filenames) == 0
     throw("No files found in $path")
+end
+
+helpers_path = joinpath(@__DIR__, "helpers")
+for file in readdir(helpers_path)
+    @info "Including $file"
+    include(joinpath(helpers_path, file))
 end
 
 db = get_sim_db(ENV["SIM_DATABASE_PATH"]; reset = true)
