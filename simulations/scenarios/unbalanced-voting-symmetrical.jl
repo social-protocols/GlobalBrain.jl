@@ -1,21 +1,20 @@
 (sim::SimulationAPI) -> begin
-    Random.seed!(3)
 
     A = sim.post!(nothing, "A")
 
     n1 = 3
     n2 = 3
     n_overlap = 2
-    side1 = 1:n1
-    side2 = n1+1:(n1+n2)
+    pro = 1:n1
+    con = n1+1:(n1+n2)
     overlap = n1-n_overlap:(n1+n_overlap)
     p_a = n1 / (n1 + n2)
 
     # Step 1
     begin
 
-        votes1 = [SimulationVote(A.post_id, 1, i) for i in side1]
-        votes2 = [SimulationVote(A.post_id, -1, i) for i in side2]
+        votes1 = [SimulationVote(A.post_id, 1, i) for i in pro]
+        votes2 = [SimulationVote(A.post_id, -1, i) for i in con]
 
         scores, _ = sim.step!(
             1,
@@ -37,8 +36,8 @@
 
     # Step 2
     begin
-        votes1 = [SimulationVote(B1.post_id, 1, i) for i in side1]
-        votes2 = [SimulationVote(B2.post_id, 1, i) for i in side2]
+        votes1 = [SimulationVote(B1.post_id, 1, i) for i in pro]
+        votes2 = [SimulationVote(B2.post_id, 1, i) for i in con]
 
         scores, _ = sim.step!(
             2,
@@ -60,7 +59,7 @@
         scores, _ = sim.step!(
             3,
             votes,
-            description = "$n_overlap users from side 1 also vote on the argument from side 2, but don't change their vote on A",
+            description = "$n_overlap users from pro side also vote on the argument from con side, but don't change their vote on A",
         )
 
         p = scores[A.post_id].p
