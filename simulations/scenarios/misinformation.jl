@@ -1,5 +1,5 @@
 (sim::SimulationAPI) -> begin
-    
+
     A = sim.post!(
         nothing,
         "[VIDEO] Shocking devastation from an airstrike in [war-torn country]",
