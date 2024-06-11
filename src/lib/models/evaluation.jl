@@ -24,7 +24,6 @@ note was shown and not shown respectively.
 Base.@kwdef struct Effect
     post_id::Int64
     comment_id::Union{Int64,Nothing}
-    top_subthread_id::Union{Int64,Nothing}
     p::Float64
     p_count::Int64
     p_size::Int64
@@ -32,7 +31,10 @@ Base.@kwdef struct Effect
     q_count::Int64
     q_size::Int64
     r::Float64
+    weight::Float64
 end
+
+Base.convert( ::Type{NamedTuple}, e::Effect ) = NamedTuple{propertynames(e)}(e)
 
 
 # TODO: improve documentation
@@ -43,8 +45,6 @@ The data used to calculate the score of a post.
 """
 Base.@kwdef struct Score
     post_id::Int64
-    top_comment_id::Union{Int64,Nothing}
-    critical_thread_id::Union{Int64,Nothing}
     o::Float64
     o_count::Int64
     o_size::Int64

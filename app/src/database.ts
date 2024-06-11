@@ -94,7 +94,6 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
           vote_event_id
         , vote_event_time
         , post_id
-        , top_comment_id
         , o
         , o_count
         , o_size
@@ -115,7 +114,6 @@ async function getDiscussionTree(db: any, postId: number, period: number) {
         idsRecursive.*
       , vote_event_id
       , vote_event_time
-      , top_comment_id
       , o
       , o_count
       , o_size

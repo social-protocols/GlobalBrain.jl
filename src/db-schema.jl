@@ -103,7 +103,6 @@ function create_tables(db::SQLite.DB)
             , vote_event_time integer not null
             , post_id         integer not null 
             , comment_id         integer not null
-            , top_subthread_id         integer
             , p               real    not null
             , p_count         integer not null
             , p_size          integer not null
@@ -111,6 +110,7 @@ function create_tables(db::SQLite.DB)
             , q_count         integer not null
             , q_size          integer not null
             , r               real    not null
+            , weight          real    not null
             , primary key(vote_event_id, post_id, comment_id)
         ) strict;
         """,
@@ -120,7 +120,6 @@ function create_tables(db::SQLite.DB)
             , vote_event_time integer not null
             , post_id         integer not null 
             , comment_id         integer not null
-            , top_subthread_id         integer
             , p               real    not null
             , p_count         integer not null
             , p_size          integer not null
@@ -128,6 +127,7 @@ function create_tables(db::SQLite.DB)
             , q_count         integer not null
             , q_size          integer not null
             , r               real    not null
+            , weight    real    not null
             , primary key(post_id, comment_id)
         ) strict;
         """,
@@ -140,8 +140,6 @@ function create_tables(db::SQLite.DB)
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , post_id           integer not null
-            , top_comment_id       integer
-            , critical_thread_id       integer
             , o                 real    not null
             , o_count           integer not null
             , o_size            integer not null
@@ -155,8 +153,6 @@ function create_tables(db::SQLite.DB)
               vote_event_id     integer not null
             , vote_event_time   integer not null
             , post_id           integer not null
-            , top_comment_id       integer
-            , critical_thread_id       integer
             , o                 real    not null
             , o_count           integer not null
             , o_size            integer not null
@@ -333,7 +329,6 @@ function create_triggers(db::SQLite.DB)
                 , new.vote_event_time
                 , new.post_id
                 , new.comment_id
-                , new.top_subthread_id
                 , new.p
                 , new.p_count
                 , new.p_size
@@ -341,6 +336,7 @@ function create_triggers(db::SQLite.DB)
                 , new.q_count
                 , new.q_size
                 , new.r
+                , new.weight
             );
         end;
         """,
@@ -351,8 +347,6 @@ function create_triggers(db::SQLite.DB)
                 new.vote_event_id
                 , new.vote_event_time
                 , new.post_id
-                , new.top_comment_id
-                , new.critical_thread_id
                 , new.o
                 , new.o_count
                 , new.o_size

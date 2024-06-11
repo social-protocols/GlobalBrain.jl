@@ -233,8 +233,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             , vote_event_time
             -- , parent_id
             , post_id
-            , top_comment_id
-            , critical_thread_id
             -- , p
             -- , q
             , o
@@ -243,7 +241,7 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             , p
             , score
         )
-        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        values (?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
         """,
     )
@@ -255,8 +253,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
             score_event.vote_event_id,
             score_event.vote_event_time,
             score.post_id,
-            score.top_comment_id,
-            score.critical_thread_id,
             score.o,
             score.o_count,
             score.o_size,
@@ -277,7 +273,6 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , vote_event_time
             , post_id
             , comment_id
-            , top_subthread_id
             , p
             , p_count
             , p_size
@@ -285,6 +280,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             , q_count
             , q_size
             , r
+            , weight
         )
         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         on conflict do nothing
@@ -299,7 +295,6 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect_event.vote_event_time,
             effect.post_id,
             effect.comment_id,
-            effect.top_subthread_id,
             effect.p,
             effect.p_count,
             effect.p_size,
@@ -307,6 +302,7 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
             effect.q_count,
             effect.q_size,
             effect.r,
+            effect.weight,
         ),
     )
 end
@@ -370,8 +366,6 @@ function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
         post_id = row[:post_id],
         comment_id = row[:comment_id],
-        top_subthread_id = ismissing(row[:top_subthread_id]) ? nothing :
-                           row[:top_subthread_id],
         p = row[:p],
         p_count = row[:p_count],
         q = row[:q],
@@ -379,6 +373,7 @@ function sql_row_to_effect(row::SQLite.Row)::Effect
         q_count = row[:q_count],
         q_size = row[:q_size],
         r = row[:r],
+        weight = row[:weight],
     )
 end
 
@@ -386,8 +381,6 @@ end
 function sql_row_to_score(row::SQLite.Row)::Score
     return Score(
         post_id = row[:post_id],
-        top_comment_id = sql_missing_to_nothing(row[:top_comment_id]),
-        critical_thread_id = sql_missing_to_nothing(row[:critical_thread_id]),
         o = row[:o],
         o_count = row[:o_count],
         o_size = row[:o_size],
