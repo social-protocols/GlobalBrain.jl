@@ -2,7 +2,7 @@
     magnitude(effect::Union{Effect, Nothing})::Float64
 
 Calculate the magnitude of a `Effect`: the absolute difference between the
-upvote probabilities given the note was shown and not shown respectively. The
+upvote probabilities given the comment was shown and not shown respectively. The
 effect of `Nothing` is 0.0 by definition.
 
 # Parameters
@@ -15,22 +15,22 @@ function magnitude(effect::Union{Effect,Nothing})::Float64
 end
 
 """
-    calc_note_support(
+    calc_comment_support(
         informed_probability::Float64,
         uninformed_probability::Float64
     )::Float64
 
-Calculate the support for a note given the upvote probabilities given the note
+Calculate the support for a comment given the upvote probabilities given the comment
 was shown and not shown respectively.
 
 # Parameters
 
     * `informed_probability::Float64`: The probability of an upvote given the
-    note was shown.
+    comment was shown.
     * `uninformed_probability::Float64`: The probability of an upvote given the
-    note was not shown.
+    comment was not shown.
 """
-function calc_note_support(e::Effect)::Float64
+function calc_comment_support(e::Effect)::Float64
     if e.p == e.q == 0.0
         return 0.0
     end
@@ -80,8 +80,8 @@ function upvote_probabilities_bayesian_average(
     return (q, r)
 end
 
-# # Use HMC simulation (NUTS sampling) to calculate the note effect using the given hierarchical model
-# function calc_note_effect_hmc(model_function) 
+# # Use HMC simulation (NUTS sampling) to calculate the comment effect using the given hierarchical model
+# function calc_comment_effect_hmc(model_function) 
 
 #     stream = IOBuffer(UInt8[])
 #     logger = Logging.SimpleLogger(Logging.Error)

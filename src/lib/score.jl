@@ -1,6 +1,6 @@
-# thread_score returns a score for determining the top note for purposes of
+# thread_score returns a score for determining the top comment for purposes of
 # calculating the informed probability of the post. It is a measure of how
-# much the *critical thread that starts with that note* changes the probability of
+# much the *critical thread that starts with that comment* changes the probability of
 # upvoting the post.
 #
 # ranking_score returns a score for determining how much attention a post
@@ -49,11 +49,11 @@
 # significantly to 15%.
 # 
 # At this point, a user could submit a near duplicate of B, B', and before
-# somebody submitted a duplicate of note C, C', B' would become the top note
+# somebody submitted a duplicate of comment C, C', B' would become the top comment
 # and the informed probability of A will bounce back up to 90%. 
 #
 # Multiplying thread_score by p_size is a heuristic that kinds of deals with
-# this. We give more weight to notes that have had more attention, and
+# this. We give more weight to comments that have had more attention, and
 # therefore have been exposed to more scrutiny and there is therefore a
 # greater chance of users responding with a counter argument. So at first,
 # even though B' has a high relative_entropy, it has a low score because its
@@ -62,7 +62,7 @@
 #
 # If people keep on submitting duplicates, users should start to notice and
 # start downvoting the duplicates, so that they never receive enough
-# attention to become the top note and people don't have to respond to them.
+# attention to become the top comment and people don't have to respond to them.
 
 # Code for generating above calculations:
 # p = .15

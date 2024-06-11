@@ -273,9 +273,9 @@ function create_views(db::SQLite.DB)
                 , max(vote_event_id) as last_vote_event_id
             from
             informedVote informed
-            join post note on note.id = informed.comment_id
+            join post comment on comment.id = informed.comment_id
             join voteEvent preinformed using (post_id, user_id)
-            where vote_event_id <= note.first_vote_event_id
+            where vote_event_id <= comment.first_vote_event_id
             group by informed.post_id, informed.comment_id, informed.user_id;
         """,
         """
@@ -287,15 +287,15 @@ function create_views(db::SQLite.DB)
         --
         -- The the uninformed tally is just the partially-informed tally minus
         -- the informed tally. The partially-informed tally is the tally of users who are informed
-        -- of the parent of the note but not the note itself.
+        -- of the parent of the comment but not the comment itself.
 
         -- So our first step is to select all partially-informed tallies.
         with PartiallyInformed as (
-          -- The partially-informed tally for note C and target A is the
+          -- The partially-informed tally for comment C and target A is the
           -- informed tally of the parent of C and target A.
           select * from InformedTally
           UNION ALL
-          -- If the note is a direct child of the target then the
+          -- If the comment is a direct child of the target then the
           -- partially-informed tally is the overall tally for the target.
           select post_id, post_id as comment_id, count, total
           from tally
@@ -410,20 +410,15 @@ function create_triggers(db::SQLite.DB)
         """,
 
 
-        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the note.
+        # These SQL statements calculate the conditional tallies. These give us the tallies of votes on a post given users were or were not informed of the comment.
         # The logic and reasoning behind these calculations is discussed here:
         # https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-05-24-calculating-tallies.md
         #
         # The informed tally table is an aggregate of the **informed vote**
         # table. The informed vote table tells has an entry for every informed vote
-        # e.g. for every post-note combination a user has voted on. Since a
+        # e.g. for every target-comment combination a user has voted on. Since a
         # a user can become-uninformed by clearing votes, the "informed" field 
         # in this table can be zero.
-        #
-        # TODO:
-        #  -- test case voting on the grandchild creates an informed vote for the child
-        #  -- test case of clearing vote on note causing informed vote on post to be cleared.
-
         """
         create trigger afterInsertOnVoteEvent after insert on VoteEvent
         begin
