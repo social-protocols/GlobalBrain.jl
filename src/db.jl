@@ -364,7 +364,7 @@ function insert_post_creation_event(db::SQLite.DB, post_creation_event::PostCrea
     stmt = get_prepared_statement(
         db,
         "insert_post_creation_event",
-        "insert into PostCreationEvent (post_id, parent_id) values (?, ?)",
+        "insert or ignore into PostCreationEvent (post_id, parent_id) values (?, ?)",
     )
     DBInterface.execute(
         stmt,

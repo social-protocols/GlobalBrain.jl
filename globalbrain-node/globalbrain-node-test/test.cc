@@ -14,6 +14,10 @@ int main(int argc, char *argv[]) {
       "{\"user_id\":\"100\",\"parent_id\":null,\"post_id\":1,"
       "\"comment_id\":null,\"vote\":1,\"vote_event_time\":1708772663570,\"vote_"
       "event_id\":1}");
+  process_post_creation_event_json_c(
+      "test.db",
+      "{\"post_id\":1,\"parent_id\":null}"
+  )
   shutdown_julia(0);
 
   const char *targetResult =
