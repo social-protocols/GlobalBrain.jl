@@ -190,6 +190,5 @@ function process_post_creation_event_json(database_path::String, postCreationEve
        " parent_id: $(post_creation_event.parent_id) at $(Dates.format(now(), "HH:MM:SS"))"
     )
 
-    # TODO: insert post_id into table
-
+    insert_post_creation_event(db, post_creation_event)
 end

@@ -12,6 +12,13 @@ function create_tables(db::SQLite.DB)
         ) strict;
         """,
         """
+        create table PostCreationEvent(
+              post_id   integer not null
+            , parent_id integer
+            , primary key(post_id)
+        ) strict;
+        """,
+        """
         create table Vote(
               vote_event_id   integer not null
             , vote_event_time integer not null

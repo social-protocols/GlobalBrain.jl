@@ -359,6 +359,23 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     )
 end
 
+
+function insert_post_creation_event(db::SQLite.DB, post_creation_event::PostCreationEvent)
+    stmt = get_prepared_statement(
+        db,
+        "insert_post_creation_event",
+        "insert into PostCreationEvent (post_id, parent_id) values (?, ?)",
+    )
+    DBInterface.execute(
+        stmt,
+        (
+            post_creation_event.post_id,
+            post_creation_event.parent_id,
+        ),
+    )
+end
+
+
 function sql_row_to_effect(row::SQLite.Row)::Effect
     Effect(
         post_id = row[:post_id],
