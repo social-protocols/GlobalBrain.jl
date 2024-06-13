@@ -158,6 +158,8 @@ function create_simulation_post!(
 
     id = first(results)
 
+    insert_post_creation_event(db, PostCreationEvent(id, parent_id))
+
     return SimulationPost(simulation_id, parent_id, id, content)
 end
 

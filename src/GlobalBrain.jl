@@ -36,6 +36,7 @@ export Score
 export EffectEvent
 export ScoreEvent
 export VoteEvent
+export PostCreationEvent
 export score_tree
 export score
 
@@ -44,6 +45,7 @@ export get_score_db
 export init_score_db
 export insert_event
 export insert_vote_event
+export insert_post_creation_event
 export set_last_processed_vote_event_id
 export get_last_vote_event_id
 export sql_row_to_detailed_tally
