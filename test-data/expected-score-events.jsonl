@@ -173,6 +173,13 @@
 {"vote_event_id":150,"vote_event_time":1717494870095,"effect":{"post_id":16,"comment_id":17,"top_subthread_id":null,"p":0.8333,"p_count":0,"p_size":0,"q":0.8611,"q_count":1,"q_size":1,"r":0.8333}}
 {"vote_event_id":150,"vote_event_time":1717494870095,"score":{"post_id":17,"top_comment_id":null,"critical_thread_id":null,"o":0.5,"o_count":0,"o_size":0,"p":0.5,"score":0.0044}}
 {"vote_event_id":150,"vote_event_time":1717494870095,"score":{"post_id":16,"top_comment_id":null,"critical_thread_id":null,"o":0.8333,"o_count":1,"o_size":1,"p":0.8333,"score":0.6141}}
+{"vote_event_id":223,"vote_event_time":1717523686050,"score":{"post_id":294,"top_comment_id":null,"critical_thread_id":null,"o":0.8333,"o_count":1,"o_size":1,"p":0.8333,"score":0.6141}}
+{"vote_event_id":224,"vote_event_time":1717523687722,"effect":{"post_id":294,"comment_id":359,"top_subthread_id":null,"p":0.8611,"p_count":1,"p_size":1,"q":0.8611,"q_count":1,"q_size":1,"r":0.8611}}
+{"vote_event_id":224,"vote_event_time":1717523687722,"score":{"post_id":359,"top_comment_id":null,"critical_thread_id":null,"o":0.1667,"o_count":0,"o_size":1,"p":0.1667,"score":-0.2642}}
+{"vote_event_id":224,"vote_event_time":1717523687722,"score":{"post_id":294,"top_comment_id":null,"critical_thread_id":null,"o":0.8333,"o_count":1,"o_size":1,"p":0.8333,"score":0.6141}}
+{"vote_event_id":225,"vote_event_time":1717523688761,"effect":{"post_id":294,"comment_id":359,"top_subthread_id":null,"p":0.1389,"p_count":0,"p_size":1,"q":0.3056,"q_count":1,"q_size":1,"r":0.1389}}
+{"vote_event_id":225,"vote_event_time":1717523688761,"score":{"post_id":359,"top_comment_id":null,"critical_thread_id":null,"o":0.1667,"o_count":0,"o_size":1,"p":0.1667,"score":-0.1549}}
+{"vote_event_id":225,"vote_event_time":1717523688761,"score":{"post_id":294,"top_comment_id":359,"critical_thread_id":359,"o":0.1667,"o_count":0,"o_size":1,"p":0.1389,"score":-0.2567}}
 {"vote_event_id":226,"vote_event_time":1717523699086,"effect":{"post_id":108,"comment_id":294,"top_subthread_id":null,"p":0.8843,"p_count":1,"p_size":1,"q":0.8333,"q_count":0,"q_size":0,"r":0.8611}}
 {"vote_event_id":226,"vote_event_time":1717523699086,"effect":{"post_id":108,"comment_id":359,"top_subthread_id":null,"p":0.8843,"p_count":1,"p_size":1,"q":0.8611,"q_count":0,"q_size":0,"r":0.8843}}
 {"vote_event_id":226,"vote_event_time":1717523699086,"effect":{"post_id":294,"comment_id":359,"top_subthread_id":null,"p":0.1389,"p_count":0,"p_size":1,"q":0.3056,"q_count":1,"q_size":1,"r":0.1389}}
