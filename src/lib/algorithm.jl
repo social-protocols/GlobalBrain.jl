@@ -52,16 +52,16 @@ end
 
 function find_top_thread(
     post_id::Int,
-    note::TalliesData,
+    target::TalliesData,
     r::BetaDistribution,
     effects::Dict{Int,Vector{Effect}},
 )::Union{Effect,Nothing}
 
-    comment_id = note.post_id
+    comment_id = target.post_id
 
     @debug "find_top_thread $post_id=>$(comment_id), r=$(r.mean)"
 
-    children = note.children()
+    children = target.children()
 
     n = length(children)
     @debug "Got $n children for $comment_id"
@@ -82,13 +82,6 @@ function find_top_thread(
         return nothing
     end
 
-    if post_id == 1 && comment_id == 2
-        for x in child_effects
-            @debug "child_effect=$(thread_score(x))"
-        end
-    end
-
-
     result = reduce((a, b) -> begin
         ma = isnothing(a) ? 0 : thread_score(a)
         mb = isnothing(b) ? 0 : thread_score(b)
@@ -106,22 +99,22 @@ end
 
 function calc_thread_effect(
     post_id::Int,
-    note::TalliesData,
+    target::TalliesData,
     prior::BetaDistribution,
     effects,
 )::Effect
 
-    comment_id = note.post_id
+    comment_id = target.post_id
 
-    if !note.needs_recalculation
-        return note.effect(post_id)
+    if !target.needs_recalculation
+        return target.effect(post_id)
     end
 
-    tally = note.conditional_tally(post_id)
+    tally = target.conditional_tally(post_id)
 
     (q, r) = upvote_probabilities(prior, tally)
 
-    top_thread = find_top_thread(post_id, note, r, effects)
+    top_thread = find_top_thread(post_id, target, r, effects)
 
     @debug "top_thread=$top_thread for $post_id=>$comment_id"
 

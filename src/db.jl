@@ -83,9 +83,16 @@ function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{T
             (:last_voted_post_id != tally.post_id) -- not strictly necessary, but avoids join in this case
             and ancestor_id = Tally.post_id
             and descendant_id = :last_voted_post_id
+        left join Post parent on
+            tally.parent_id = parent.id
         where
             (lineage.ancestor_id is not null or :last_voted_post_id = tally.post_id)
-            and parent_id is null
+            -- the root of the tallies tree that we pass to the algorithm is an ancestor of the post that was voted on
+            -- (or the post itself) that either:
+            --
+            -- 1) has no parent (parent_id is null)
+            -- 2) it has a parent (parent_id is not null), but we don't have the parent in the post table, because there has never been a vote on the parent.
+            and parent.id is null
         ;
         """,
     )

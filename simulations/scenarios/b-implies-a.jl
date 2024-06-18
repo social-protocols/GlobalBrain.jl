@@ -8,8 +8,8 @@
 # ------------------------------------------------------------------------------
 # Step 1: - All users downvote A because p_a is just under 50%
 # Step 2: - User U given true value of B
-#         - User U posts note saying B is true
-#         - Minority of users consider U's note and thus form same posterior
+#         - User U posts comment saying B is true
+#         - Minority of users consider U's comment and thus form same posterior
 #           belief in B
 # Step 3: - These users also change vote on A accordingly
 # ------------------------------------------------------------------------------
