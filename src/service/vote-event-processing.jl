@@ -73,6 +73,7 @@ function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::V
         insert_vote_event(db, vote_event)
 
         tallies_data = get_root_tallies_data(db, vote_event.post_id)
+        @info "tallies_data: $(tallies_data)"
 
         score_posts(output_event, tallies_data)
 
@@ -124,6 +125,27 @@ Base.@ccallable function process_vote_event_json_c(
     end
 end
 
+# C-compatible wrapper. This should only be called by the node binding in binding.cc
+Base.@ccallable function process_post_creation_event_json_c(
+    database_path_c::Cstring,
+    postCreationEvent_c::Cstring,
+)::Cvoid
+    try
+        # Convert C strings to Julia strings
+        database_path = unsafe_string(database_path_c)
+        postCreationEvent = unsafe_string(postCreationEvent_c)
+
+        # Call the original Julia function
+        result = process_post_creation_event_json(database_path, postCreationEvent)
+
+    catch e
+        stacktrace(catch_backtrace())
+        @error "Error in process_post_creation_event_json_c" exception = e
+        return
+    end
+end
+
+
 function process_vote_event_json(database_path::String, voteEvent::String)::String
     # SQLite instance needs to be initiated lazily when calling from Javascript
     if (!haskey(dbs, database_path))
@@ -153,4 +175,20 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
     return String(take!(results))
+end
+
+function process_post_creation_event_json(database_path::String, postCreationEvent::String)::Void
+    # SQLite instance needs to be initiated lazily when calling from Javascript
+    if (!haskey(dbs, database_path))
+        dbs[database_path] = get_score_db(database_path)
+    end
+    db = dbs[database_path]
+
+    post_creation_event = as_post_creation_event_or_throw(IOBuffer(postCreationEvent))
+    @info (
+       "Got post creation event for post $(post_creation_event.post_id):" *
+       " parent_id: $(post_creation_event.parent_id) at $(Dates.format(now(), "HH:MM:SS"))"
+    )
+
+    insert_post_creation_event(db, post_creation_event)
 end

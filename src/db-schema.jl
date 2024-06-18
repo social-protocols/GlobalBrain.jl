@@ -73,8 +73,7 @@ function create_tables(db::SQLite.DB)
         create table Post(
               parent_id  integer
             , id         integer not null
-            , first_vote_event_id integer not null
-            , content    text default ''
+            , first_vote_event_id integer
             , primary key(id)
         ) strict;
         """,
@@ -270,7 +269,8 @@ function create_views(db::SQLite.DB)
             informedVote informed
             join post comment on comment.id = informed.comment_id
             join voteEvent preinformed using (post_id, user_id)
-            where vote_event_id <= comment.first_vote_event_id
+            where comment.first_vote_event_id is not null
+                and vote_event_id <= comment.first_vote_event_id
             group by informed.post_id, informed.comment_id, informed.user_id;
         """,
         """
@@ -438,10 +438,10 @@ function create_triggers(db::SQLite.DB)
                 , vote_event_time = new.vote_event_time
             ;
 
-            -- Insert a record for the post the first time we see this post id.
-            insert into Post(parent_id, id, first_vote_event_id)
-            values(new.parent_id, new.post_id, new.vote_event_id) on conflict do nothing;
-
+            -- Update the post the first time we see a vote on this post id.
+            update Post set
+            first_vote_event_id = new.vote_event_id
+            where id = new.post_id;
 
             -- Insert an informed vote record for all ancestors and descendants of this post_id
             insert into InformedVote

@@ -23,6 +23,12 @@ console.log(
   global_brain.process_vote_event_json(test_db_path, test_vote_event3),
 );
 
+const test_post_creation_event = `{"post_id":1, "parent_id":null}`;
+global_brain.processPostCreationEventJsonC(test_db_path, test_post_creation_event);
+
+const test_post_creation_event2 = `{"post_id":2, "parent_id":1}`;
+global_brain.processPostCreationEventJsonC(test_db_path, test_post_creation_event2);
+
 if (fs.existsSync(test_db_path)) {
   fs.unlinkSync(test_db_path);
 }

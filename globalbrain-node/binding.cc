@@ -44,6 +44,30 @@ void ProcessVoteEventJsonCWrapper(const FunctionCallbackInfo<Value>& args) {
     args.GetReturnValue().Set(result);
 }
 
+void ProcessPostCreationEventJsonCWrapper(const FunctionCallbackInfo<Value>& args) {
+    Isolate* isolate = args.GetIsolate();
+    HandleScope scope(isolate);
+
+    // Check the number of arguments passed
+    if (args.Length() < 2) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments").ToLocalChecked()));
+        return;
+    }
+
+    // Check the argument types
+    if (!args[0]->IsString() || !args[1]->IsString()) {
+        isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong arguments").ToLocalChecked()));
+        return;
+    }
+
+    // Convert the arguments to C strings
+    String::Utf8Value database_path(isolate, args[0]);
+    String::Utf8Value postCreationEvent(isolate, args[1]);
+
+    // Call the dummy process_vote_event_json_c function
+    process_post_creation_event_json_c(*database_path, *postCreationEvent);
+}
+
 void Cleanup(void *data) {
   shutdown_julia(0);
 }
@@ -51,6 +75,7 @@ void Cleanup(void *data) {
 void Init(Local<Object> exports, Local<Value> module, void* priv) {
     Isolate* isolate = exports->GetIsolate();
     NODE_SET_METHOD(exports, "processVoteEventJsonC", ProcessVoteEventJsonCWrapper);
+    NODE_SET_METHOD(exports, "processPostCreationEventJsonC", ProcessPostCreationEventJsonCWrapper);
 
     int argc = 1;
     char *argv[] = {strdup("julia_init"), NULL};

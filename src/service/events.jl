@@ -7,6 +7,10 @@ Base.@kwdef struct VoteEvent
     vote::Int
 end
 
+Base.@kwdef struct PostCreationEvent
+    post_id::Int64
+    parent_id::Union{Int,Nothing}
+end
 
 Base.@kwdef struct EffectEvent
     vote_event_id::Int
