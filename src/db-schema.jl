@@ -26,7 +26,6 @@ function create_tables(db::SQLite.DB)
         create table Tally(
               parent_id            integer
             , post_id              integer not null
-            , latest_vote_event_id integer not null
             , count                integer not null
             , total                integer not null
             , primary key(post_id)
@@ -471,21 +470,18 @@ function create_triggers(db::SQLite.DB)
             insert into Tally(
                   parent_id
                 , post_id
-                , latest_vote_event_id
                 , count
                 , total
             )
             values (
                   new.parent_id
                 , new.post_id
-                , new.vote_event_id
                 , (new.vote == 1)
                 , (new.vote != 0)
             ) on conflict(post_id) do update 
             set 
                   total                = total + (new.vote != 0)
                 , count                = count + (new.vote == 1)
-                , latest_vote_event_id = new.vote_event_id
             ;
 
         end;
@@ -496,7 +492,6 @@ function create_triggers(db::SQLite.DB)
             set 
                 total                  = total + (new.vote != 0) - (old.vote != 0)
                 , count                = count + (new.vote == 1) - (old.vote == 1)
-                , latest_vote_event_id = new.vote_event_id
             where post_id = new.post_id
             ;
 

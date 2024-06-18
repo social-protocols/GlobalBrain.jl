@@ -1,5 +1,4 @@
 (sim::SimulationAPI) -> begin
-    Random.seed!(3)
 
     A = sim.post!(
         nothing,
