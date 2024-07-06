@@ -75,7 +75,7 @@
 
 
 function weight(effect::Effect)::Float64
-    return relative_entropy(effect.p, effect.q) * effect.p_size
+    return relative_entropy(effect.p, effect.q) * effect.p_count
 end
 
 function effect_score(effect::Effect)::Float64
