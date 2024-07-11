@@ -8,16 +8,20 @@ using Random
 include("lib/models/probability-models.jl")
 include("lib/models/evaluation.jl")
 include("lib/models/tallies-data.jl")
+
 include("lib/binary-entropy.jl")
 include("lib/probabilities.jl")
 include("lib/algorithm.jl")
 include("lib/score.jl")
 include("lib/effect.jl")
+
 include("service/events.jl")
 include("service/vote-event-processing.jl")
 include("service/json-events.jl")
-include("db-schema.jl")
-include("db.jl")
+
+include("db/utils.jl")
+include("db/schema.jl")
+include("db/db.jl")
 
 # --- Service
 export julia_main

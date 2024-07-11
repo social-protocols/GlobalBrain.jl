@@ -1,74 +1,4 @@
-global preparedStatements = Dict{String,SQLite.Stmt}()
-
-# Generic function to iterate over a SQLite query result and place results in
-# a vector. It is often convenient by default to iterate over the results of
-# a query, even if they are not needed, because to commit transactions there
-# can not be any open SQL statement. But you can't just put each SQLite.Row into
-# a vector (.e.g [row for row in result]) because the SQLite.Row object contains
-# only a reference to the query, and not the actual data. You actually need to read
-# the values out of the row and put them somewhere. The optional converter function
-# takes a SQLite.Row and returns whatever data is required.
-function collect_results(optional_converter::Union{Function,Nothing} = nothing)
-
-    converter = !isnothing(optional_converter) ? optional_converter : x -> begin
-        nothing
-    end
-
-    f = rows -> begin
-        return [converter(row) for row in rows]
-    end
-
-    return f
-
-end
-
-"""
-    init_score_db(database_path::String)
-
-Create a SQLite database with the schema required to run the Global Brain
-service at the provided path if it doesn't already exist.
-"""
-
-function init_score_db(database_path::String)
-    if isfile(database_path)
-        @warn "Database already exists at $database_path"
-        return
-    end
-
-    db = SQLite.DB(database_path)
-
-    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> collect_results()
-
-    SQLite.transaction(db) do
-        create_tables(db)
-        create_views(db)
-        create_triggers(db)
-        @info "Score database successfully initialized at $database_path"
-    end
-
-    return db
-end
-
-
-function get_score_db(database_path::String)::SQLite.DB
-    if !isfile(database_path)
-        return init_score_db(database_path)
-    end
-    return SQLite.DB(database_path)
-end
-
-
-function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::String)
-    if !haskey(preparedStatements, stmt_key)
-        preparedStatements[stmt_key] = DBInterface.prepare(db, sql_query)
-    end
-    return preparedStatements[stmt_key]
-end
-
-
-
 function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{TalliesData}
-
     stmt = get_prepared_statement(
         db,
         "get_root_tallies_data",
@@ -118,7 +48,6 @@ function get_child_tallies_data(
     last_voted_post_id::Int,
     parent_id::Int,
 )::Vector{TalliesData}
-
     stmt = get_prepared_statement(
         db,
         "get_child_tallies_data",
@@ -156,7 +85,6 @@ function get_conditional_tally(
     post_id::Int,
     comment_id::Int,
 )::ConditionalTally
-
     stmt = get_prepared_statement(
         db,
         "get_conditional_tally",
@@ -170,17 +98,14 @@ function get_conditional_tally(
         """,
     )
 
-    results =
-        DBInterface.execute(stmt, [post_id, comment_id]) |> collect_results(
-            r -> begin
-                ConditionalTally(
-                    post_id = r[:post_id],
-                    comment_id = r[:comment_id],
-                    informed = BernoulliTally(r[:informed_count], r[:informed_total]),
-                    uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
-                )
-            end,
+    results = DBInterface.execute(stmt, [post_id, comment_id]) |> collect_results(
+        r -> ConditionalTally(
+            post_id = r[:post_id],
+            comment_id = r[:comment_id],
+            informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+            uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
         )
+    )
 
     if length(results) == 0
         return ConditionalTally(
@@ -192,12 +117,9 @@ function get_conditional_tally(
     end
 
     return first(results)
-
 end
 
-
 function get_effect(db::SQLite.DB, post_id::Int, comment_id::Int)::Effect
-
     stmt = get_prepared_statement(
         db,
         "get_effect",
@@ -221,7 +143,6 @@ function get_effect(db::SQLite.DB, post_id::Int, comment_id::Int)::Effect
 
     return first(results)
 end
-
 
 function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
     stmt = get_prepared_statement(
@@ -261,7 +182,6 @@ function insert_score_event(db::SQLite.DB, score_event::ScoreEvent)
         ),
     )
 end
-
 
 function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
     stmt = get_prepared_statement(
@@ -307,11 +227,9 @@ function insert_effect_event(db::SQLite.DB, effect_event::EffectEvent)
     )
 end
 
-
 function insert_event(db::SQLite.DB, event::EffectEvent)
     insert_effect_event(db, event)
 end
-
 
 function insert_event(db::SQLite.DB, event::ScoreEvent)
     insert_score_event(db, event)
@@ -323,11 +241,7 @@ function get_last_vote_event_id(db::SQLite.DB)
         "get_last_vote_event_id",
         "select vote_event_id from LastVoteEvent",
     )
-
-    results = DBInterface.execute(stmt) |> collect_results(row -> begin
-        row[:vote_event_id]
-    end)
-
+    results = DBInterface.execute(stmt) |> collect_results(row -> row[:vote_event_id])
     return first(results)
 end
 
@@ -348,7 +262,6 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
             values (?, ?, ?, ?, ?, ?)
         """,
     )
-
     DBInterface.execute(
         stmt,
         (
@@ -362,51 +275,8 @@ function insert_vote_event(db::SQLite.DB, vote_event::VoteEvent)
     )
 end
 
-function sql_row_to_effect(row::SQLite.Row)::Effect
-    Effect(
-        post_id = row[:post_id],
-        comment_id = row[:comment_id],
-        p = row[:p],
-        p_count = row[:p_count],
-        q = row[:q],
-        p_size = row[:p_size],
-        q_count = row[:q_count],
-        q_size = row[:q_size],
-        r = row[:r],
-        weight = row[:weight],
-    )
-end
-
-
-function sql_row_to_score(row::SQLite.Row)::Score
-    return Score(
-        post_id = row[:post_id],
-        o = row[:o],
-        o_count = row[:o_count],
-        o_size = row[:o_size],
-        p = row[:p],
-        score = row[:score],
-    )
-end
-
-
-function sql_row_to_vote_event(row::SQLite.Row)::VoteEvent
-    return VoteEvent(
-        vote_event_id = row[:vote_event_id],
-        vote_event_time = row[:vote_event_time],
-        user_id = row[:user_id],
-        parent_id = sql_missing_to_nothing(row[:parent_id]),
-        post_id = row[:post_id],
-        vote = row[:vote],
-    )
-end
-
-function sql_missing_to_nothing(val::Any)
-    return ismissing(val) ? nothing : val
-end
 
 function get_effects_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector{Effect}
-
     stmt = get_prepared_statement(
         db,
         "get_effects_for_vote_event",
@@ -418,13 +288,10 @@ function get_effects_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vecto
             vote_event_id = :vote_event_Id
         """,
     )
-
     return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_effect)
 end
 
-
 function get_scores_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector{Score}
-
     stmt = get_prepared_statement(
         db,
         "get_scores_for_vote_event",
@@ -436,12 +303,10 @@ function get_scores_for_vote_event(db::SQLite.DB, vote_event_id::Number)::Vector
             vote_event_id = :vote_event_Id
         """,
     )
-
     return DBInterface.execute(stmt, [vote_event_id]) |> collect_results(sql_row_to_score)
 end
 
 function get_vote_event(db::SQLite.DB, vote_event_id::Int)::VoteEvent
-
     stmt = get_prepared_statement(
         db,
         "get_vote_event",
