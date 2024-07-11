@@ -24,8 +24,6 @@ include("db/schema.jl")
 include("db/db.jl")
 
 # --- Service
-export julia_main
-export global_brain_service
 export process_vote_events_stream
 export process_vote_event
 export process_vote_event_json
@@ -40,8 +38,8 @@ export Score
 export EffectEvent
 export ScoreEvent
 export VoteEvent
-export score_tree
-export score
+export score_posts
+export score_post
 
 # --- Database
 export get_score_db
@@ -70,7 +68,6 @@ export beta
 export update
 export bayesian_avg
 export reset_weight
-export sample
 export unpack
 export +
 export -
