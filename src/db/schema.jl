@@ -1,3 +1,32 @@
+"""
+    init_score_db(database_path::String)
+
+Create a SQLite database with the schema required to run the Global Brain
+service at the provided path if it doesn't already exist.
+"""
+function init_score_db(database_path::String)
+    if isfile(database_path)
+        @warn "Database already exists at $database_path"
+        return
+    end
+
+    db = SQLite.DB(database_path)
+    DBInterface.execute(db, "PRAGMA journal_mode=WAL;") |> collect_results()
+    SQLite.transaction(db) do
+        create_schema(db)
+        @info "Score database successfully initialized at $database_path"
+    end
+
+    return db
+end
+
+function get_score_db(database_path::String)::SQLite.DB
+    if !isfile(database_path)
+        return init_score_db(database_path)
+    end
+    return SQLite.DB(database_path)
+end
+
 function create_schema(db::SQLite.DB)
     # Vote events and import
     map((stmt) -> DBInterface.execute(db, stmt), [
