@@ -1,34 +1,20 @@
-function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
+global dbs = Dict{String,SQLite.DB}()
+
+function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
     last_processed_vote_event_id = get_last_vote_event_id(db)
-    @info "Last processed vote event: $last_processed_vote_event_id"
-
-    for line in eachline(input_stream)
-        if line == ""
-            continue
-        end
-        vote_event = as_vote_event_or_throw(IOBuffer(line))
-        @info (
-            "Got vote event $(vote_event.vote_event_id) on post:" *
-            " $(vote_event.post_id) ($(vote_event.vote)) at $(Dates.format(now(), "HH:MM:SS"))"
-        )
-
-        # The anonymous function provided here is used by the score_tree function to output
-        # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
-        # ScoreEvent or an EffectEvent.
-        process_vote_event(db::SQLite.DB, vote_event) do object
-            e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
-            insert_event(db, e)
-            json_data = JSON.json(e)
-            write(output_stream, json_data * "\n")
-        end
+    if vote_event.vote_event_id <= last_processed_vote_event_id
+        replay_vote_event(output_event, db, vote_event)
+        return
     end
-
-    close(db)
+    SQLite.transaction(db) do
+        insert_vote_event(db, vote_event)
+        tallies_data = get_root_tallies_data(db, vote_event.post_id)
+        score_posts(output_event, tallies_data)
+    end
+    return
 end
 
-
 function replay_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
-
     existing_vote_event = get_vote_event(db, vote_event.vote_event_id)
 
     @info "Existing vote event $existing_vote_event"
@@ -53,37 +39,10 @@ function replay_vote_event(output_event::Function, db::SQLite.DB, vote_event::Vo
         throw("Missing score event for vote_event_id=$(vote_event.vote_event_id)")
     end
 
-
     for event in score_events
         output_event(event)
     end
-
 end
-
-
-function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
-    last_processed_vote_event_id = get_last_vote_event_id(db)
-    if vote_event.vote_event_id <= last_processed_vote_event_id
-        replay_vote_event(output_event, db, vote_event)
-        return
-    end
-
-    SQLite.transaction(db) do
-
-        insert_vote_event(db, vote_event)
-
-        tallies_data = get_root_tallies_data(db, vote_event.post_id)
-
-        score_posts(output_event, tallies_data)
-
-    end
-
-    return
-end
-
-
-global dbs = Dict{String,SQLite.DB}()
-
 
 # C-compatible wrapper. This should only be called by the node binding in binding.cc
 Base.@ccallable function process_vote_event_json_c(
@@ -153,4 +112,33 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
     return String(take!(results))
+end
+
+# TODO: Do we still need this function?
+function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
+    last_processed_vote_event_id = get_last_vote_event_id(db)
+    @info "Last processed vote event: $last_processed_vote_event_id"
+
+    for line in eachline(input_stream)
+        if line == ""
+            continue
+        end
+        vote_event = as_vote_event_or_throw(IOBuffer(line))
+        @info (
+            "Got vote event $(vote_event.vote_event_id) on post:" *
+            " $(vote_event.post_id) ($(vote_event.vote)) at $(Dates.format(now(), "HH:MM:SS"))"
+        )
+
+        # The anonymous function provided here is used by the score_tree function to output
+        # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
+        # ScoreEvent or an EffectEvent.
+        process_vote_event(db::SQLite.DB, vote_event) do object
+            e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
+            insert_event(db, e)
+            json_data = JSON.json(e)
+            write(output_stream, json_data * "\n")
+        end
+    end
+
+    close(db)
 end
