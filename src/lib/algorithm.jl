@@ -1,11 +1,11 @@
-function score_posts(output::Function, posts::Vector{TalliesData})
+function score_posts(output_event::Function, posts::Vector{TalliesData})
     effects = Dict{Int,Vector{Effect}}()
     for post in posts
-        score_post(output, post, effects)
+        score_post(output_event, post, effects)
     end
 end
 
-function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector{Effect}})
+function score_post(output_event::Function, post::TalliesData, effects::Dict{Int,Vector{Effect}})
     post_id = post.post_id
     @debug "In score post $post_id"
 
@@ -24,11 +24,11 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
     for e in my_effects
-        yield(e)
+        output_event(e)
     end
 
     for child in post.children()
-        score_post(yield, child, effects)
+        score_post(output_event, child, effects)
     end
 
     score = Score(
@@ -39,7 +39,7 @@ function score_post(yield::Function, post::TalliesData, effects::Dict{Int,Vector
         p = p,
         score = ranking_score(my_effects, p),
     )
-    yield(score)
+    output_event(score)
 end
 
 function weighted_average_informed_probability(
