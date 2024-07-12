@@ -7,11 +7,11 @@ const GLOBAL_PRIOR_UPVOTE_PROBABILITY = BetaDistribution(
     GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE,
 )
 
+
 # The global prior weight for the *informed* upvote probability is just a guess, based on
 # the belief that the prior weight for the informed upvote probability should be higher than
 # that for the uninformed upvote probability. A priori, arguments do not change minds.
 const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
-
 
 
 function score_posts(output_event::Function, posts::Vector{TalliesTree})
@@ -20,6 +20,7 @@ function score_posts(output_event::Function, posts::Vector{TalliesTree})
         score_post(output_event, post, effects)
     end
 end
+
 
 function score_post(output_event::Function, post::TalliesTree, effects::Dict{Int,Vector{Effect}})
     post_id = post.post_id
@@ -30,10 +31,7 @@ function score_post(output_event::Function, post::TalliesTree, effects::Dict{Int
         return Vector{Score}()
     end
 
-    this_tally = post.tally
-
-    o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally))
-
+    o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, post.tally))
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
     p = calc_informed_probability(post_id, post, o, effects)
@@ -50,13 +48,14 @@ function score_post(output_event::Function, post::TalliesTree, effects::Dict{Int
     score = Score(
         post_id = post_id,
         o = o.mean,
-        o_count = this_tally.count,
-        o_size = this_tally.size,
+        o_count = post.tally.count,
+        o_size = post.tally.size,
         p = p,
         score = ranking_score(my_effects, p),
     )
     output_event(score)
 end
+
 
 function calc_informed_probability(
     post_id::Int,
@@ -82,6 +81,7 @@ function calc_informed_probability(
 
     return weighted_average_informed_probability(child_effects)
 end
+
 
 function calc_thread_effect(
     post_id::Int,
@@ -111,11 +111,13 @@ function calc_thread_effect(
     return effect
 end
 
-function weighted_average_informed_probability(child_effects::Vector{Effect})
+
+function weighted_average_informed_probability(child_effects::Vector{Effect})::Number
     total_weight = sum([effect.weight for effect in child_effects])
     weighted_sum = sum([effect.weight * effect.p for effect in child_effects])
     return weighted_sum / total_weight
 end
+
 
 function add!(effects::Dict{Int,Vector{Effect}}, new_effect::Effect)
     if !haskey(effects, new_effect.comment_id)
@@ -123,6 +125,7 @@ function add!(effects::Dict{Int,Vector{Effect}}, new_effect::Effect)
     end
     push!(effects[new_effect.comment_id], new_effect)
 end
+
 
 function calc_uninformed_probability(
     prior::BetaDistribution,
@@ -134,6 +137,7 @@ function calc_uninformed_probability(
         (x -> x.mean)
 end
 
+
 function partially_informed_probability_dist(
     prior::BetaDistribution,
     tally::ConditionalTally,
@@ -144,16 +148,18 @@ function partially_informed_probability_dist(
 end
 
 
-function effect_score(effect::Effect)::Float64
-    return information_gain(effect.p, effect.q, effect.r)
-end
-
-function direct_score(p)::Float64
-    p * (1 + log2(p))
-end
-
 # The total ranking score for a post includes the direct score for
 # the post itself, plus the value of its effects on other posts.
 function ranking_score(effects::Vector{Effect}, p::Float64)::Float64
     return direct_score(p) + sum([effect_score(e) for e in effects])
+end
+
+
+function effect_score(effect::Effect)::Float64
+    return information_gain(effect.p, effect.q, effect.r)
+end
+
+
+function direct_score(p)::Float64
+    p * (1 + log2(p))
 end
