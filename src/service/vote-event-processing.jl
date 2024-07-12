@@ -7,6 +7,8 @@ function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::V
         return
     end
     SQLite.transaction(db) do
+        # Insert the vote event sets all the database triggers in motion.
+        # Afterwards, the database is up-to-date with the newest vote event
         insert_vote_event(db, vote_event)
         tallies_data = get_root_tallies_data(db, vote_event.post_id)
         score_posts(output_event, tallies_data)
@@ -96,19 +98,23 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
         " $(vote_event.post_id) ($(vote_event.vote)) at $(Dates.format(now(), "HH:MM:SS"))"
     )
 
+    # The closure created here is handed down into the algorithm and tracks and updates
+    # some state in the scope of this function. It also writes the resulting scores and
+    # effects into the IOBuffer created here while turning them into ScoreEvents and
+    # EffectEvents respectively first.
     results = IOBuffer()
-
-    # The anonymous function provided here is used by the score_tree function to output
-    # both `EffectEvent`s and `ScoreEvent`s. The `object` parameter is thus either a
-    # ScoreEvent or an EffectEvent.
     n = 0
-    successfully_processed = process_vote_event(db::SQLite.DB, vote_event) do object
-        e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, object)
+    output_event = (score_or_effect) -> begin
+        e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, score_or_effect)
         insert_event(db, e)
         json_data = JSON.json(e)
         write(results, json_data * "\n")
-        n = n + 1
+        n += 1
     end
+
+    # TODO: This function should be annotated with a "!" because it changes state with the
+    # output_event function that is handed down here.
+    process_vote_event(output_event, db::SQLite.DB, vote_event)
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
     return String(take!(results))
