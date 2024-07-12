@@ -10,8 +10,6 @@ include("lib/models/probability.jl")
 include("lib/models/data-model.jl")
 
 include("lib/algorithm.jl")
-include("lib/score.jl")
-include("lib/effect.jl")
 
 include("service/events.jl")
 include("service/vote-event-processing.jl")
@@ -36,20 +34,16 @@ export Score
 export EffectEvent
 export ScoreEvent
 export VoteEvent
-export score_posts
-export score_post
+export score_tree_and_emit_events
 
 # --- Database
 export get_score_db
 export init_score_db
 export insert_event
 export insert_vote_event
-export set_last_processed_vote_event_id
 export get_last_vote_event_id
-export sql_row_to_detailed_tally
 export sql_row_to_effect
 export sql_row_to_score
-export as_tallies_tree
 export collect_results
 
 # --- Probability models
@@ -66,7 +60,6 @@ export beta
 export update
 export bayesian_avg
 export reset_weight
-export unpack
 export +
 export -
 
