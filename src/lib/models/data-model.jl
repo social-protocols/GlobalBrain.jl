@@ -1,15 +1,3 @@
-Base.@kwdef struct TalliesData
-    # TODO: Can we add type signatures for the functions here?
-    # TODO if not, add comments with required signatures
-    tally::Function
-    conditional_tally::Function
-    effect::Function # TODO: clarify (i.e., rename) what effects we are getting here and what we do with them
-    children::Function
-    needs_recalculation::Bool
-    post_id::Int
-    last_voted_post_id::Int
-end
-
 """
     SQLTalliesData <: TalliesData
 
@@ -23,16 +11,28 @@ Base.@kwdef struct SQLTalliesData
     db::SQLite.DB
 end
 
-function TalliesData(t::SQLTalliesData)
-    return TalliesData(
-        () -> t.tally, # TODO: probably not necessary, we can just use the tally here
-        (target_id) -> get_conditional_tally(t.db, target_id, t.post_id),
-        (target_id) -> get_effect(t.db, target_id, t.post_id),
-        () -> get_child_tallies_data(t.db, t.last_voted_post_id, t.post_id),
-        t.needs_recalculation,
-        t.post_id,
-        t.last_voted_post_id,
-    )
+# This struct has no keyword constructor. The only constructor that should be used is the
+# inner constructor provided in this struct that constructs TalliesTrees from SQLTalliesData.
+struct TalliesTree
+    tally::BernoulliTally
+    post_id::Int
+    needs_recalculation::Bool
+    last_voted_post_id::Int
+    children::Function
+    conditional_tally::Function
+    effect::Function # TODO: clarify (i.e., rename) what effects we are getting here and what we do with them
+
+    function TalliesTree(t::SQLTalliesData)
+        return new(
+            t.tally,
+            t.post_id,
+            t.needs_recalculation,
+            t.last_voted_post_id,
+            () -> get_child_tallies_data(t.db, t.last_voted_post_id, t.post_id),
+            (target_id) -> get_conditional_tally(t.db, target_id, t.post_id),
+            (target_id) -> get_effect(t.db, target_id, t.post_id),
+        )
+    end
 end
 
 Base.@kwdef struct ConditionalTally
