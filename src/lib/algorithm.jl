@@ -20,7 +20,7 @@ function score_post(output_event::Function, post::TalliesData, effects::Dict{Int
 
     @debug "Overall probability in score_post for $post_id is $(o.mean)"
 
-    p = weighted_average_informed_probability(post_id, post, o, effects)
+    p = calc_informed_probability(post_id, post, o, effects)
 
     my_effects::Vector{Effect} = get(effects, post_id, [])
     for e in my_effects
@@ -42,7 +42,7 @@ function score_post(output_event::Function, post::TalliesData, effects::Dict{Int
     output_event(score)
 end
 
-function weighted_average_informed_probability(
+function calc_informed_probability(
     post_id::Int,
     target::TalliesData,
     r::BetaDistribution,
@@ -64,10 +64,7 @@ function weighted_average_informed_probability(
         return r.mean
     end
 
-    total_weight = sum([effect.weight for effect in child_effects])
-    weighted_sum = sum([effect.weight * effect.p for effect in child_effects])
-
-    return weighted_sum / total_weight
+    return weighted_average_informed_probability(child_effects)
 end
 
 function calc_thread_effect(
@@ -82,7 +79,7 @@ function calc_thread_effect(
 
     tally = target.conditional_tally(post_id)
     (q, r) = upvote_probabilities(prior, tally)
-    p = weighted_average_informed_probability(post_id, target, r, effects)
+    p = calc_informed_probability(post_id, target, r, effects)
 
     @debug "p=$p for $post_id=>$(target.post_id)"
 
@@ -96,6 +93,12 @@ function calc_thread_effect(
     )
     add!(effects, effect)
     return effect
+end
+
+function weighted_average_informed_probability(child_effects::Vector{Effect})
+    total_weight = sum([effect.weight for effect in child_effects])
+    weighted_sum = sum([effect.weight * effect.p for effect in child_effects])
+    return weighted_sum / total_weight
 end
 
 function add!(effects::Dict{Int,Vector{Effect}}, new_effect::Effect)
