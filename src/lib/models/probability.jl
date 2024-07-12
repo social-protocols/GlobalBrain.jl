@@ -224,8 +224,3 @@ function Base.:-(a::Tally, b::Tuple{Int,Int})
     T = typeof(a)
     return T(a.count - b[1], a.size - b[2])
 end
-
-
-function unpack(t::Tally)
-    return (t.count, t.size)
-end

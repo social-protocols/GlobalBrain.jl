@@ -41,6 +41,12 @@ end
 
 
 
+# TODO: not needed anymore?
+function unpack(t::Tally)
+    return (t.count, t.size)
+end
+
+
 # - The following commented code used to be in the effects.jl script which was now
 # - merged with the score.jl script. We might not need this code anymore.
 # --------------------------------------------------------------------------------
