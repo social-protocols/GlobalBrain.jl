@@ -1,10 +1,3 @@
-# TODO: refactor this, weight is part of the Effect struct, so it shouldn't be
-#       calculated on an already existing effect. Probably best to make it a
-#       derived attributed on the struct itself.
-function weight(effect::Effect)::Float64
-    return relative_entropy(effect.p, effect.q) * effect.p_size
-end
-
 function effect_score(effect::Effect)::Float64
     return information_gain(effect.p, effect.q, effect.r)
 end
