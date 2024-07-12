@@ -78,20 +78,20 @@ function calc_thread_effect(
     end
 
     tally = target.conditional_tally(post_id)
-    (q, r) = upvote_probabilities(prior, tally)
-    p = calc_informed_probability(post_id, target, r, effects)
-
-    @debug "p=$p for $post_id=>$(target.post_id)"
+    r_dist = partially_informed_probability_dist(prior, tally)
 
     effect = Effect(
         post_id = post_id,
         comment_id = target.post_id,
-        p = p,
-        q = q,
-        r = r.mean,
+        p = calc_informed_probability(post_id, target, r_dist, effects),
+        q = calc_uninformed_probability(prior, tally),
+        r = r_dist.mean,
         conditional_tally = tally,
     )
     add!(effects, effect)
+
+    @debug "p=$(effect.p) for $post_id=>$(target.post_id)"
+
     return effect
 end
 
