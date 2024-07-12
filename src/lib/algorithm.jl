@@ -94,12 +94,9 @@ function calc_thread_effect(
         post_id = post_id,
         comment_id = comment_id,
         p = p,
-        p_count = tally.informed.count,
-        p_size = tally.informed.size,
         q = q,
-        q_count = tally.uninformed.count,
-        q_size = tally.uninformed.size,
         r = r.mean,
+        conditional_tally = tally,
     )
 end
 
