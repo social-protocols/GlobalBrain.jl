@@ -62,24 +62,21 @@ function Effect(;
     post_id::Int64,
     comment_id::Union{Int64,Nothing},
     p::Float64,
-    p_count::Int64,
-    p_size::Int64,
     q::Float64,
-    q_count::Int64,
-    q_size::Int64,
     r::Float64,
+    conditional_tally::ConditionalTally,
 )
     return Effect(
         post_id = post_id,
         comment_id = comment_id,
         p = p,
-        p_count = p_count,
-        p_size = p_size,
+        p_count = conditional_tally.informed.count,
+        p_size = conditional_tally.informed.size,
         q = q,
-        q_count = q_count,
-        q_size = q_size,
+        q_count = conditional_tally.uninformed.count,
+        q_size = conditional_tally.uninformed.size,
         r = r,
-        weight = relative_entropy(p, q) * p_size # weight is derived
+        weight = relative_entropy(p, q) * conditional_tally.informed.size # weight is derived
     )
 end
 
