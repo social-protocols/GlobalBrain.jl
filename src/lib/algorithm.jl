@@ -56,9 +56,10 @@ function weighted_average_informed_probability(
     @debug "Got $(length(children)) children for $comment_id"
 
     @debug "Getting effects of children of $comment_id on $post_id"
-    child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
-    add!(effects, child_effects)
-    child_effects = filter(effect -> effect.weight > 0, child_effects)
+    child_effects =
+        [calc_thread_effect(post_id, child, r, effects) for child in children] |>
+        (x -> filter(effect -> effect.weight > 0, x))
+
     if length(child_effects) == 0
         return r.mean
     end
@@ -85,7 +86,7 @@ function calc_thread_effect(
 
     @debug "p=$p for $post_id=>$(target.post_id)"
 
-    return Effect(
+    effect = Effect(
         post_id = post_id,
         comment_id = target.post_id,
         p = p,
@@ -93,13 +94,13 @@ function calc_thread_effect(
         r = r.mean,
         conditional_tally = tally,
     )
+    add!(effects, effect)
+    return effect
 end
 
-function add!(effects::Dict{Int,Vector{Effect}}, new_effects::Vector{Effect})
-    for e in new_effects
-        if !haskey(effects, e.comment_id)
-            effects[e.comment_id] = []
-        end
-        push!(effects[e.comment_id], e)
+function add!(effects::Dict{Int,Vector{Effect}}, new_effect::Effect)
+    if !haskey(effects, new_effect.comment_id)
+        effects[new_effect.comment_id] = []
     end
+    push!(effects[new_effect.comment_id], new_effect)
 end
