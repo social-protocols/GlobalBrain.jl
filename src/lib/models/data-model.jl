@@ -42,6 +42,9 @@ Base.@kwdef struct ConditionalTally
     uninformed::Tally
 end
 
+# Effect has a keyword constructor so that it can be constructed from database rows.
+# When constructing effects in calculations, it's usually better to use the constructor
+# provided below, which derives the weight from the other attributes.
 Base.@kwdef struct Effect
     post_id::Int64
     comment_id::Union{Int64,Nothing}
@@ -53,6 +56,31 @@ Base.@kwdef struct Effect
     q_size::Int64
     r::Float64
     weight::Float64
+end
+
+function Effect(;
+    post_id::Int64,
+    comment_id::Union{Int64,Nothing},
+    p::Float64,
+    p_count::Int64,
+    p_size::Int64,
+    q::Float64,
+    q_count::Int64,
+    q_size::Int64,
+    r::Float64,
+)
+    return Effect(
+        post_id = post_id,
+        comment_id = comment_id,
+        p = p,
+        p_count = p_count,
+        p_size = p_size,
+        q = q,
+        q_count = q_count,
+        q_size = q_size,
+        r = r,
+        weight = relative_entropy(p, q) * p_size # weight is derived
+    )
 end
 
 Base.convert( ::Type{NamedTuple}, e::Effect ) = NamedTuple{propertynames(e)}(e)
