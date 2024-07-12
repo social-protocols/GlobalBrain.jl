@@ -1,17 +1,18 @@
 global dbs = Dict{String,SQLite.DB}()
 
-function process_vote_event(output_event::Function, db::SQLite.DB, vote_event::VoteEvent)
+function process_vote_event(emit_event::Function, db::SQLite.DB, vote_event::VoteEvent)
     last_processed_vote_event_id = get_last_vote_event_id(db)
     if vote_event.vote_event_id <= last_processed_vote_event_id
-        replay_vote_event(output_event, db, vote_event)
+        replay_vote_event(emit_event, db, vote_event)
         return
     end
     SQLite.transaction(db) do
         # Insert the vote event sets all the database triggers in motion.
         # Afterwards, the database is up-to-date with the newest vote event
         insert_vote_event(db, vote_event)
-        tallies_data = get_root_tallies_data(db, vote_event.post_id)
-        score_posts(output_event, tallies_data)
+        tallies_tree = get_root_tallies_tree(db, vote_event.post_id)
+        effects = Dict{Int,Vector{Effect}}()
+        score_tree_and_emit_events(tallies_tree, emit_event, effects)
     end
     return
 end
@@ -104,7 +105,7 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
     # EffectEvents respectively first.
     results = IOBuffer()
     n = 0
-    output_event = (score_or_effect) -> begin
+    emit_event = (score_or_effect) -> begin
         e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, score_or_effect)
         insert_event(db, e)
         json_data = JSON.json(e)
@@ -114,7 +115,7 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
 
     # TODO: This function should be annotated with a "!" because it changes state with the
     # output_event function that is handed down here.
-    process_vote_event(output_event, db::SQLite.DB, vote_event)
+    process_vote_event(emit_event, db::SQLite.DB, vote_event)
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
     return String(take!(results))
