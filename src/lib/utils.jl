@@ -1,3 +1,5 @@
+# TODO: Everything in here does not seem to be needed anymore -> determine whether we can delete this
+
 """
     magnitude(effect::Union{Effect, Nothing})::Float64
 
@@ -38,47 +40,10 @@ function calc_comment_support(e::Effect)::Float64
 end
 
 
-function upvote_probabilities(prior::BetaDistribution, tally::ConditionalTally)
-    return upvote_probabilities_bayesian_average(prior, tally)
-end
 
-
-# The global prior upvote probability is Beta(.25, .25), or a beta distribution with mean 0.5 and weight 0.5. 
-# See reasoning in: https://github.com/social-protocols/internal-wiki/blob/main/pages/research-notes/2024-06-03-choosing-priors.md#user-content-fnref-1-35b0437c85b2f65e7c3d7139bba82f66
-
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE = C1 = 0.50
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN = 0.5
-const GLOBAL_PRIOR_UPVOTE_PROBABILITY = BetaDistribution(
-    GLOBAL_PRIOR_UPVOTE_PROBABILITY_MEAN,
-    GLOBAL_PRIOR_UPVOTE_PROBABILITY_SAMPLE_SIZE,
-)
-
-# The global prior weiht for the *informed* upvote probability is just a guess, based on the belief that the prior weight for the
-# informed upvote probability should be higher than that for the uninformed
-# upvote probability. A priori, arguments do not change minds.
-const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
-
-function upvote_probabilities_bayesian_average(
-    prior::BetaDistribution,
-    tally::ConditionalTally,
-)
-    q =
-        prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.uninformed)) |>
-        (x -> x.mean)
-
-    @debug "\tUninformed probability: $q $(prior.mean):($(tally.uninformed.count), $(tally.uninformed.size))"
-
-    r =
-        prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.informed))
-
-    @debug "\tPartially Informed probability: $(r.mean) $(prior.mean):($(tally.informed.count), $(tally.informed.size))"
-
-    return (q, r)
-end
+# - The following commented code used to be in the effects.jl script which was now
+# - merged with the score.jl script. We might not need this code anymore.
+# --------------------------------------------------------------------------------
 
 # # Use HMC simulation (NUTS sampling) to calculate the comment effect using the given hierarchical model
 # function calc_comment_effect_hmc(model_function) 
@@ -160,3 +125,5 @@ end
 #         0 ~ Bernoulli(p)
 #     end
 # end
+
+
