@@ -5,12 +5,10 @@ using SQLite
 using Dates
 using Random
 
-include("lib/models/probability-models.jl")
-include("lib/models/evaluation.jl")
-include("lib/models/tallies-data.jl")
+include("lib/models/information.jl")
+include("lib/models/probability.jl")
+include("lib/models/data-model.jl")
 
-include("lib/binary-entropy.jl")
-include("lib/probabilities.jl")
 include("lib/algorithm.jl")
 include("lib/score.jl")
 include("lib/effect.jl")
