@@ -9,13 +9,8 @@ global preparedStatements = Dict{String,SQLite.Stmt}()
 # the values out of the row and put them somewhere. The optional converter function
 # takes a SQLite.Row and returns whatever data is required.
 function collect_results(optional_converter::Union{Function,Nothing} = nothing)
-    converter = !isnothing(optional_converter) ? optional_converter : x -> begin
-        nothing
-    end
-    f = rows -> begin
-        return [converter(row) for row in rows]
-    end
-    return f
+    converter = !isnothing(optional_converter) ? optional_converter : (_) -> nothing
+    return rows -> [converter(row) for row in rows]
 end
 
 function get_prepared_statement(db::SQLite.DB, stmt_key::String, sql_query::String)
