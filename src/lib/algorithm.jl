@@ -1,11 +1,11 @@
-function score_posts(output_event::Function, posts::Vector{TalliesData})
+function score_posts(output_event::Function, posts::Vector{TalliesTree})
     effects = Dict{Int,Vector{Effect}}()
     for post in posts
         score_post(output_event, post, effects)
     end
 end
 
-function score_post(output_event::Function, post::TalliesData, effects::Dict{Int,Vector{Effect}})
+function score_post(output_event::Function, post::TalliesTree, effects::Dict{Int,Vector{Effect}})
     post_id = post.post_id
     @debug "In score post $post_id"
 
@@ -14,7 +14,7 @@ function score_post(output_event::Function, post::TalliesData, effects::Dict{Int
         return Vector{Score}()
     end
 
-    this_tally = post.tally()
+    this_tally = post.tally
 
     o = GLOBAL_PRIOR_UPVOTE_PROBABILITY |> (x -> update(x, this_tally))
 
@@ -44,7 +44,7 @@ end
 
 function calc_informed_probability(
     post_id::Int,
-    target::TalliesData,
+    target::TalliesTree,
     r::BetaDistribution,
     effects::Dict{Int,Vector{Effect}},
 )::Number
@@ -69,9 +69,9 @@ end
 
 function calc_thread_effect(
     post_id::Int,
-    target::TalliesData,
+    target::TalliesTree,
     prior::BetaDistribution,
-    effects,
+    effects::Dict{Int,Vector{Effect}},
 )::Effect
     if !target.needs_recalculation
         return target.effect(post_id)

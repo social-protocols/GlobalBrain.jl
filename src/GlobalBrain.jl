@@ -28,7 +28,7 @@ export process_vote_event_json
 
 # --- Algorithm
 export ConditionalTally
-export TalliesData
+export TalliesTree
 export SQLTalliesData
 export as_event
 export Effect

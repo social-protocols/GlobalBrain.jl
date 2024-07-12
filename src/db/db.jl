@@ -1,4 +1,4 @@
-function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{TalliesData}
+function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{TalliesTree}
     stmt = get_prepared_statement(
         db,
         "get_root_tallies_data",
@@ -6,10 +6,10 @@ function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{T
         -- get the root ancestor for last voted post id
         -- the last voted post id might be a root node.
         select
-            Tally.*
+              Tally.*
             , true as needs_recalculation
         from Tally
-        left join lineage on
+        left join Lineage on
             (:last_voted_post_id != tally.post_id) -- not strictly necessary, but avoids join in this case
             and ancestor_id = Tally.post_id
             and descendant_id = :last_voted_post_id
@@ -30,7 +30,7 @@ function get_root_tallies_data(db::SQLite.DB, last_voted_post_id::Int)::Vector{T
     results = DBInterface.execute(stmt, [last_voted_post_id])
 
     return [
-        TalliesData(
+        TalliesTree(
             SQLTalliesData(
                 tally = BernoulliTally(row[:count], row[:total]),
                 post_id = row[:post_id],
@@ -47,7 +47,7 @@ function get_child_tallies_data(
     db::SQLite.DB,
     last_voted_post_id::Int,
     parent_id::Int,
-)::Vector{TalliesData}
+)::Vector{TalliesTree}
     stmt = get_prepared_statement(
         db,
         "get_child_tallies_data",
@@ -68,7 +68,7 @@ function get_child_tallies_data(
     results = DBInterface.execute(stmt, [last_voted_post_id, parent_id])
 
     return [
-        TalliesData(
+        TalliesTree(
             SQLTalliesData(
                 tally = BernoulliTally(row[:count], row[:total]),
                 post_id = row[:post_id],
