@@ -59,7 +59,6 @@ function weighted_average_informed_probability(
     child_effects = [calc_thread_effect(post_id, child, r, effects) for child in children]
     add!(effects, child_effects)
     child_effects = filter(effect -> effect.weight > 0, child_effects)
-
     if length(child_effects) == 0
         return r.mean
     end
@@ -76,8 +75,6 @@ function calc_thread_effect(
     prior::BetaDistribution,
     effects,
 )::Effect
-    comment_id = target.post_id
-
     if !target.needs_recalculation
         return target.effect(post_id)
     end
@@ -86,11 +83,11 @@ function calc_thread_effect(
     (q, r) = upvote_probabilities(prior, tally)
     p = weighted_average_informed_probability(post_id, target, r, effects)
 
-    @debug "p=$p for $post_id=>$comment_id"
+    @debug "p=$p for $post_id=>$(target.post_id)"
 
     return Effect(
         post_id = post_id,
-        comment_id = comment_id,
+        comment_id = target.post_id,
         p = p,
         q = q,
         r = r.mean,
