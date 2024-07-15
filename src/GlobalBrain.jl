@@ -20,54 +20,74 @@ include("db/schema.jl")
 include("db/db.jl")
 
 # --- Service
+
 export process_vote_events_stream
 export process_vote_event
 export process_vote_event_json
+export replay_vote_event
 
-# --- Algorithm
-export ConditionalTally
-export TalliesTree
-export SQLTalliesData
-export as_event
-export Effect
-export Score
+export VoteEvent
 export EffectEvent
 export ScoreEvent
-export VoteEvent
+export as_event
+
+# --- Algorithm
+
 export score_tree_and_emit_events
 
-# --- Database
-export get_score_db
-export init_score_db
-export insert_event
-export insert_vote_event
-export get_last_vote_event_id
-export sql_row_to_effect
-export sql_row_to_score
-export collect_results
+# --- Lib
 
-# --- Probability models
+export SQLTalliesData
+export TalliesTree
+export ConditionalTally
+export Effect
+export Score
+
+export surprisal
+export entropy
+export cross_entropy
+export relative_entropy
+export information_gain
+
 export Model
 export BetaBernoulli
 export GammaPoisson
-export BernoulliTally
-export PoissonTally
+export Tally
 export Distribution
+export BernoulliTally
 export BetaDistribution
-export GammaDistribution
 export alpha
 export beta
+export PoissonTally
+export GammaDistribution
 export update
 export bayesian_avg
 export reset_weight
 export +
 export -
 
-# --- Binary entropy
-export surprisal
-export entropy
-export cross_entropy
-export relative_entropy
-export information_gain
+# --- Database
+
+export init_score_db
+export get_score_db
+export create_schema
+
+export get_root_tallies_tree
+export get_child_tallies_trees
+export get_conditional_tally
+export get_effect
+export insert_score_event
+export insert_effect_event
+export insert_event
+export get_last_vote_event_id
+export insert_vote_event
+export get_effects_for_vote_event
+export get_scores_for_vote_event
+export get_vote_event
+
+export collect_results
+export sql_row_to_effect
+export sql_row_to_score
+export sql_row_to_vote_event
 
 end
