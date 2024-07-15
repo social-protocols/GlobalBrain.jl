@@ -105,13 +105,14 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
     # EffectEvents respectively first.
     results = IOBuffer()
     n = 0
-    emit_event = (score_or_effect) -> begin
-        e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, score_or_effect)
-        insert_event(db, e)
-        json_data = JSON.json(e)
-        write(results, json_data * "\n")
-        n += 1
-    end
+    emit_event =
+        (score_or_effect) -> begin
+            e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, score_or_effect)
+            insert_event(db, e)
+            json_data = JSON.json(e)
+            write(results, json_data * "\n")
+            n += 1
+        end
 
     # TODO: This function should be annotated with a "!" because it changes state with the
     # output_event function that is handed down here.

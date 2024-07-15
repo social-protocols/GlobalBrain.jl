@@ -212,5 +212,3 @@ end
 # GlobalBrain.relative_entropy(p, r)
 # GlobalBrain.information_gain(p, q, r) 
 # GlobalBrain.relative_entropy(p, q) - GlobalBrain.relative_entropy(p, r)
-
-
