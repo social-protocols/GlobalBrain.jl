@@ -47,7 +47,7 @@ function get_root_tallies_tree(db::SQLite.DB, last_voted_post_id::Int)::TalliesT
 end
 
 
-function get_child_tallies_data(
+function get_child_tallies_trees(
     db::SQLite.DB,
     last_voted_post_id::Int,
     parent_id::Int,
