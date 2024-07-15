@@ -80,7 +80,7 @@ function Effect(
     )
 end
 
-Base.convert( ::Type{NamedTuple}, e::Effect ) = NamedTuple{propertynames(e)}(e)
+Base.convert(::Type{NamedTuple}, e::Effect) = NamedTuple{propertynames(e)}(e)
 
 Base.@kwdef struct Score
     post_id::Int64

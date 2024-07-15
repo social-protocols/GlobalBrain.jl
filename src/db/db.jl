@@ -102,14 +102,15 @@ function get_conditional_tally(
         """,
     )
 
-    results = DBInterface.execute(stmt, [post_id, comment_id]) |> collect_results(
-        r -> ConditionalTally(
-            post_id = r[:post_id],
-            comment_id = r[:comment_id],
-            informed = BernoulliTally(r[:informed_count], r[:informed_total]),
-            uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
+    results =
+        DBInterface.execute(stmt, [post_id, comment_id]) |> collect_results(
+            r -> ConditionalTally(
+                post_id = r[:post_id],
+                comment_id = r[:comment_id],
+                informed = BernoulliTally(r[:informed_count], r[:informed_total]),
+                uninformed = BernoulliTally(r[:uninformed_count], r[:uninformed_total]),
+            ),
         )
-    )
 
     if length(results) == 0
         return ConditionalTally(

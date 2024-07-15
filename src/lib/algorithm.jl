@@ -14,7 +14,11 @@ const GLOBAL_PRIOR_UPVOTE_PROBABILITY = BetaDistribution(
 const GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE = C2 = 5.0
 
 
-function score_tree_and_emit_events(tree::TalliesTree, emit_event::Function, effects::Dict{Int,Vector{Effect}})
+function score_tree_and_emit_events(
+    tree::TalliesTree,
+    emit_event::Function,
+    effects::Dict{Int,Vector{Effect}},
+)
     post_id = tree.post_id
     @debug "In score post $post_id"
 
@@ -59,34 +63,42 @@ function calc_informed_probability_and_effects(
 )::Number
     child_effects::Vector{Effect} = map(
         child -> begin
-            effect =
-                if !child.needs_recalculation
-                    child.effect(target_id) # TODO: should an event also be emitted for this effect?
-                else
-                    tally = child.conditional_tally(target_id)
-                    r_dist = partially_informed_probability_dist(r, tally)
-                    effect = Effect(
+            effect = if !child.needs_recalculation
+                child.effect(target_id) # TODO: should an event also be emitted for this effect?
+            else
+                tally = child.conditional_tally(target_id)
+                r_dist = partially_informed_probability_dist(r, tally)
+                effect = Effect(
+                    target_id,
+                    child.post_id,
+                    calc_informed_probability_and_effects(
                         target_id,
-                        child.post_id,
-                        calc_informed_probability_and_effects(target_id, child, r_dist, effect_callback, emit_event), # recursion
-                        calc_uninformed_probability(r, tally),
-                        r_dist.mean,
-                        tally,
-                    )
-                    emit_event(effect)
-                    effect
-                end
+                        child,
+                        r_dist,
+                        effect_callback,
+                        emit_event,
+                    ), # recursion
+                    calc_uninformed_probability(r, tally),
+                    r_dist.mean,
+                    tally,
+                )
+                emit_event(effect)
+                effect
+            end
             effect_callback(effect)
             return effect
         end,
-        subtree.children()
+        subtree.children(),
     )
 
     return weighted_average_informed_probability(child_effects, r)
 end
 
 
-function weighted_average_informed_probability(child_effects::Vector{Effect}, r::BetaDistribution)::Number
+function weighted_average_informed_probability(
+    child_effects::Vector{Effect},
+    r::BetaDistribution,
+)::Number
     total_weight = sum([effect.weight for effect in child_effects])
     if total_weight == 0
         return r.mean
@@ -109,9 +121,9 @@ function calc_uninformed_probability(
     tally::ConditionalTally,
 )::Number
     return prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.uninformed)) |>
-        (x -> x.mean)
+           (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+           (x -> update(x, tally.uninformed)) |>
+           (x -> x.mean)
 end
 
 
@@ -120,14 +132,18 @@ function partially_informed_probability_dist(
     tally::ConditionalTally,
 )::BetaDistribution
     return prior |>
-        (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
-        (x -> update(x, tally.informed))
+           (x -> reset_weight(x, GLOBAL_PRIOR_INFORMED_UPVOTE_PROBABILITY_SAMPLE_SIZE)) |>
+           (x -> update(x, tally.informed))
 end
 
 
 # The total ranking score for a post includes the direct score for
 # the post itself, plus the value of its effects on other posts.
-function ranking_score(post_id::Int64, effects::Dict{Int64, Vector{Effect}}, p::Float64)::Float64
+function ranking_score(
+    post_id::Int64,
+    effects::Dict{Int64,Vector{Effect}},
+    p::Float64,
+)::Float64
     return direct_score(p) + sum([effect_score(e) for e in get(effects, post_id, [])])
 end
 
