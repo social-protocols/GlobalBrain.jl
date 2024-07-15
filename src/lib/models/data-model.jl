@@ -58,7 +58,7 @@ Base.@kwdef struct Effect
     weight::Float64
 end
 
-function Effect(;
+function Effect(
     post_id::Int64,
     comment_id::Union{Int64,Nothing},
     p::Float64,
@@ -76,7 +76,7 @@ function Effect(;
         q_count = conditional_tally.uninformed.count,
         q_size = conditional_tally.uninformed.size,
         r = r,
-        weight = relative_entropy(p, q) * conditional_tally.informed.size # weight is derived
+        weight = relative_entropy(p, q) * conditional_tally.informed.size, # weight is derived
     )
 end
 

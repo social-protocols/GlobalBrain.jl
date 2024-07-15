@@ -28,23 +28,22 @@ function get_root_tallies_tree(db::SQLite.DB, last_voted_post_id::Int)::TalliesT
     )
 
     results = DBInterface.execute(stmt, [last_voted_post_id])
-    rows = [row for row in results]
+    converted_results = [
+        TalliesTree(
+            SQLTalliesData(
+                tally = BernoulliTally(row[:count], row[:total]),
+                post_id = row[:post_id],
+                needs_recalculation = row[:needs_recalculation],
+                last_voted_post_id = last_voted_post_id,
+                db = db,
+            ),
+        ) for row in results
+    ]
     @assert(
-        length(rows) == 1,
+        length(converted_results) == 1,
         "Expected exactly one root node while retrieving root tallies data for $last_voted_post_id",
     )
-    row = first(rows)
-    # TODO: continue here <---------
-    @info "$row"
-    return TalliesTree(
-        SQLTalliesData(
-            tally = BernoulliTally(row[:count], row[:total]),
-            post_id = row[:post_id],
-            needs_recalculation = row[:needs_recalculation],
-            last_voted_post_id = last_voted_post_id,
-            db = db,
-        ),
-    )
+    return first(converted_results)
 end
 
 

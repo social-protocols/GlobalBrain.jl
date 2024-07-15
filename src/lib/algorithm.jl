@@ -30,10 +30,8 @@ function score_tree_and_emit_events(tree::TalliesTree, emit_event::Function, eff
         post_id,
         tree,
         o,
-        (effect) -> begin
-            add!(effects, effect)
-            emit_event(effect)
-        end,
+        (effect) -> add!(effects, effect),
+        emit_event,
     )
 
     for subtree in tree.children()
@@ -57,8 +55,9 @@ function calc_informed_probability_and_effects(
     subtree::TalliesTree,
     r::BetaDistribution,
     effect_callback::Function,
+    emit_event::Function,
 )::Number
-    child_effects = map(
+    child_effects::Vector{Effect} = map(
         child -> begin
             effect =
                 if !child.needs_recalculation
@@ -66,15 +65,16 @@ function calc_informed_probability_and_effects(
                 else
                     tally = child.conditional_tally(target_id)
                     r_dist = partially_informed_probability_dist(r, tally)
-
-                    Effect(
-                        post_id = target_id,
-                        comment_id = child.post_id,
-                        p = calc_informed_probability_and_effects(target_id, child, r_dist, effect_callback), # recursion
-                        q = calc_uninformed_probability(r, tally),
-                        r = r_dist.mean,
-                        conditional_tally = tally,
+                    effect = Effect(
+                        target_id,
+                        child.post_id,
+                        calc_informed_probability_and_effects(target_id, child, r_dist, effect_callback, emit_event), # recursion
+                        calc_uninformed_probability(r, tally),
+                        r_dist.mean,
+                        tally,
                     )
+                    emit_event(effect)
+                    effect
                 end
             effect_callback(effect)
             return effect
@@ -127,7 +127,7 @@ end
 
 # The total ranking score for a post includes the direct score for
 # the post itself, plus the value of its effects on other posts.
-function ranking_score(post_id::Number, effects::Vector{Effect}, p::Float64)::Float64
+function ranking_score(post_id::Int64, effects::Dict{Int64, Vector{Effect}}, p::Float64)::Float64
     return direct_score(p) + sum([effect_score(e) for e in get(effects, post_id, [])])
 end
 
