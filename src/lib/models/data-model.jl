@@ -28,7 +28,7 @@ struct TalliesTree
             t.post_id,
             t.needs_recalculation,
             t.last_voted_post_id,
-            () -> get_child_tallies_data(t.db, t.last_voted_post_id, t.post_id),
+            () -> get_child_tallies_trees(t.db, t.last_voted_post_id, t.post_id),
             (target_id) -> get_conditional_tally(t.db, target_id, t.post_id),
             (target_id) -> get_effect(t.db, target_id, t.post_id),
         )
