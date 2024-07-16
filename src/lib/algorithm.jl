@@ -64,7 +64,7 @@ function calc_informed_probability_and_effects(
     child_effects::Vector{Effect} = map(
         child -> begin
             effect = if !child.needs_recalculation
-                child.effect(target_id) # TODO: should an event also be emitted for this effect?
+                child.effect_on(target_id) # TODO: should an event also be emitted for this effect?
             else
                 tally = child.conditional_tally(target_id)
                 r_dist = partially_informed_probability_dist(r, tally)

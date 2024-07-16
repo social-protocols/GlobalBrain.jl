@@ -20,7 +20,7 @@ struct TalliesTree
     last_voted_post_id::Int
     children::Function
     conditional_tally::Function
-    effect::Function # TODO: clarify (i.e., rename) what effects we are getting here and what we do with them
+    effect_on::Function
 
     function TalliesTree(t::SQLTalliesData)
         return new(

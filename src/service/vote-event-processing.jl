@@ -114,15 +114,13 @@ function process_vote_event_json(database_path::String, voteEvent::String)::Stri
             n += 1
         end
 
-    # TODO: This function should be annotated with a "!" because it changes state with the
-    # output_event function that is handed down here.
     process_vote_event(emit_event, db::SQLite.DB, vote_event)
 
     @debug "Produced $(n) score events $(vote_event.vote_event_id)"
     return String(take!(results))
 end
 
-# TODO: Do we still need this function?
+
 function process_vote_events_stream(db::SQLite.DB, input_stream, output_stream)
     last_processed_vote_event_id = get_last_vote_event_id(db)
     @info "Last processed vote event: $last_processed_vote_event_id"
