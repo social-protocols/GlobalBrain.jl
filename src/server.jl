@@ -5,7 +5,7 @@ using JSON
 
 db = get_score_db("global-brain.db")
 
-route("/echo", method = POST) do
+route("/", method = POST) do
     message = rawpayload()
     parsed_message = JSON.parse(message)
     vote_events = map(parse_vote_event, parsed_message["payload"])
@@ -13,11 +13,7 @@ route("/echo", method = POST) do
     results = ""
     n = 0
 
-    for vote_event in vote_events
-        # The closure created here is handed down into the algorithm and tracks and updates
-        # some state in the scope of this function. It also writes the resulting scores and
-        # effects into the IOBuffer created here while turning them into ScoreEvents and
-        # EffectEvents respectively first.
+    map(vote_events) do vote_event
         emit_event =
             (score_or_effect) -> begin
                 e = as_event(vote_event.vote_event_id, vote_event.vote_event_time, score_or_effect)
@@ -26,8 +22,6 @@ route("/echo", method = POST) do
                 results *= json_data * "\n"
                 n += 1
             end
-
-        println(vote_event)
         process_vote_event(emit_event, db, vote_event)
     end
 
@@ -37,7 +31,7 @@ end
 route("/send") do
     response = HTTP.request(
         "POST",
-        "http://localhost:8000/echo",
+        "http://localhost:8000",
         [("Content-Type", "application/json")],
         """
         {
