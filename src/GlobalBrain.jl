@@ -30,6 +30,7 @@ export VoteEvent
 export EffectEvent
 export ScoreEvent
 export as_event
+export parse_vote_event
 
 # --- Algorithm
 

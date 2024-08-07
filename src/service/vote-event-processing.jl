@@ -7,7 +7,7 @@ function process_vote_event(emit_event::Function, db::SQLite.DB, vote_event::Vot
         return
     end
     SQLite.transaction(db) do
-        # Insert the vote event sets all the database triggers in motion.
+        # Inserting the vote event sets all the database triggers in motion.
         # Afterwards, the database is up-to-date with the newest vote event
         insert_vote_event(db, vote_event)
         tallies_tree = get_root_tallies_tree(db, vote_event.post_id)
