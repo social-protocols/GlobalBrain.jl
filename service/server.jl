@@ -1,7 +1,21 @@
 using Genie, Genie.Renderer.Json, Genie.Requests
 using HTTP
-using GlobalBrain
 using JSON
+
+include("../src/GlobalBrain.jl")
+using Main.GlobalBrain
+
+Genie.Configuration.config!(
+  server_port                     = 8000,
+  server_host                     = "0.0.0.0",
+  # log_level                       = Logging.Info,
+  # log_to_file                     = false,
+  # server_handle_static_files      = true,
+  # path_build                      = "build",
+  # format_julia_builds             = true,
+  # format_html_output              = true,
+  # watch                           = true
+)
 
 db = get_score_db("global-brain.db")
 
@@ -31,7 +45,7 @@ end
 route("/send") do
     response = HTTP.request(
         "POST",
-        "http://localhost:8000",
+        "http://127.0.0.1:8000",
         [("Content-Type", "application/json")],
         """
         {

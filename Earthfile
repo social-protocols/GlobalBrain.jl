@@ -35,6 +35,17 @@ root-julia-setup:
 	COPY --dir src ./
 
 
+docker-build:
+  FROM +root-julia-setup
+  WORKDIR /app/service
+  COPY ./service/Project.toml ./service/Manifest.toml ./
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  COPY ./service/server.jl ./
+  EXPOSE 8000
+  CMD ["/nix/store/sbqwvska1zjdqj1vqmyalxgw91r9y65q-julia-bin-1.10.3/bin/julia", "--project", "server.jl"]
+  SAVE IMAGE global-brain:latest
+
+
 node-ext:
   FROM +root-julia-setup
 
