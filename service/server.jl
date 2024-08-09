@@ -19,7 +19,7 @@ Genie.Configuration.config!(
 
 db = get_score_db("global-brain.db")
 
-route("/", method = POST) do
+route("/score", method = POST) do
     message = rawpayload()
     parsed_message = JSON.parse(message)
     vote_events = map(parse_vote_event, parsed_message["payload"])
@@ -45,7 +45,7 @@ end
 route("/send") do
     response = HTTP.request(
         "POST",
-        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8000/score",
         [("Content-Type", "application/json")],
         """
         {
