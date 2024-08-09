@@ -141,9 +141,9 @@ version = "6.2.1+6"
 
 [[deps.Genie]]
 deps = ["ArgParse", "Base64", "Dates", "Distributed", "DotEnv", "EzXML", "FilePathsBase", "HTTP", "HttpCommon", "Inflector", "JSON3", "JuliaFormatter", "Logging", "LoggingExtras", "LoweredCodeUtils", "MIMEs", "Markdown", "Millboard", "Nettle", "OrderedCollections", "Pkg", "REPL", "Random", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "UUIDs", "Unicode", "XML2_jll", "YAML"]
-git-tree-sha1 = "27931ed88fcbdaeeef8d0c0e490176da258019d4"
+git-tree-sha1 = "da0dbb3ff3be5a554d1756270be7fd343ea708e0"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-version = "5.30.3"
+version = "5.30.4"
 
 [[deps.Glob]]
 git-tree-sha1 = "97285bbd5230dd766e9ef6749b80fc617126d496"
@@ -222,9 +222,9 @@ version = "1.0.59"
 
 [[deps.JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "5d3a5a206297af3868151bb4a2cf27ebce46f16d"
+git-tree-sha1 = "7ae67d8567853d367e3463719356b8989e236069"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.9.33"
+version = "0.9.34"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
