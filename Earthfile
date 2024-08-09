@@ -36,13 +36,20 @@ root-julia-setup:
 
 
 docker-build:
-  FROM +root-julia-setup
+  FROM julia:1.10
+
+  WORKDIR /app
+  COPY Manifest.toml Project.toml ./
+  COPY --dir src ./
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
   WORKDIR /app/service
   COPY ./service/Project.toml ./service/Manifest.toml ./
-  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+  RUN julia -t auto --code-coverage=none --check-bounds=yes --project -e 'using Pkg; Pkg.instantiate()'
   COPY ./service/server.jl ./
+
   EXPOSE 8000
-  CMD ["/nix/store/sbqwvska1zjdqj1vqmyalxgw91r9y65q-julia-bin-1.10.3/bin/julia", "--project", "server.jl"]
+  CMD ["/usr/local/julia/bin/julia", "--project", "server.jl"]
   SAVE IMAGE global-brain:latest
 
 
